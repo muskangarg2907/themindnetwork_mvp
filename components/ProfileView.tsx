@@ -23,6 +23,39 @@ export const ProfileView: React.FC = () => {
     }
   }, [navigate]);
 
+  // Poll for status updates every 10 seconds
+  useEffect(() => {
+    if (!profile) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const phone = localStorage.getItem('userPhone');
+        if (!phone) return;
+
+        const resp = await fetch(`/api/profiles/lookup?phone=${encodeURIComponent(phone)}`);
+        if (resp.ok) {
+          const updated = await resp.json();
+          // Update profile if status changed
+          if (updated.status !== profile.status) {
+            console.log('[PROFILE] Status changed from', profile.status, 'to', updated.status);
+            setProfile(updated);
+            setEditData(updated);
+            localStorage.setItem('userProfile', JSON.stringify(updated));
+          }
+        } else if (resp.status === 404) {
+          // Profile was deleted - redirect to create
+          console.log('[PROFILE] Profile deleted, redirecting to create');
+          localStorage.removeItem('userProfile');
+          navigate('/create');
+        }
+      } catch (err) {
+        console.error('[PROFILE] Polling error:', err);
+      }
+    }, 10000); // Poll every 10 seconds
+
+    return () => clearInterval(interval);
+  }, [profile, navigate]);
+
   if (!profile || !editData) return null;
 
   const isClient = profile.role === 'client';
@@ -106,7 +139,7 @@ export const ProfileView: React.FC = () => {
             </div>
         </div>
 
-        {/* Verification Banner */}
+        {/* Verification/Status Banners */}
         {profile.status === 'pending_verification' && (
             <div className="bg-yellow-50 border border-yellow-200 p-6 rounded-xl flex items-start gap-4 animate-slide-up shadow-sm">
                 <div className="text-yellow-600 text-xl mt-1">
@@ -116,6 +149,34 @@ export const ProfileView: React.FC = () => {
                     <h3 className="font-bold text-yellow-800 text-lg">Verification in Progress</h3>
                     <p className="text-yellow-700 mt-1">
                         Our team is currently reviewing your details. You will receive an update on your registered email soon.
+                    </p>
+                </div>
+            </div>
+        )}
+
+        {profile.status === 'rejected' && (
+            <div className="bg-orange-50 border border-orange-300 p-6 rounded-xl flex items-start gap-4 animate-slide-up shadow-sm">
+                <div className="text-orange-600 text-xl mt-1">
+                    <i className="fas fa-exclamation-circle"></i>
+                </div>
+                <div>
+                    <h3 className="font-bold text-orange-800 text-lg">Profile Paused</h3>
+                    <p className="text-orange-700 mt-1">
+                        Your profile has been paused. Please contact admin for more details.
+                    </p>
+                </div>
+            </div>
+        )}
+
+        {profile.status === 'approved' && (
+            <div className="bg-green-50 border border-green-200 p-6 rounded-xl flex items-start gap-4 animate-slide-up shadow-sm">
+                <div className="text-green-600 text-xl mt-1">
+                    <i className="fas fa-check-circle"></i>
+                </div>
+                <div>
+                    <h3 className="font-bold text-green-800 text-lg">Profile Approved</h3>
+                    <p className="text-green-700 mt-1">
+                        Your profile has been approved! You can now fully use the TheMindNetwork platform.
                     </p>
                 </div>
             </div>

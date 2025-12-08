@@ -82,11 +82,19 @@ export const Login: React.FC = () => {
         return;
       }
 
+      // 404 = profile not found (deleted) - redirect to create new profile
+      if (resp.status === 404) {
+        console.log('[LOGIN] Profile not found (404), redirecting to create');
+        setIsLoading(false);
+        navigate('/create');
+        return;
+      }
+
       const errBody = await resp.json();
       console.log('[LOGIN] Lookup failed:', errBody);
       
-      // If not found, go to create flow
-      console.log('[LOGIN] No profile found, redirecting to create');
+      // Any other error, go to create flow
+      console.log('[LOGIN] Error response, redirecting to create');
       setIsLoading(false);
       navigate('/create');
     } catch (err: any) {
