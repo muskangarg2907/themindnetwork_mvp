@@ -19,16 +19,32 @@ export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db
 
   // Create a new connection
   try {
-    // Parse URI to ensure it has correct format
-    const uri = MONGODB_URI.includes('?') 
-      ? `${MONGODB_URI}&retryWrites=true&w=majority`
-      : `${MONGODB_URI}?retryWrites=true&w=majority`;
+    // Ensure the URI includes the database name and proper parameters
+    let uri = MONGODB_URI;
+    
+    // Check if database name is in the URI
+    if (!uri.includes('/themindnetwork')) {
+      // Insert database name before query params or at the end
+      const hasParams = uri.includes('?');
+      if (hasParams) {
+        uri = uri.replace('/?', '/themindnetwork?');
+      } else {
+        uri = uri.replace(/\/$/, '') + '/themindnetwork';
+      }
+    }
+    
+    // Add required parameters
+    const params = 'retryWrites=true&w=majority&tls=true&tlsAllowInvalidCertificates=false';
+    uri = uri.includes('?') 
+      ? `${uri}&${params}`
+      : `${uri}?${params}`;
+    
+    console.log('[DB] Connecting to MongoDB...');
     
     const client = new MongoClient(uri, {
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 10000,
-      maxPoolSize: 10,
-      minPoolSize: 1,
+      serverSelectionTimeoutMS: 10000,
+      connectTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
     });
     await client.connect();
     const db = client.db(DB_NAME);
