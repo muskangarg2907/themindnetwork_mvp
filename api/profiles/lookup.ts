@@ -1,57 +1,9 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { promises as fs } from 'fs';
-
-const DATA_FILE = '/tmp/themindnetwork_profiles.json';
-
-// Seed profiles - fallback data
-const SEED_PROFILES = [
-  {
-    id: 'bfdb2397-a73e-4986-a2ec-19a1c4e6ca7c',
-    status: 'pending_verification',
-    role: 'provider',
-    basicInfo: {
-      fullName: 'Muskan Garg',
-      email: 'muskangarg.official@gmail.com',
-      phone: '+91 8972949649',
-      dob: '1999-07-29',
-      location: 'Patiala',
-      gender: 'Female'
-    },
-    createdAt: '2025-12-08T09:17:53.657Z'
-  },
-  {
-    id: 'be000ad4-a571-4d38-b355-c628c98ec491',
-    status: 'pending_verification',
-    role: 'provider',
-    basicInfo: {
-      fullName: 'Muskan Garg',
-      email: 'muskangarg.official@gmail.com',
-      phone: '+91 9501366244',
-      dob: '1999-07-29',
-      location: 'Bangalore',
-      gender: 'Female'
-    },
-    createdAt: '2025-12-08T16:07:52.230Z'
-  }
-];
-
-async function readProfilesFile() {
-  try {
-    const txt = await fs.readFile(DATA_FILE, 'utf8');
-    const parsed = JSON.parse(txt || '[]');
-    return parsed.length > 0 ? parsed : SEED_PROFILES;
-  } catch (err: any) {
-    if (err.code === 'ENOENT') return SEED_PROFILES;
-    console.error('Read error:', err);
-    return SEED_PROFILES;
-  }
-}
+import { getProfilesCollection } from '../db';
 
 function normalizePhone(s: string) {
   if (!s) return '';
-  // Extract just the digits
   const digits = String(s).replace(/\D/g, '');
-  // Return last 10 digits (for Indian numbers) or full if less than 10
   return digits.length >= 10 ? digits.slice(-10) : digits;
 }
 
@@ -68,21 +20,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const norm = normalizePhone(phone);
     console.log('[LOOKUP] Searching for phone:', phone, 'normalized:', norm);
     
-    const profiles = await readProfilesFile();
-    console.log('[LOOKUP] Total profiles:', profiles.length);
-
-    const found = profiles.find((p: any) => {
-      const pPhone = p?.basicInfo?.phone || p?.phone || '';
-      const pNorm = normalizePhone(pPhone);
-      
-      console.log('[LOOKUP] Checking profile:', p?.id, 'phone:', pPhone, 'normalized:', pNorm);
-      
-      if (!pNorm) return false;
-      
-      // Match normalized last-10-digits (works for Indian phones with or without country code)
-      const match = pNorm === norm;
-      console.log('[LOOKUP] Match?', match);
-      return match;
+    const profiles = await getProfilesCollection();
+    
+    // Find profile by normalized phone
+    const found = await profiles.findOne({
+      'basicInfo.phone': norm
     });
 
     if (!found) {
@@ -90,7 +32,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(404).json({ error: 'Not found', searched: norm });
     }
     
-    console.log('[LOOKUP] FOUND:', found.id);
+    console.log('[LOOKUP] FOUND:', found._id);
     return res.status(200).json(found);
   } catch (err: any) {
     console.error('[LOOKUP] ERROR:', err);

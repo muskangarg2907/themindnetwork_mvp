@@ -1,64 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { promises as fs } from 'fs';
-import { randomUUID } from 'crypto';
-
-const DATA_FILE = '/tmp/themindnetwork_profiles.json';
-
-// Seed profiles
-const SEED_PROFILES = [
-  {
-    id: 'bfdb2397-a73e-4986-a2ec-19a1c4e6ca7c',
-    status: 'pending_verification',
-    role: 'provider',
-    basicInfo: {
-      fullName: 'Muskan Garg',
-      email: 'muskangarg.official@gmail.com',
-      phone: '+91 8972949649',
-      dob: '1999-07-29',
-      location: 'Patiala',
-      gender: 'Female'
-    },
-    createdAt: '2025-12-08T09:17:53.657Z'
-  },
-  {
-    id: 'be000ad4-a571-4d38-b355-c628c98ec491',
-    status: 'pending_verification',
-    role: 'provider',
-    basicInfo: {
-      fullName: 'Muskan Garg',
-      email: 'muskangarg.official@gmail.com',
-      phone: '+91 9501366244',
-      dob: '1999-07-29',
-      location: 'Bangalore',
-      gender: 'Female'
-    },
-    createdAt: '2025-12-08T16:07:52.230Z'
-  }
-];
-
-async function readProfilesFile() {
-  try {
-    const txt = await fs.readFile(DATA_FILE, 'utf8');
-    const parsed = JSON.parse(txt || '[]');
-    // Return parsed data as-is; don't fallback to SEED_PROFILES
-    // This allows truly empty state when admin deletes all profiles
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (err: any) {
-    if (err.code === 'ENOENT') return [];
-    console.error('Read error:', err);
-    return [];
-  }
-}
-
-async function writeProfilesFile(profiles: any) {
-  try {
-    const tmp = DATA_FILE + '.tmp';
-    await fs.writeFile(tmp, JSON.stringify(profiles, null, 2), 'utf8');
-    await fs.rename(tmp, DATA_FILE);
-  } catch (err: any) {
-    console.error('Write error:', err);
-  }
-}
+import { getProfilesCollection } from '../db';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Content-Type', 'application/json');
@@ -72,10 +13,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    const profiles = await getProfilesCollection();
+
     // GET all profiles (for admin dashboard)
     if (req.method === 'GET') {
-      const profiles = await readProfilesFile();
-      return res.status(200).json({ profiles, total: profiles.length });
+      const allProfiles = await profiles.find({}).toArray();
+      return res.status(200).json({ profiles: allProfiles, total: allProfiles.length });
     }
 
     // DELETE profile by ID
@@ -84,9 +27,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!id) {
         return res.status(400).json({ error: 'id query parameter required' });
       }
-      const profiles = await readProfilesFile();
-      const filtered = profiles.filter((p: any) => p.id !== id);
-      await writeProfilesFile(filtered);
+      const result = await profiles.deleteOne({ _id: id as string });
+      if (result.deletedCount === 0) {
+        return res.status(404).json({ error: 'Profile not found' });
+      }
       console.log('[ADMIN] Deleted profile:', id);
       return res.status(200).json({ message: 'Profile deleted', success: true });
     }
@@ -103,35 +47,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: 'Invalid update payload' });
       }
 
-      const profiles = await readProfilesFile();
-      const idx = profiles.findIndex((p: any) => p.id === id);
+      const result = await profiles.findOneAndUpdate(
+        { _id: id as string },
+        {
+          $set: {
+            ...updates,
+            updatedAt: new Date().toISOString()
+          }
+        },
+        { returnDocument: 'after' }
+      );
 
-      if (idx === -1) {
+      if (!result.value) {
         return res.status(404).json({ error: 'Profile not found' });
       }
 
-      // Merge updates
-      profiles[idx] = {
-        ...profiles[idx],
-        ...updates,
-        updatedAt: new Date().toISOString()
-      };
-
-      await writeProfilesFile(profiles);
-      console.log('[ADMIN] Updated profile:', id, 'status:', profiles[idx].status);
-      return res.status(200).json({ message: 'Profile updated', profile: profiles[idx] });
+      console.log('[ADMIN] Updated profile:', id, 'status:', result.value?.status);
+      return res.status(200).json({ message: 'Profile updated', profile: result.value });
     }
 
     // POST to reset all profiles
     if (req.method === 'POST') {
       const { action } = req.body;
       if (action === 'reset') {
-        try {
-          await fs.unlink(DATA_FILE);
-          console.log('[ADMIN] Reset all profiles');
-        } catch (err: any) {
-          if (err.code !== 'ENOENT') throw err;
-        }
+        const result = await profiles.deleteMany({});
+        console.log('[ADMIN] Reset all profiles. Deleted:', result.deletedCount);
         return res.status(200).json({ message: 'All profiles deleted', success: true });
       }
       return res.status(400).json({ error: 'Unknown action' });

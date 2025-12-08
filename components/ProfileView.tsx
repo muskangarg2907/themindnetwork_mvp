@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { UserProfile } from '../types';
 import { ChatBot } from './ChatBot';
 import { Button } from './ui/Button';
@@ -7,12 +7,11 @@ import { Input, TextArea } from './ui/Input';
 
 export const ProfileView: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<UserProfile | null>(null);
-    const notFoundCountRef = useRef(0);
-
-  useEffect(() => {
+  const [pollingEnabled, setPollingEnabled] = useState(!(location.state as any)?.isNewlyCreated);  useEffect(() => {
     // Retrieve from storage
     const stored = localStorage.getItem('userProfile');
     if (stored) {
@@ -24,9 +23,20 @@ export const ProfileView: React.FC = () => {
     }
   }, [navigate]);
 
+  // If profile was just created, delay polling to avoid race conditions (10s grace period)
+  useEffect(() => {
+    if ((location.state as any)?.isNewlyCreated && !pollingEnabled) {
+      const timer = setTimeout(() => {
+        console.log('[PROFILE] Grace period ended, enabling polling');
+        setPollingEnabled(true);
+      }, 10000);
+      return () => clearTimeout(timer);
+    }
+  }, [location.state, pollingEnabled]);
+
   // Poll for status updates every 5 seconds (faster feedback)
     useEffect(() => {
-        if (!profile?.id) return;
+        if (!profile?.id || !pollingEnabled) return;
 
         const interval = setInterval(async () => {
       try {
@@ -36,33 +46,23 @@ export const ProfileView: React.FC = () => {
         const resp = await fetch(`/api/profiles/lookup?phone=${encodeURIComponent(phone)}`);
         if (resp.ok) {
           const updated = await resp.json();
-                    // Reset consecutive-not-found counter on success
-                    notFoundCountRef.current = 0;
-
-                    // Validate updated payload minimally before applying
-                    if (updated && updated.id === profile.id && updated.basicInfo) {
-                        const currentJSON = JSON.stringify(profile);
-                        const updatedJSON = JSON.stringify(updated);
-                        if (currentJSON !== updatedJSON) {
-                            console.log('[PROFILE] Profile updated:', updated);
-                            console.log('[PROFILE] Status changed from', profile?.status, 'to', updated?.status);
-                            setProfile(updated);
-                            setEditData(updated);
-                            localStorage.setItem('userProfile', JSON.stringify(updated));
-                        }
-                    } else {
-                        console.warn('[PROFILE] Received lookup result that does not match current profile id — ignoring', updated?.id, profile?.id);
-                    }
+          // Validate updated payload minimally before applying
+          if (updated && updated.id === profile.id && updated.basicInfo) {
+            const currentJSON = JSON.stringify(profile);
+            const updatedJSON = JSON.stringify(updated);
+            if (currentJSON !== updatedJSON) {
+              console.log('[PROFILE] Profile updated:', updated);
+              console.log('[PROFILE] Status changed from', profile?.status, 'to', updated?.status);
+              setProfile(updated);
+              setEditData(updated);
+              localStorage.setItem('userProfile', JSON.stringify(updated));
+            }
+          } else {
+            console.warn('[PROFILE] Received lookup result that does not match current profile id — ignoring', updated?.id, profile?.id);
+          }
         } else if (resp.status === 404) {
-                    // Profile not found right now — avoid redirecting immediately as this can be a race.
-                    notFoundCountRef.current = (notFoundCountRef.current || 0) + 1;
-                    console.log('[PROFILE] Lookup 404 (not found). consecutive count:', notFoundCountRef.current);
-                    // Only redirect if we see 2 consecutive 404s to avoid races right after profile creation
-                    if (notFoundCountRef.current >= 2) {
-                        console.log('[PROFILE] Profile missing after consecutive checks — redirecting to create');
-                        localStorage.removeItem('userProfile');
-                        navigate('/create');
-                    }
+          // Profile not found on server — but keep displaying local profile
+          console.log('[PROFILE] Lookup returned 404 (profile not on server yet) — keeping local profile visible');
         }
       } catch (err) {
         console.error('[PROFILE] Polling error:', err);
@@ -70,7 +70,7 @@ export const ProfileView: React.FC = () => {
     }, 5000); // Poll every 5 seconds
 
     return () => clearInterval(interval);
-  }, [profile?.id, navigate]);
+  }, [profile?.id, pollingEnabled]);
 
   if (!profile || !editData) return null;
 
