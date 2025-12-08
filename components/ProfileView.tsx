@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserProfile } from '../types';
 import { ChatBot } from './ChatBot';
@@ -10,6 +10,7 @@ export const ProfileView: React.FC = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<UserProfile | null>(null);
+    const notFoundCountRef = useRef(0);
 
   useEffect(() => {
     // Retrieve from storage
@@ -24,10 +25,10 @@ export const ProfileView: React.FC = () => {
   }, [navigate]);
 
   // Poll for status updates every 5 seconds (faster feedback)
-  useEffect(() => {
-    if (!profile?.id) return;
+    useEffect(() => {
+        if (!profile?.id) return;
 
-    const interval = setInterval(async () => {
+        const interval = setInterval(async () => {
       try {
         const phone = localStorage.getItem('userPhone');
         if (!phone) return;
@@ -35,22 +36,33 @@ export const ProfileView: React.FC = () => {
         const resp = await fetch(`/api/profiles/lookup?phone=${encodeURIComponent(phone)}`);
         if (resp.ok) {
           const updated = await resp.json();
-          // Update profile if ANY data changed (compare by JSON)
-          const currentJSON = JSON.stringify(profile);
-          const updatedJSON = JSON.stringify(updated);
-          
-          if (currentJSON !== updatedJSON) {
-            console.log('[PROFILE] Profile updated:', updated);
-            console.log('[PROFILE] Status changed from', profile?.status, 'to', updated?.status);
-            setProfile(updated);
-            setEditData(updated);
-            localStorage.setItem('userProfile', JSON.stringify(updated));
-          }
+                    // Reset consecutive-not-found counter on success
+                    notFoundCountRef.current = 0;
+
+                    // Validate updated payload minimally before applying
+                    if (updated && updated.id === profile.id && updated.basicInfo) {
+                        const currentJSON = JSON.stringify(profile);
+                        const updatedJSON = JSON.stringify(updated);
+                        if (currentJSON !== updatedJSON) {
+                            console.log('[PROFILE] Profile updated:', updated);
+                            console.log('[PROFILE] Status changed from', profile?.status, 'to', updated?.status);
+                            setProfile(updated);
+                            setEditData(updated);
+                            localStorage.setItem('userProfile', JSON.stringify(updated));
+                        }
+                    } else {
+                        console.warn('[PROFILE] Received lookup result that does not match current profile id — ignoring', updated?.id, profile?.id);
+                    }
         } else if (resp.status === 404) {
-          // Profile was deleted - redirect to create
-          console.log('[PROFILE] Profile deleted (404), redirecting to create');
-          localStorage.removeItem('userProfile');
-          navigate('/create');
+                    // Profile not found right now — avoid redirecting immediately as this can be a race.
+                    notFoundCountRef.current = (notFoundCountRef.current || 0) + 1;
+                    console.log('[PROFILE] Lookup 404 (not found). consecutive count:', notFoundCountRef.current);
+                    // Only redirect if we see 2 consecutive 404s to avoid races right after profile creation
+                    if (notFoundCountRef.current >= 2) {
+                        console.log('[PROFILE] Profile missing after consecutive checks — redirecting to create');
+                        localStorage.removeItem('userProfile');
+                        navigate('/create');
+                    }
         }
       } catch (err) {
         console.error('[PROFILE] Polling error:', err);

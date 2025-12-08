@@ -131,6 +131,13 @@ export const ProfileWizard: React.FC = () => {
                         const saved = await saveProfile(finalProfile);
                         // Optionally keep a local copy
                         localStorage.setItem('userProfile', JSON.stringify(saved));
+                        // Ensure phone is available for lookup flows
+                        try {
+                            const phoneToStore = saved?.basicInfo?.phone;
+                            if (phoneToStore) localStorage.setItem('userPhone', phoneToStore);
+                        } catch (e) {
+                            console.warn('Failed to persist userPhone locally', e);
+                        }
                         // Notify admin interface that a new profile was created
                         try {
                             await fetch('/api/admin/notify', {
