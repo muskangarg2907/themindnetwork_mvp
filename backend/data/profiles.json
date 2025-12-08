@@ -1,0 +1,110 @@
+[
+  {
+    "id": "25532fc7-9f85-4bd9-b05b-70093f278454",
+    "basicInfo": {
+      "fullName": "Test User",
+      "email": "test@example.com"
+    },
+    "createdAt": "2025-12-08T09:11:13.198Z"
+  },
+  {
+    "id": "e7b5d769-ea53-493c-8a37-afc1b38e5710",
+    "basicInfo": {
+      "fullName": "Test User",
+      "email": "test@example.com"
+    },
+    "createdAt": "2025-12-08T09:13:49.195Z"
+  },
+  {
+    "id": "bfdb2397-a73e-4986-a2ec-19a1c4e6ca7c",
+    "status": "pending_verification",
+    "role": "provider",
+    "basicInfo": {
+      "fullName": "Muskan Garg",
+      "email": "muskangarg.official@gmail.com",
+      "phone": "+91 8972949649",
+      "dob": "1999-07-29",
+      "location": "Patiala",
+      "gender": "Female"
+    },
+    "clinical": {
+      "presentingProblem": "",
+      "currentMood": "",
+      "hasPriorTherapy": false,
+      "medications": "",
+      "riskFactors": []
+    },
+    "preferences": {
+      "communicationStyle": "",
+      "providerGenderPreference": "",
+      "insuranceProvider": ""
+    },
+    "providerDetails": {
+      "qualification": "Ma",
+      "yearsExperience": "2",
+      "specializations": [
+        "Ssdvd"
+      ],
+      "mode": "online",
+      "languages": [],
+      "clientType": [],
+      "budgetRange": "100",
+      "licenses": "",
+      "therapeuticFocus": "",
+      "therapyStyle": "",
+      "resumeLink": ""
+    },
+    "createdAt": "2025-12-08T09:17:53.657Z",
+    "aiSummary": "Muskan Garg is a provider. A professional bio is not available in local mode."
+  },
+  {
+    "id": "75159959-c127-4819-b6cd-b58b1ce18c68",
+    "basicInfo": {
+      "fullName": "Test User",
+      "email": "test@example.com"
+    },
+    "createdAt": "2025-12-08T09:21:51.164Z"
+  },
+  {
+    "id": "be000ad4-a571-4d38-b355-c628c98ec491",
+    "status": "pending_verification",
+    "role": "provider",
+    "basicInfo": {
+      "fullName": "Muskan Garg",
+      "email": "muskangarg.official@gmail.com",
+      "phone": "+91 9501366244",
+      "dob": "1999-07-29",
+      "location": "Bangalore",
+      "gender": "Female"
+    },
+    "clinical": {
+      "presentingProblem": "",
+      "currentMood": "",
+      "hasPriorTherapy": false,
+      "medications": "",
+      "riskFactors": []
+    },
+    "preferences": {
+      "communicationStyle": "",
+      "providerGenderPreference": "",
+      "insuranceProvider": ""
+    },
+    "providerDetails": {
+      "qualification": "MA",
+      "yearsExperience": "1",
+      "specializations": [
+        "Anxiety"
+      ],
+      "mode": "online",
+      "languages": [],
+      "clientType": [],
+      "budgetRange": "500",
+      "licenses": "-",
+      "therapeuticFocus": "",
+      "therapyStyle": "Eclectic",
+      "resumeLink": ""
+    },
+    "createdAt": "2025-12-08T16:07:52.230Z",
+    "aiSummary": "Muskan Garg is a provider. A professional bio is not available in local mode."
+  }
+]

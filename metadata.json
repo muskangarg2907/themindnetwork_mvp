@@ -1,0 +1,5 @@
+{
+  "name": "TheMindNetwork",
+  "description": "A scalable user profile creation wizard with an integrated AI Chatbot that simulates RAG (Retrieval-Augmented Generation) to interact with the created profile data.",
+  "requestFramePermissions": []
+}
