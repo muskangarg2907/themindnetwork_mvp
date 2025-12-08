@@ -6,11 +6,12 @@ let cachedDb: Db | null = null;
 const MONGODB_URI = process.env.MONGODB_URI;
 const DB_NAME = 'themindnetwork';
 
-if (!MONGODB_URI) {
-  throw new Error('MONGODB_URI environment variable is not set');
-}
-
 export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db }> {
+  // Check if MongoDB URI is configured
+  if (!MONGODB_URI) {
+    throw new Error('MONGODB_URI environment variable is not set. Please configure MongoDB Atlas connection string in Vercel environment variables.');
+  }
+
   // If we have a cached connection, return it
   if (cachedClient && cachedDb) {
     return { client: cachedClient, db: cachedDb };
