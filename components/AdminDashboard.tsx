@@ -20,10 +20,8 @@ export const AdminDashboard: React.FC = () => {
   const [editStatus, setEditStatus] = useState('pending_verification');
 
   useEffect(() => {
+    // Initial fetch only. Manual refresh button is provided for updates.
     fetchProfiles();
-    // Auto-refresh every 2 seconds to show real-time updates
-    const interval = setInterval(fetchProfiles, 2000);
-    return () => clearInterval(interval);
   }, []);
 
   const fetchProfiles = async () => {
@@ -132,9 +130,14 @@ export const AdminDashboard: React.FC = () => {
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-slate-800">Admin Dashboard</h1>
-          <Button variant="outline" onClick={handleResetAll} className="bg-red-100 text-red-700 hover:bg-red-200">
-            <i className="fas fa-trash mr-2"></i> Reset All Profiles
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button variant="outline" onClick={fetchProfiles} className="bg-slate-100 text-slate-700 hover:bg-slate-200">
+              <i className="fas fa-sync-alt mr-2"></i> Refresh
+            </Button>
+            <Button variant="outline" onClick={handleResetAll} className="bg-red-100 text-red-700 hover:bg-red-200">
+              <i className="fas fa-trash mr-2"></i> Reset All Profiles
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
