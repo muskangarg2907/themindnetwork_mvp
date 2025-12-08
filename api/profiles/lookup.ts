@@ -1,5 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { getProfilesCollection } from '../db';
+import { getProfilesCollection } from '../db.js';
 
 function normalizePhone(s: string) {
   if (!s) return '';

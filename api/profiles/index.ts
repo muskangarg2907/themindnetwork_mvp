@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { randomUUID } from 'crypto';
-import { getProfilesCollection } from '../db';
+import { getProfilesCollection } from '../db.js';
 
 // Normalize phone: extract last 10 digits (for Indian numbers)
 function normalizePhone(s: string) {
