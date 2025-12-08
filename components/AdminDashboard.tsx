@@ -142,6 +142,13 @@ export const AdminDashboard: React.FC = () => {
           <div className="lg:col-span-2 bg-white rounded-xl shadow p-6">
             <h2 className="text-xl font-bold mb-4">Profiles ({profiles.length})</h2>
             {loading && <p className="text-slate-500">Loading...</p>}
+            {!loading && profiles.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <i className="fas fa-inbox text-4xl text-slate-300 mb-3"></i>
+                <p className="text-slate-500 text-center">No profiles to show!</p>
+                <p className="text-xs text-slate-400 mt-1">Create a new profile or import data</p>
+              </div>
+            ) : (
             <div className="space-y-3 max-h-96 overflow-y-auto">
               {profiles.map((p) => (
                 <div
@@ -174,6 +181,7 @@ export const AdminDashboard: React.FC = () => {
                 </div>
               ))}
             </div>
+            )}
           </div>
 
           {/* Profile Details */}

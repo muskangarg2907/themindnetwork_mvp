@@ -40,11 +40,13 @@ async function readProfilesFile() {
   try {
     const txt = await fs.readFile(DATA_FILE, 'utf8');
     const parsed = JSON.parse(txt || '[]');
-    return parsed.length > 0 ? parsed : SEED_PROFILES;
+    // Return parsed data as-is; don't fallback to SEED_PROFILES
+    // This allows truly empty state when admin deletes all profiles
+    return Array.isArray(parsed) ? parsed : [];
   } catch (err: any) {
-    if (err.code === 'ENOENT') return SEED_PROFILES;
+    if (err.code === 'ENOENT') return [];
     console.error('Read error:', err);
-    return SEED_PROFILES;
+    return [];
   }
 }
 
