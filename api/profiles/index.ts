@@ -4,6 +4,13 @@ import { randomUUID } from 'crypto';
 
 const DATA_FILE = '/tmp/themindnetwork_profiles.json';
 
+// Normalize phone: extract last 10 digits (for Indian numbers)
+function normalizePhone(s: string) {
+  if (!s) return '';
+  const digits = String(s).replace(/\D/g, '');
+  return digits.length >= 10 ? digits.slice(-10) : digits;
+}
+
 // Seed profiles - fallback data
 const SEED_PROFILES = [
   {
@@ -82,7 +89,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
       const id = randomUUID();
       const profiles = await readProfilesFile();
-      const record = { id, ...payload, createdAt: new Date().toISOString() };
+      
+      // Normalize phone in basicInfo for consistent lookup
+      const normalizedPayload = {
+        ...payload,
+        basicInfo: {
+          ...payload.basicInfo,
+          phone: normalizePhone(payload.basicInfo?.phone || '')
+        }
+      };
+      
+      const record = { id, ...normalizedPayload, createdAt: new Date().toISOString() };
       profiles.push(record);
       await writeProfilesFile(profiles);
       return res.status(201).json(record);

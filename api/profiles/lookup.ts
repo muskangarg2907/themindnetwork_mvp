@@ -79,7 +79,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       
       if (!pNorm) return false;
       
-      // Simple last-10-digits match (works for Indian phones)
+      // Match normalized last-10-digits (works for Indian phones with or without country code)
       const match = pNorm === norm;
       console.log('[LOOKUP] Match?', match);
       return match;
