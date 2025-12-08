@@ -30,19 +30,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const norm = normalizePhone(phone);
+    console.log('Lookup phone normalized:', norm);
     const profiles = await readProfilesFile();
+    console.log('Total profiles in storage:', profiles.length);
 
     const found = profiles.find((p: any) => {
       const pPhone = p?.basicInfo?.phone || p?.phone || '';
       const pNorm = normalizePhone(pPhone);
+      console.log('Checking profile phone:', pPhone, 'normalized:', pNorm);
+      
       if (!pNorm) return false;
-      if (norm.length >= 10 && pNorm.endsWith(norm.slice(-10))) return true;
+      
+      // Match by last 10 digits if both have at least 10 digits
+      if (norm.length >= 10 && pNorm.length >= 10) {
+        return pNorm.slice(-10) === norm.slice(-10);
+      }
+      
+      // Otherwise exact match
       return pNorm === norm;
     });
 
     if (!found) {
-      return res.status(404).json({ error: 'Not found' });
+      console.log('No matching profile found for:', norm);
+      return res.status(404).json({ error: 'Not found', searchedPhone: norm });
     }
+    
+    console.log('Found profile:', found.id);
     return res.status(200).json(found);
   } catch (err: any) {
     console.error('Lookup error:', err);

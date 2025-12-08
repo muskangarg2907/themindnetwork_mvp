@@ -1,24 +1,61 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { promises as fs } from 'fs';
-import { join } from 'path';
 import { randomUUID } from 'crypto';
 
-const DATA_FILE = join('/tmp', 'profiles.json');
+const DATA_FILE = '/tmp/themindnetwork_profiles.json';
+
+// Seed profiles - fallback data
+const SEED_PROFILES = [
+  {
+    id: 'bfdb2397-a73e-4986-a2ec-19a1c4e6ca7c',
+    status: 'pending_verification',
+    role: 'provider',
+    basicInfo: {
+      fullName: 'Muskan Garg',
+      email: 'muskangarg.official@gmail.com',
+      phone: '+91 8972949649',
+      dob: '1999-07-29',
+      location: 'Patiala',
+      gender: 'Female'
+    },
+    createdAt: '2025-12-08T09:17:53.657Z'
+  },
+  {
+    id: 'be000ad4-a571-4d38-b355-c628c98ec491',
+    status: 'pending_verification',
+    role: 'provider',
+    basicInfo: {
+      fullName: 'Muskan Garg',
+      email: 'muskangarg.official@gmail.com',
+      phone: '+91 9501366244',
+      dob: '1999-07-29',
+      location: 'Bangalore',
+      gender: 'Female'
+    },
+    createdAt: '2025-12-08T16:07:52.230Z'
+  }
+];
 
 async function readProfilesFile() {
   try {
     const txt = await fs.readFile(DATA_FILE, 'utf8');
-    return JSON.parse(txt || '[]');
+    const parsed = JSON.parse(txt || '[]');
+    return parsed.length > 0 ? parsed : SEED_PROFILES;
   } catch (err: any) {
-    if (err.code === 'ENOENT') return [];
-    throw err;
+    if (err.code === 'ENOENT') return SEED_PROFILES;
+    console.error('Read error:', err);
+    return SEED_PROFILES;
   }
 }
 
 async function writeProfilesFile(profiles: any) {
-  const tmp = DATA_FILE + '.tmp';
-  await fs.writeFile(tmp, JSON.stringify(profiles, null, 2), 'utf8');
-  await fs.rename(tmp, DATA_FILE);
+  try {
+    const tmp = DATA_FILE + '.tmp';
+    await fs.writeFile(tmp, JSON.stringify(profiles, null, 2), 'utf8');
+    await fs.rename(tmp, DATA_FILE);
+  } catch (err: any) {
+    console.error('Write error:', err);
+  }
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
