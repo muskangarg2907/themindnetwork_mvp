@@ -58,11 +58,9 @@ export const Login: React.FC = () => {
     }
     setError('');
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-        setIsLoading(false);
-        setStep('otp');
-    }, 1000);
+    // Move directly to OTP step
+    setIsLoading(false);
+    setStep('otp');
   };
 
   const handleVerifyOtp = async () => {
@@ -76,9 +74,6 @@ export const Login: React.FC = () => {
     const fullPhone = `${countryCode} ${phoneNumber}`;
 
     try {
-      // Simulate verification delay
-      await new Promise((r) => setTimeout(r, 700));
-
       // Set local auth tokens
       localStorage.setItem('authToken', 'simulated_token_phone_123');
       localStorage.setItem('userPhone', fullPhone);
