@@ -49,7 +49,10 @@ async function readProfilesFile() {
 
 function normalizePhone(s: string) {
   if (!s) return '';
-  return String(s).replace(/\D/g, '');
+  // Extract just the digits
+  const digits = String(s).replace(/\D/g, '');
+  // Return last 10 digits (for Indian numbers) or full if less than 10
+  return digits.length >= 10 ? digits.slice(-10) : digits;
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -76,15 +79,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       
       if (!pNorm) return false;
       
-      // Match by last 10 digits
-      if (norm.length >= 10 && pNorm.length >= 10) {
-        const match = pNorm.slice(-10) === norm.slice(-10);
-        console.log('[LOOKUP] Last 10 digits match?', match, pNorm.slice(-10), 'vs', norm.slice(-10));
-        return match;
-      }
-      
-      // Exact match
-      return pNorm === norm;
+      // Simple last-10-digits match (works for Indian phones)
+      const match = pNorm === norm;
+      console.log('[LOOKUP] Match?', match);
+      return match;
     });
 
     if (!found) {
