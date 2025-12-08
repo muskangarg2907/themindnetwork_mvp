@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/Button';
 
 interface Profile {
@@ -18,10 +18,51 @@ export const AdminDashboard: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
   const [editStatus, setEditStatus] = useState('pending_verification');
+  const [notifyTimestamp, setNotifyTimestamp] = useState<string | null>(null);
+  const notifyRef = useRef<string | null>(null);
+  const [newProfilesAvailable, setNewProfilesAvailable] = useState(false);
 
   useEffect(() => {
     // Initial fetch only. Manual refresh button is provided for updates.
     fetchProfiles();
+
+    // Initialize notify timestamp and start lightweight polling for notifications
+    let mounted = true;
+    const fetchNotify = async () => {
+      try {
+        const res = await fetch('/api/admin/notify');
+        if (!res.ok) {
+          // 404 means no notify record yet
+          return null;
+        }
+        const data = await res.json();
+        return data.lastUpdate as string | undefined | null;
+      } catch (err) {
+        console.warn('[ADMIN] notify fetch failed', err);
+        return null;
+      }
+    };
+
+    (async () => {
+      const initial = await fetchNotify();
+      if (!mounted) return;
+      setNotifyTimestamp(initial || null);
+      notifyRef.current = initial || null;
+
+      const interval = setInterval(async () => {
+        const last = await fetchNotify();
+        // compare against ref to avoid stale closure
+        if (last && last !== notifyRef.current) {
+          // Mark that new profiles are available (do not auto-refresh)
+          setNewProfilesAvailable(true);
+        }
+      }, 5000);
+
+      return () => {
+        mounted = false;
+        clearInterval(interval);
+      };
+    })();
   }, []);
 
   const fetchProfiles = async () => {
@@ -128,10 +169,32 @@ export const AdminDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 p-8">
       <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-slate-800">Admin Dashboard</h1>
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-800">Admin Dashboard</h1>
+            {newProfilesAvailable && (
+              <div className="mt-2 inline-flex items-center gap-3 bg-yellow-50 text-yellow-700 px-3 py-1 rounded-md text-sm">
+                <i className="fas fa-info-circle"></i>
+                New profiles available — press Refresh to load
+              </div>
+            )}
+          </div>
           <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={fetchProfiles} className="bg-slate-100 text-slate-700 hover:bg-slate-200">
+            <Button variant="outline" onClick={async () => {
+              setNewProfilesAvailable(false);
+              await fetchProfiles();
+              // update notify timestamp after manual refresh
+              try {
+                const r = await fetch('/api/admin/notify');
+                if (r.ok) {
+                  const d = await r.json();
+                  setNotifyTimestamp(d.lastUpdate || null);
+                  notifyRef.current = d.lastUpdate || null;
+                }
+              } catch (e) {
+                // ignore
+              }
+            }} className="bg-slate-100 text-slate-700 hover:bg-slate-200">
               <i className="fas fa-sync-alt mr-2"></i> Refresh
             </Button>
             <Button variant="outline" onClick={handleResetAll} className="bg-red-100 text-red-700 hover:bg-red-200">
