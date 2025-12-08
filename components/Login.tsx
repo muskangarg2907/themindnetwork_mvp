@@ -23,6 +23,23 @@ export const Login: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Add keyboard listener for Enter key
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (step === 'phone') {
+          handleSendOtp();
+        } else {
+          handleVerifyOtp();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [step, phoneNumber, otp]);
+
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Allow only numbers
     const val = e.target.value.replace(/\D/g, '');

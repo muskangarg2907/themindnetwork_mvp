@@ -23,9 +23,9 @@ export const ProfileView: React.FC = () => {
     }
   }, [navigate]);
 
-  // Poll for status updates every 10 seconds
+  // Poll for status updates every 5 seconds (faster feedback)
   useEffect(() => {
-    if (!profile) return;
+    if (!profile?.id) return;
 
     const interval = setInterval(async () => {
       try {
@@ -35,26 +35,30 @@ export const ProfileView: React.FC = () => {
         const resp = await fetch(`/api/profiles/lookup?phone=${encodeURIComponent(phone)}`);
         if (resp.ok) {
           const updated = await resp.json();
-          // Update profile if status changed
-          if (updated.status !== profile.status) {
-            console.log('[PROFILE] Status changed from', profile.status, 'to', updated.status);
+          // Update profile if ANY data changed (compare by JSON)
+          const currentJSON = JSON.stringify(profile);
+          const updatedJSON = JSON.stringify(updated);
+          
+          if (currentJSON !== updatedJSON) {
+            console.log('[PROFILE] Profile updated:', updated);
+            console.log('[PROFILE] Status changed from', profile?.status, 'to', updated?.status);
             setProfile(updated);
             setEditData(updated);
             localStorage.setItem('userProfile', JSON.stringify(updated));
           }
         } else if (resp.status === 404) {
           // Profile was deleted - redirect to create
-          console.log('[PROFILE] Profile deleted, redirecting to create');
+          console.log('[PROFILE] Profile deleted (404), redirecting to create');
           localStorage.removeItem('userProfile');
           navigate('/create');
         }
       } catch (err) {
         console.error('[PROFILE] Polling error:', err);
       }
-    }, 10000); // Poll every 10 seconds
+    }, 5000); // Poll every 5 seconds
 
     return () => clearInterval(interval);
-  }, [profile, navigate]);
+  }, [profile?.id, navigate]);
 
   if (!profile || !editData) return null;
 

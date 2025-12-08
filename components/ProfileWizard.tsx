@@ -33,6 +33,19 @@ export const ProfileWizard: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
+  // Add keyboard listener for Enter key
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && currentStep !== WizardStep.ROLE_SELECTION) {
+        e.preventDefault();
+        handleNext();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentStep, profileData]);
+
   const updateData = (section: keyof UserProfile, payload: any) => {
     setProfileData(prev => ({
       ...prev,
