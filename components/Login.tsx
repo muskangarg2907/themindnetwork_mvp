@@ -48,46 +48,53 @@ export const Login: React.FC = () => {
     }, 1000);
   };
 
-    const handleVerifyOtp = async () => {
-        if (otp.length !== 4) {
-                setError('Please enter the 4-digit OTP.');
-                return;
-        }
-        setError('');
-        setIsLoading(true);
+  const handleVerifyOtp = async () => {
+    if (otp.length !== 4) {
+        setError('Please enter the 4-digit OTP.');
+        return;
+    }
+    setError('');
+    setIsLoading(true);
 
-        const fullPhone = `${countryCode} ${phoneNumber}`;
+    const fullPhone = `${countryCode} ${phoneNumber}`;
 
-        try {
-            // Simulate verification delay
-            await new Promise((r) => setTimeout(r, 700));
+    try {
+      // Simulate verification delay
+      await new Promise((r) => setTimeout(r, 700));
 
-            // Set local auth tokens
-            localStorage.setItem('authToken', 'simulated_token_phone_123');
-            localStorage.setItem('userPhone', fullPhone);
+      // Set local auth tokens
+      localStorage.setItem('authToken', 'simulated_token_phone_123');
+      localStorage.setItem('userPhone', fullPhone);
 
-            // Ask backend if a profile exists for this phone
-            const resp = await fetch(`/api/profiles/lookup?phone=${encodeURIComponent(fullPhone)}`);
-            if (resp.ok) {
-                const profile = await resp.json();
-                // Cache profile locally for UI
-                localStorage.setItem('userProfile', JSON.stringify(profile));
-                setIsLoading(false);
-                navigate('/profile');
-                return;
-            }
+      // Ask backend if a profile exists for this phone
+      console.log('[LOGIN] Looking up profile for phone:', fullPhone);
+      const resp = await fetch(`/api/profiles/lookup?phone=${encodeURIComponent(fullPhone)}`);
+      
+      console.log('[LOGIN] Lookup response status:', resp.status);
+      
+      if (resp.ok) {
+        const profile = await resp.json();
+        console.log('[LOGIN] Found profile:', profile.id, profile.basicInfo?.fullName);
+        // Cache profile locally for UI
+        localStorage.setItem('userProfile', JSON.stringify(profile));
+        setIsLoading(false);
+        navigate('/profile');
+        return;
+      }
 
-            // If not found, go to create flow
-            setIsLoading(false);
-            navigate('/create');
-        } catch (err: any) {
-            console.error('Login verify error:', err);
-            setIsLoading(false);
-            setError('Login failed. Please try again.');
-        }
-    };
-
-  return (
+      const errBody = await resp.json();
+      console.log('[LOGIN] Lookup failed:', errBody);
+      
+      // If not found, go to create flow
+      console.log('[LOGIN] No profile found, redirecting to create');
+      setIsLoading(false);
+      navigate('/create');
+    } catch (err: any) {
+      console.error('[LOGIN] Error:', err);
+      setIsLoading(false);
+      setError('Login failed. Please try again.');
+    }
+  };  return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
         <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-100 p-8 animate-slide-up">
             <div className="text-center mb-8">
