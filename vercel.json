@@ -3,5 +3,21 @@
   "outputDirectory": "dist",
   "env": {
     "VITE_API_URL": "@vite_api_url"
-  }
+  },
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/((?!api).*)",
+      "destination": "/index.html"
+    }
+  ]
 }
+

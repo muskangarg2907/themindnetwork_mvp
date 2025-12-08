@@ -1,12 +1,16 @@
 import { UserProfile } from '../types';
 
-// Prefer explicit VITE_API_URL in production; default to relative `/api` so
-// the frontend can be served alongside an API (nginx proxy) or use Vite proxy in dev.
+// On Vercel, use relative /api paths which route to serverless functions.
+// In dev, Vite proxy handles /api routes to localhost:4000
 const VITE_API_URL = (import.meta as any)?.env?.VITE_API_URL || '';
 
 function buildUrl(path: string) {
-  const base = VITE_API_URL.replace(/\/$/, '');
-  return base ? `${base}${path}` : path;
+  if (VITE_API_URL) {
+    const base = VITE_API_URL.replace(/\/$/, '');
+    return `${base}${path}`;
+  }
+  // Default: relative path (works with Vercel and Vite dev proxy)
+  return path;
 }
 
 async function parseErrorResponse(res: Response) {
