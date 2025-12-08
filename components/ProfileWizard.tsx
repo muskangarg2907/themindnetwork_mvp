@@ -128,11 +128,21 @@ export const ProfileWizard: React.FC = () => {
     };
 
         try {
-            const saved = await saveProfile(finalProfile);
-            // Optionally keep a local copy
-            localStorage.setItem('userProfile', JSON.stringify(saved));
-            setIsGenerating(false);
-            navigate('/profile');
+                        const saved = await saveProfile(finalProfile);
+                        // Optionally keep a local copy
+                        localStorage.setItem('userProfile', JSON.stringify(saved));
+                        // Notify admin interface that a new profile was created
+                        try {
+                            await fetch('/api/admin/notify', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ source: 'profile_wizard' })
+                            });
+                        } catch (e) {
+                            console.warn('Failed to notify admin:', e);
+                        }
+                        setIsGenerating(false);
+                        navigate('/profile');
         } catch (err: any) {
             console.error('Save profile failed:', err);
             const msg = err?.message || 'Failed to save profile. Please try again later.';
