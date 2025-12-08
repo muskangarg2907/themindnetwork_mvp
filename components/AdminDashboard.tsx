@@ -21,6 +21,9 @@ export const AdminDashboard: React.FC = () => {
 
   useEffect(() => {
     fetchProfiles();
+    // Auto-refresh every 2 seconds to show real-time updates
+    const interval = setInterval(fetchProfiles, 2000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchProfiles = async () => {
@@ -28,7 +31,16 @@ export const AdminDashboard: React.FC = () => {
     try {
       const res = await fetch('/api/admin/profiles');
       const data = await res.json();
-      setProfiles(data.profiles || []);
+      const profileList = data.profiles || [];
+      setProfiles(profileList);
+      
+      // If a profile is selected, update it with fresh data from the list
+      if (selectedProfile) {
+        const updatedSelected = profileList.find((p: Profile) => p.id === selectedProfile.id);
+        if (updatedSelected) {
+          setSelectedProfile(updatedSelected);
+        }
+      }
     } catch (err) {
       console.error('Error fetching profiles:', err);
     }
@@ -44,8 +56,13 @@ export const AdminDashboard: React.FC = () => {
         body: JSON.stringify({ status: 'approved' })
       });
       if (res.ok) {
-        fetchProfiles();
-        setSelectedProfile(null);
+        const updatedProfile = await res.json();
+        // Update selectedProfile immediately with response data
+        if (selectedProfile?.id === id) {
+          setSelectedProfile(updatedProfile.profile || updatedProfile);
+        }
+        // Then refresh the full list
+        await fetchProfiles();
       }
     } catch (err) {
       console.error('Error approving:', err);
@@ -62,8 +79,13 @@ export const AdminDashboard: React.FC = () => {
         body: JSON.stringify({ status: 'rejected' })
       });
       if (res.ok) {
-        fetchProfiles();
-        setSelectedProfile(null);
+        const updatedProfile = await res.json();
+        // Update selectedProfile immediately with response data
+        if (selectedProfile?.id === id) {
+          setSelectedProfile(updatedProfile.profile || updatedProfile);
+        }
+        // Then refresh the full list
+        await fetchProfiles();
       }
     } catch (err) {
       console.error('Error rejecting:', err);
@@ -77,7 +99,8 @@ export const AdminDashboard: React.FC = () => {
     try {
       const res = await fetch(`/api/admin/profiles?id=${id}`, { method: 'DELETE' });
       if (res.ok) {
-        fetchProfiles();
+        setSelectedProfile(null);
+        await fetchProfiles();
         setSelectedProfile(null);
       }
     } catch (err) {
