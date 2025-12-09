@@ -206,20 +206,7 @@ export const StepProviderPractice: React.FC<StepProps> = ({ data, updateData }) 
       </div>
     </div>
   );
-};
-      <TextArea
-          label="Client Types *" 
-          name="clientType" 
-          placeholder="e.g.&#10;Individuals&#10;Couples&#10;Families&#10;Teenagers&#10;Adults" 
-          value={details.clientType.join('\n')} 
-          onChange={(e) => {
-            const arr = e.target.value.split('\n').map(s => toTitleCase(s.trim())).filter(Boolean);
-            updateDetails('clientType', arr);
-          }}
-          rows={4}
-      />
-
-       <Input 
+};       <Input 
           label="Therapeutic Focus Area" 
           name="therapeuticFocus" 
           placeholder="e.g. Child Development, Trauma Recovery" 
