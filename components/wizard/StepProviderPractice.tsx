@@ -98,6 +98,7 @@ export const StepProviderPractice: React.FC<StepProps> = ({ data, updateData }) 
                 <option value="offline">In-Person Only</option>
                 <option value="both">Hybrid (Both)</option>
             </select>
+        </div>
       </div>
 
       <div className="flex flex-col gap-1.5 w-full">
