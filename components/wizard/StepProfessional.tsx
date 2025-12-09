@@ -67,7 +67,7 @@ export const StepClinical: React.FC<StepProps> = ({ data, updateData }) => {
       />
 
       <Input 
-        label="Specific Symptoms/Risk Factors (comma separated)" 
+        label="Specific Symptoms/Risk Factors" 
         name="riskFactors" 
         placeholder="e.g. Anxiety, Insomnia, Panic Attacks" 
         value={data.clinical.riskFactors.join(', ')} 

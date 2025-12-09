@@ -94,7 +94,7 @@ export const StepProviderProfessional: React.FC<StepProps> = ({ data, updateData
       />
 
       <TextArea
-        label="Specializations (Comma separated) *"
+        label="Specializations *"
         name="specializations"
         placeholder="e.g. Trauma, Anxiety, Depression, CBT"
         value={details.specializations.join(', ')}

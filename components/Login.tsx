@@ -20,8 +20,16 @@ export const Login: React.FC = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   
   const [otp, setOtp] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const otpInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Auto-focus OTP input when step changes to OTP
+  React.useEffect(() => {
+    if (step === 'otp' && otpInputRef.current) {
+      otpInputRef.current.focus();
+    }
+  }, [step]);
 
   // Add keyboard listener for Enter key
   React.useEffect(() => {
@@ -168,14 +176,20 @@ export const Login: React.FC = () => {
                              </p>
                              <button onClick={() => setStep('phone')} className="text-xs text-teal-600 hover:underline mt-1 font-medium">Change Number</button>
                          </div>
-                         <Input
-                            label="One Time Password (OTP)"
-                            placeholder="e.g. 1234"
-                            value={otp}
-                            onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                            className="text-center tracking-[0.5em] text-lg font-bold text-slate-800"
-                            error={error}
-                        />
+                         <div className="flex flex-col gap-1.5 w-full">
+                            <label className="text-sm font-semibold text-slate-700 ml-1">Enter 4-Digit OTP</label>
+                            <input
+                                ref={otpInputRef}
+                                type="text"
+                                inputMode="numeric"
+                                maxLength={4}
+                                className={`w-full bg-white border ${error ? 'border-red-500' : 'border-slate-300'} text-slate-900 rounded-lg px-4 py-3 text-center text-2xl font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all shadow-sm`}
+                                placeholder="••••"
+                                value={otp}
+                                onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                            />
+                            {error && <span className="text-xs font-medium text-red-600 ml-1">{error}</span>}
+                         </div>
                         <Button 
                             className="w-full"
                             onClick={handleVerifyOtp}

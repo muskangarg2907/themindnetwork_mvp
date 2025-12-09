@@ -354,13 +354,19 @@ export const ProfileView: React.FC = () => {
                                                 </div>
                                             )}
 
-                                            {profile.providerDetails.website && (
-                                                <div className="col-span-2 mt-2">
-                                                    <a href={profile.providerDetails.website} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
-                                                        <i className="fas fa-link mr-1"></i> Visit Website
-                                                    </a>
-                                                </div>
-                                            )}
+                                            {profile.providerDetails.website && (() => {
+                                                let url = profile.providerDetails.website;
+                                                if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                                                    url = 'https://' + url;
+                                                }
+                                                return (
+                                                    <div className="col-span-2 mt-2">
+                                                        <a href={url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
+                                                            <i className="fas fa-link mr-1"></i> Visit Website
+                                                        </a>
+                                                    </div>
+                                                );
+                                            })()}
                                         </div>
                                     </div>
                                 </>

@@ -87,12 +87,16 @@ export const StepProviderPractice: React.FC<StepProps> = ({ data, updateData }) 
         />
       </div>
 
-      <Input 
-          label="Client Types (Comma separated)" 
+      <TextArea
+          label="Client Types *" 
           name="clientType" 
-          placeholder="e.g. Individuals, Couples, Families" 
-          value={details.clientType.join(', ')} 
-          onChange={(e) => handleArrayChange('clientType', e.target.value)}
+          placeholder="e.g.&#10;Individuals&#10;Couples&#10;Families&#10;Teenagers&#10;Adults" 
+          value={details.clientType.join('\n')} 
+          onChange={(e) => {
+            const arr = e.target.value.split('\n').map(s => toTitleCase(s.trim())).filter(Boolean);
+            updateDetails('clientType', arr);
+          }}
+          rows={4}
       />
 
        <Input 
