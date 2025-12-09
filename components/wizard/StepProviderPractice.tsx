@@ -123,11 +123,39 @@ export const StepProviderPractice: React.FC<StepProps> = ({ data, updateData }) 
         )}
       </div>
 
-       <Inputt 
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Input 
           label="Languages Spoken" 
           name="languages" 
           placeholder="e.g. English, Hindi, Marathi" 
           value={details.languages.join(', ')} 
+          onChange={(e) => handleArrayChange('languages', e.target.value)}
+        />
+        <Input 
+          label="Budget Range (per session) *" 
+          name="budgetRange" 
+          placeholder="e.g. ₹ 1000 - ₹ 2000" 
+          value={details.budgetRange} 
+          onChange={handleChange}
+        />
+      </div>
+
+      <Input 
+        label="Therapeutic Focus Area" 
+        name="therapeuticFocus" 
+        placeholder="e.g. Child Development, Trauma Recovery" 
+        value={details.therapeuticFocus} 
+        onChange={handleChange}
+      />
+
+      <TextArea
+        label="What is your style of therapy?"
+        name="therapyStyle"
+        placeholder="Describe your approach (e.g. Solution-focused, Psychodynamic, collaborative...)"
+        value={details.therapyStyle}
+        onChange={handleChange}
+        className="h-24"
+      />
       
       <Input 
         label="Personal Website" 
