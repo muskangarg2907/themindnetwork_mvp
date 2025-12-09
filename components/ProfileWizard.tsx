@@ -29,7 +29,7 @@ const INITIAL_PROFILE: UserProfile = {
 export const ProfileWizard: React.FC = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState<WizardStep>(WizardStep.ROLE_SELECTION);
-  const [profileData, setProfileData] = useState<UserProfile>(initialData);
+  const [profileData, setProfileData] = useState<UserProfile>(INITIAL_PROFILE);
   const [isGenerating, setIsGenerating] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
