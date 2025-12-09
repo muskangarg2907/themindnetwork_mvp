@@ -231,9 +231,6 @@ export const ProfileWizard: React.FC = () => {
                     <i className="fas fa-arrow-left"></i> Back to Login
                 </button>
             </div>
-        )}          ></div>
-                </div>
-            </div>
         )}
 
         {/* Content Area */}
