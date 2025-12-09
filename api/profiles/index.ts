@@ -76,8 +76,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       console.log('[PROFILES] PUT: Updating profile', _id);
 
       try {
+        // Try to use as ObjectId, fallback to string match for UUID
+        let query;
+        try {
+          query = { _id: new ObjectId(_id) };
+        } catch {
+          query = { _id: _id };
+        }
+        
         const result = await profiles.findOneAndUpdate(
-          { _id: new ObjectId(_id) },
+          query,
           {
             $set: {
               ...updates,

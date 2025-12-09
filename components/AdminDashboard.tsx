@@ -168,28 +168,9 @@ export const AdminDashboard: React.FC = () => {
       if (res.ok) {
         setSelectedProfile(null);
         await fetchProfiles();
-        setSelectedProfile(null);
       }
     } catch (err) {
       console.error('Error deleting:', err);
-    }
-    setLoading(false);
-  };
-
-  const handleResetAll = async () => {
-    if (!window.confirm('Are you sure you want to delete ALL profiles? This cannot be undone.')) return;
-    setLoading(true);
-    try {
-      const res = await fetch('/api/admin/profiles', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'reset' })
-      });
-      if (res.ok) {
-        fetchProfiles();
-      }
-    } catch (err) {
-      console.error('Error resetting:', err);
     }
     setLoading(false);
   };
@@ -230,9 +211,6 @@ export const AdminDashboard: React.FC = () => {
               navigate('/admin-login');
             }} className="bg-slate-100 text-slate-700 hover:bg-slate-200">
               <i className="fas fa-sign-out-alt mr-2"></i> Logout
-            </Button>
-            <Button variant="outline" onClick={handleResetAll} className="bg-red-100 text-red-700 hover:bg-red-200">
-              <i className="fas fa-trash mr-2"></i> Reset All Profiles
             </Button>
           </div>
         </div>

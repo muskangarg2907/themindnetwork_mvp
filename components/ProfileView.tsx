@@ -44,12 +44,15 @@ export const ProfileView: React.FC = () => {
 
   const handleSave = async () => {
       try {
-        console.log('[PROFILE] Saving profile with _id:', editData._id);
-        // Save to backend
+        // Use _id if available, otherwise use id
+        const profileId = editData._id || editData.id;
+        console.log('[PROFILE] Saving profile with id:', profileId);
+        
+        // Save to backend with _id field
         const response = await fetch('/api/profiles', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(editData)
+          body: JSON.stringify({ ...editData, _id: profileId })
         });
         
         if (!response.ok) {
