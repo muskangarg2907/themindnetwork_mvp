@@ -206,30 +206,4 @@ export const StepProviderPractice: React.FC<StepProps> = ({ data, updateData }) 
       </div>
     </div>
   );
-};       <Input 
-          label="Therapeutic Focus Area" 
-          name="therapeuticFocus" 
-          placeholder="e.g. Child Development, Trauma Recovery" 
-          value={details.therapeuticFocus} 
-          onChange={handleChange}
-      />
-
-      <TextArea
-        label="What is your style of therapy?"
-        name="therapyStyle"
-        placeholder="Describe your approach (e.g. Solution-focused, Psychodynamic, collaborative...)"
-        value={details.therapyStyle}
-        onChange={handleChange}
-        className="h-24"
-      />
-      
-      <Input 
-        label="Personal Website" 
-        name="website" 
-        placeholder="https://..." 
-        value={details.website || ''} 
-        onChange={handleChange}
-      />
-    </div>
-  );
 };
