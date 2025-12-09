@@ -1,4 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
+import { ObjectId } from 'mongodb';
 import { getProfilesCollection } from '../db.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -27,7 +28,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!id) {
         return res.status(400).json({ error: 'id query parameter required' });
       }
-      const result = await profiles.deleteOne({ _id: id as string });
+      const result = await profiles.deleteOne({ _id: new ObjectId(id as string) });
       if (result.deletedCount === 0) {
         return res.status(404).json({ error: 'Profile not found' });
       }
@@ -48,7 +49,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       const result = await profiles.findOneAndUpdate(
-        { _id: id as string },
+        { _id: new ObjectId(id as string) },
         {
           $set: {
             ...updates,
