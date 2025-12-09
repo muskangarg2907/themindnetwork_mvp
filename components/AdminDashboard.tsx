@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/Button';
 
 interface Profile {
-  id: string;
+  _id: string;
   basicInfo: {
     fullName: string;
     email: string;
@@ -75,7 +75,7 @@ export const AdminDashboard: React.FC = () => {
       
       // If a profile is selected, update it with fresh data from the list
       if (selectedProfile) {
-        const updatedSelected = profileList.find((p: Profile) => p.id === selectedProfile.id);
+        const updatedSelected = profileList.find((p: Profile) => p._id === selectedProfile._id);
         if (updatedSelected) {
           setSelectedProfile(updatedSelected);
         }
@@ -97,7 +97,7 @@ export const AdminDashboard: React.FC = () => {
       if (res.ok) {
         const updatedProfile = await res.json();
         // Update selectedProfile immediately with response data
-        if (selectedProfile?.id === id) {
+        if (selectedProfile?._id === id) {
           setSelectedProfile(updatedProfile.profile || updatedProfile);
         }
         // Then refresh the full list
@@ -120,7 +120,7 @@ export const AdminDashboard: React.FC = () => {
       if (res.ok) {
         const updatedProfile = await res.json();
         // Update selectedProfile immediately with response data
-        if (selectedProfile?.id === id) {
+        if (selectedProfile?._id === id) {
           setSelectedProfile(updatedProfile.profile || updatedProfile);
         }
         // Then refresh the full list
@@ -197,6 +197,12 @@ export const AdminDashboard: React.FC = () => {
             }} className="bg-slate-100 text-slate-700 hover:bg-slate-200">
               <i className="fas fa-sync-alt mr-2"></i> Refresh
             </Button>
+            <Button variant="outline" onClick={() => {
+              localStorage.clear();
+              window.location.href = '/';
+            }} className="bg-slate-100 text-slate-700 hover:bg-slate-200">
+              <i className="fas fa-sign-out-alt mr-2"></i> Logout
+            </Button>
             <Button variant="outline" onClick={handleResetAll} className="bg-red-100 text-red-700 hover:bg-red-200">
               <i className="fas fa-trash mr-2"></i> Reset All Profiles
             </Button>
@@ -218,10 +224,10 @@ export const AdminDashboard: React.FC = () => {
             <div className="space-y-3 max-h-96 overflow-y-auto">
               {profiles.map((p) => (
                 <div
-                  key={p.id}
+                  key={p._id}
                   onClick={() => setSelectedProfile(p)}
                   className={`p-4 border rounded-lg cursor-pointer transition ${
-                    selectedProfile?.id === p.id
+                    selectedProfile?._id === p._id
                       ? 'bg-teal-50 border-teal-400'
                       : 'bg-slate-50 border-slate-200 hover:border-teal-300'
                   }`}
@@ -280,14 +286,14 @@ export const AdminDashboard: React.FC = () => {
 
                 <div className="pt-4 space-y-2">
                   <Button
-                    onClick={() => handleApprove(selectedProfile.id)}
+                    onClick={() => handleApprove(selectedProfile._id)}
                     className="w-full bg-green-600 hover:bg-green-700"
                     disabled={selectedProfile.status === 'approved'}
                   >
                     <i className="fas fa-check mr-2"></i> Approve
                   </Button>
                   <Button
-                    onClick={() => handleReject(selectedProfile.id)}
+                    onClick={() => handleReject(selectedProfile._id)}
                     variant="outline"
                     className="w-full border-red-300 text-red-600 hover:bg-red-50"
                     disabled={selectedProfile.status === 'rejected'}
@@ -295,7 +301,7 @@ export const AdminDashboard: React.FC = () => {
                     <i className="fas fa-times mr-2"></i> Reject
                   </Button>
                   <Button
-                    onClick={() => handleDelete(selectedProfile.id)}
+                    onClick={() => handleDelete(selectedProfile._id)}
                     variant="outline"
                     className="w-full border-red-500 text-red-700 hover:bg-red-50"
                   >
