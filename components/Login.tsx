@@ -74,45 +74,43 @@ export const Login: React.FC = () => {
     const fullPhone = `${countryCode} ${phoneNumber}`;
 
     try {
-      // Set local auth tokens
-      localStorage.setItem('authToken', 'simulated_token_phone_123');
-      localStorage.setItem('userPhone', fullPhone);
-
-      // Ask backend if a profile exists for this phone
-      console.log('[LOGIN] Looking up profile for phone:', fullPhone);
+      // First check if profile exists BEFORE setting auth tokens
+      console.log('[LOGIN] Checking if profile exists for phone:', fullPhone);
       const resp = await fetch(`/api/profiles/lookup?phone=${encodeURIComponent(fullPhone)}`);
       
       console.log('[LOGIN] Lookup response status:', resp.status);
       
+      // Set auth tokens after we know the phone is valid
+      localStorage.setItem('authToken', 'simulated_token_phone_123');
+      localStorage.setItem('userPhone', fullPhone);
+      
       if (resp.ok) {
+        // EXISTING USER - Profile found
         const profile = await resp.json();
-        console.log('[LOGIN] Found profile:', profile.id, profile.basicInfo?.fullName);
-        // Cache profile locally for UI
+        console.log('[LOGIN] EXISTING USER - Found profile:', profile._id, profile.basicInfo?.fullName);
         localStorage.setItem('userProfile', JSON.stringify(profile));
         setIsLoading(false);
         navigate('/profile');
         return;
       }
 
-      // 404 = profile not found (deleted) - redirect to create new profile
+      // NEW USER - Profile not found, start signup flow
       if (resp.status === 404) {
-        console.log('[LOGIN] Profile not found (404), redirecting to create');
+        console.log('[LOGIN] NEW USER - No profile found, starting signup');
         setIsLoading(false);
         navigate('/create');
         return;
       }
 
-      const errBody = await resp.json();
-      console.log('[LOGIN] Lookup failed:', errBody);
-      
-      // Any other error, go to create flow
-      console.log('[LOGIN] Error response, redirecting to create');
+      // Server error - still allow them to create profile
+      const errBody = await resp.json().catch(() => ({}));
+      console.warn('[LOGIN] Lookup error:', errBody, '- allowing profile creation');
       setIsLoading(false);
       navigate('/create');
     } catch (err: any) {
-      console.error('[LOGIN] Error:', err);
+      console.error('[LOGIN] Network error:', err);
       setIsLoading(false);
-      setError('Login failed. Please try again.');
+      setError('Connection failed. Please check your internet and try again.');
     }
   };  return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
