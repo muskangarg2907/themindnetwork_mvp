@@ -34,43 +34,8 @@ export const ProfileView: React.FC = () => {
     }
   }, [location.state, pollingEnabled]);
 
-  // Poll for status updates every 5 seconds (faster feedback)
-    useEffect(() => {
-        if (!profile?.id || !pollingEnabled) return;
-
-        const interval = setInterval(async () => {
-      try {
-        const phone = localStorage.getItem('userPhone');
-        if (!phone) return;
-
-        const resp = await fetch(`/api/profiles/lookup?phone=${encodeURIComponent(phone)}`);
-        if (resp.ok) {
-          const updated = await resp.json();
-          // Validate updated payload minimally before applying
-          if (updated && updated.id === profile.id && updated.basicInfo) {
-            const currentJSON = JSON.stringify(profile);
-            const updatedJSON = JSON.stringify(updated);
-            if (currentJSON !== updatedJSON) {
-              console.log('[PROFILE] Profile updated:', updated);
-              console.log('[PROFILE] Status changed from', profile?.status, 'to', updated?.status);
-              setProfile(updated);
-              setEditData(updated);
-              localStorage.setItem('userProfile', JSON.stringify(updated));
-            }
-          } else {
-            console.warn('[PROFILE] Received lookup result that does not match current profile id — ignoring', updated?.id, profile?.id);
-          }
-        } else if (resp.status === 404) {
-          // Profile not found on server — but keep displaying local profile
-          console.log('[PROFILE] Lookup returned 404 (profile not on server yet) — keeping local profile visible');
-        }
-      } catch (err) {
-        console.error('[PROFILE] Polling error:', err);
-      }
-    }, 5000); // Poll every 5 seconds
-
-    return () => clearInterval(interval);
-  }, [profile?.id, pollingEnabled]);
+  // Removed constant polling - status updates are managed by admin portal
+  // Profile changes are reflected when user refreshes or logs in again
 
   if (!profile || !editData) return null;
 
@@ -79,6 +44,7 @@ export const ProfileView: React.FC = () => {
 
   const handleSave = async () => {
       try {
+        console.log('[PROFILE] Saving profile with _id:', editData._id);
         // Save to backend
         const response = await fetch('/api/profiles', {
           method: 'PUT',
@@ -87,10 +53,13 @@ export const ProfileView: React.FC = () => {
         });
         
         if (!response.ok) {
+          const errorText = await response.text();
+          console.error('[PROFILE] Save failed:', response.status, errorText);
           throw new Error('Failed to save profile');
         }
         
         const savedProfile = await response.json();
+        console.log('[PROFILE] Save successful:', savedProfile);
         setProfile(savedProfile);
         setEditData(savedProfile);
         localStorage.setItem('userProfile', JSON.stringify(savedProfile));
