@@ -77,10 +77,28 @@ export const ProfileView: React.FC = () => {
   const isClient = profile.role === 'client';
   const isProvider = profile.role === 'provider';
 
-  const handleSave = () => {
-      setProfile(editData);
-      localStorage.setItem('userProfile', JSON.stringify(editData));
-      setIsEditing(false);
+  const handleSave = async () => {
+      try {
+        // Save to backend
+        const response = await fetch('/api/profiles', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(editData)
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to save profile');
+        }
+        
+        const savedProfile = await response.json();
+        setProfile(savedProfile);
+        setEditData(savedProfile);
+        localStorage.setItem('userProfile', JSON.stringify(savedProfile));
+        setIsEditing(false);
+      } catch (err) {
+        console.error('Error saving profile:', err);
+        alert('Failed to save profile. Please try again.');
+      }
   };
 
   // Helper for array updates in edit mode
@@ -377,11 +395,26 @@ export const ProfileView: React.FC = () => {
                     {!isEditing && (
                         <div className="mt-6 pt-6 border-t border-slate-100">
                              <h5 className="text-sm text-slate-400 mb-2">
-                                {isClient ? 'AI Clinical Brief' : 'AI Generated Bio'}
+                                {isClient ? 'Profile Summary' : 'Professional Bio'}
                              </h5>
                              <p className="text-slate-600 text-sm leading-relaxed border-l-4 border-teal-500 pl-4">
-                                {profile.aiSummary || 'Analysis pending...'}
+                                {profile.aiSummary || 'No bio added yet. Click Edit Profile to add one.'}
                              </p>
+                        </div>
+                    )}
+                    
+                    {isEditing && (
+                        <div className="mt-6 pt-6 border-t border-slate-100">
+                            <TextArea
+                                label={isClient ? 'Profile Summary' : 'Professional Bio'}
+                                placeholder={isClient 
+                                    ? "Describe what you're looking for in therapy and your goals..."
+                                    : "Write a professional bio about your practice, approach, and expertise..."
+                                }
+                                value={editData.aiSummary || ''}
+                                onChange={(e) => setEditData({ ...editData, aiSummary: e.target.value })}
+                                rows={6}
+                            />
                         </div>
                     )}
                  </div>

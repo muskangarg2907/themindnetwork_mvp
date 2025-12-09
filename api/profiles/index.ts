@@ -1,5 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { randomUUID } from 'crypto';
+import { ObjectId } from 'mongodb';
 import { getProfilesCollection } from '../db.js';
 
 // Normalize phone: extract last 10 digits (for Indian numbers)
@@ -61,6 +62,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       } catch (err) {
         console.error('[PROFILES] POST: Insert failed:', err);
         return res.status(500).json({ error: 'Failed to save profile', details: (err as any)?.message });
+      }
+    }
+
+    if (req.method === 'PUT') {
+      const payload = req.body;
+      if (!payload || typeof payload !== 'object' || !payload._id) {
+        return res.status(400).json({ error: 'Invalid payload or missing _id' });
+      }
+
+      const { _id, ...updates } = payload;
+      
+      console.log('[PROFILES] PUT: Updating profile', _id);
+
+      try {
+        const result = await profiles.findOneAndUpdate(
+          { _id: new ObjectId(_id) },
+          {
+            $set: {
+              ...updates,
+              updatedAt: new Date().toISOString()
+            }
+          },
+          { returnDocument: 'after' }
+        );
+
+        if (!result) {
+          return res.status(404).json({ error: 'Profile not found' });
+        }
+
+        console.log('[PROFILES] PUT: Profile updated successfully');
+        return res.status(200).json(result);
+      } catch (err) {
+        console.error('[PROFILES] PUT: Update failed:', err);
+        return res.status(500).json({ error: 'Failed to update profile', details: (err as any)?.message });
       }
     }
 

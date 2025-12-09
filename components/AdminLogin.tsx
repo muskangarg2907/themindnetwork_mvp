@@ -13,10 +13,19 @@ export const AdminLogin: React.FC = () => {
   const [error, setError] = useState('');
 
   const handleLogin = () => {
-    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+    const trimmedUsername = username.trim();
+    const trimmedPassword = password.trim();
+    
+    console.log('[ADMIN LOGIN] Attempting login with username:', trimmedUsername);
+    console.log('[ADMIN LOGIN] Expected username:', ADMIN_USERNAME);
+    console.log('[ADMIN LOGIN] Password match:', trimmedPassword === ADMIN_PASSWORD);
+    
+    if (trimmedUsername === ADMIN_USERNAME && trimmedPassword === ADMIN_PASSWORD) {
+      console.log('[ADMIN LOGIN] Login successful');
       localStorage.setItem('adminAuth', 'authenticated');
       navigate('/admin');
     } else {
+      console.log('[ADMIN LOGIN] Login failed');
       setError('Invalid username or password');
     }
   };
@@ -41,7 +50,6 @@ export const AdminLogin: React.FC = () => {
               setUsername(e.target.value);
               setError('');
             }}
-            error={error}
           />
           <Input
             label="Password"
@@ -57,7 +65,6 @@ export const AdminLogin: React.FC = () => {
                 handleLogin();
               }
             }}
-            error={error}
           />
           
           {error && (
