@@ -20,7 +20,7 @@ export const Login: React.FC = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   
   const [otp, setOtp] = useState('');
-  const [isLoading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const otpInputRef = React.useRef<HTMLInputElement>(null);
 
