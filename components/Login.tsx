@@ -47,7 +47,6 @@ export const Login: React.FC = () => {
       });
     }
   }, []);
-  }, [step]);
 
   // Add keyboard listener for Enter key
   React.useEffect(() => {
