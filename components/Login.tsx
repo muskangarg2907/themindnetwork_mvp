@@ -26,6 +26,7 @@ export const Login: React.FC = () => {
   const [error, setError] = useState('');
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const otpInputRef = React.useRef<HTMLInputElement>(null);
+
   // Auto-focus OTP input when step changes to OTP
   React.useEffect(() => {
     if (step === 'otp' && otpInputRef.current) {
@@ -61,6 +62,21 @@ export const Login: React.FC = () => {
       }
     };
 
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [step, phoneNumber, otp]);
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Allow only numbers
+    const val = e.target.value.replace(/\D/g, '');
+    // Limit to 10 digits
+    if (val.length <= 10) {
+        setPhoneNumber(val);
+        // Clear error if user starts typing again
+        if (error) setError('');
+    }
+  };
+
   const handleSendOtp = async () => {
     if (phoneNumber.length !== 10) {
         setError('Please enter a valid 10-digit mobile number.');
@@ -73,6 +89,18 @@ export const Login: React.FC = () => {
     
     try {
       const appVerifier = window.recaptchaVerifier;
+      const confirmation = await signInWithPhoneNumber(auth, fullPhone, appVerifier);
+      setConfirmationResult(confirmation);
+      setIsLoading(false);
+      setStep('otp');
+      console.log('[LOGIN] OTP sent successfully to', fullPhone);
+    } catch (err: any) {
+      console.error('[LOGIN] Error sending OTP:', err);
+      setIsLoading(false);
+      setError(err.message || 'Failed to send OTP. Please try again.');
+    }
+  };
+
   const handleVerifyOtp = async () => {
     if (otp.length !== 6) {
         setError('Please enter the 6-digit OTP.');
@@ -131,33 +159,6 @@ export const Login: React.FC = () => {
       console.error('[LOGIN] OTP verification error:', err);
       setIsLoading(false);
       setError(err.message || 'Invalid OTP. Please try again.');
-    }
-  };    // EXISTING USER - Profile found
-        const profile = await resp.json();
-        console.log('[LOGIN] EXISTING USER - Found profile:', profile._id, profile.basicInfo?.fullName);
-        localStorage.setItem('userProfile', JSON.stringify(profile));
-        setIsLoading(false);
-        navigate('/profile');
-        return;
-      }
-
-      // NEW USER - Profile not found, start signup flow
-      if (resp.status === 404) {
-        console.log('[LOGIN] NEW USER - No profile found, starting signup');
-        setIsLoading(false);
-        navigate('/create');
-        return;
-      }
-
-      // Server error - still allow them to create profile
-      const errBody = await resp.json().catch(() => ({}));
-      console.warn('[LOGIN] Lookup error:', errBody, '- allowing profile creation');
-      setIsLoading(false);
-      navigate('/create');
-    } catch (err: any) {
-      console.error('[LOGIN] Network error:', err);
-      setIsLoading(false);
-      setError('Connection failed. Please check your internet and try again.');
     }
   };  return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
