@@ -28,7 +28,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!id) {
         return res.status(400).json({ error: 'id query parameter required' });
       }
-      const result = await profiles.deleteOne({ _id: new ObjectId(id as string) });
+      
+      // Try ObjectId first, then string for UUID
+      let query;
+      try {
+        query = { _id: new ObjectId(id as string) };
+      } catch {
+        query = { _id: id as string };
+      }
+      
+      const result = await profiles.deleteOne(query);
       if (result.deletedCount === 0) {
         return res.status(404).json({ error: 'Profile not found' });
       }
@@ -51,11 +60,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       try {
-        const objectId = new ObjectId(id as string);
-        console.log('[ADMIN] Converted to ObjectId:', objectId);
+        // Try to match by ObjectId first, then by string _id (for UUIDs)
+        let query;
+        try {
+          query = { _id: new ObjectId(id as string) };
+        } catch {
+          // If ObjectId conversion fails, treat as UUID string
+          query = { _id: id as string };
+        }
+        
+        console.log('[ADMIN] Query:', query);
 
         const result = await profiles.findOneAndUpdate(
-          { _id: objectId },
+          query,
           {
             $set: {
               ...updates,

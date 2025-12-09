@@ -276,6 +276,11 @@ export const ProfileView: React.FC = () => {
                                         onChange={(e) => handleArrayChange('providerDetails', 'specializations', e.target.value)}
                                         className="h-20"
                                     />
+                                    <Input 
+                                        label="Languages Spoken (comma separated)" 
+                                        value={editData.providerDetails.languages.join(', ')}
+                                        onChange={(e) => handleArrayChange('providerDetails', 'languages', e.target.value)}
+                                    />
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="flex flex-col gap-1.5 w-full">
                                             <label className="text-sm font-semibold text-slate-700 ml-1">Preferred Mode</label>
@@ -295,6 +300,22 @@ export const ProfileView: React.FC = () => {
                                             onChange={(e) => handleDetailChange('budgetRange', e.target.value)}
                                         />
                                     </div>
+                                    <Input 
+                                        label="Therapeutic Focus" 
+                                        value={editData.providerDetails.therapeuticFocus}
+                                        onChange={(e) => handleDetailChange('therapeuticFocus', e.target.value)}
+                                    />
+                                    <Input 
+                                        label="Licenses / Certifications" 
+                                        value={editData.providerDetails.licenses}
+                                        onChange={(e) => handleDetailChange('licenses', e.target.value)}
+                                    />
+                                    <Input 
+                                        label="Website" 
+                                        value={editData.providerDetails.website || ''}
+                                        onChange={(e) => handleDetailChange('website', e.target.value)}
+                                        placeholder="https://..."
+                                    />
                                     <TextArea
                                         label="Therapy Style / Bio"
                                         value={editData.providerDetails.therapyStyle}
@@ -333,7 +354,35 @@ export const ProfileView: React.FC = () => {
                                         <div className="grid grid-cols-2 gap-y-2 text-sm">
                                             <div className="text-slate-600">Mode: <span className="text-slate-900 font-medium capitalize">{profile.providerDetails.mode}</span></div>
                                             <div className="text-slate-600">Budget: <span className="text-slate-900 font-medium">{profile.providerDetails.budgetRange}</span></div>
-                                            <div className="text-slate-600">Focus: <span className="text-slate-900 font-medium">{profile.providerDetails.therapeuticFocus}</span></div>
+                                            
+                                            {profile.providerDetails.therapeuticFocus && (
+                                                <div className="col-span-2 text-slate-600">Focus: <span className="text-slate-900 font-medium">{profile.providerDetails.therapeuticFocus}</span></div>
+                                            )}
+                                            
+                                            {profile.providerDetails.languages && profile.providerDetails.languages.length > 0 && (
+                                                <div className="col-span-2 text-slate-600">
+                                                    Languages: <span className="text-slate-900 font-medium">{profile.providerDetails.languages.join(', ')}</span>
+                                                </div>
+                                            )}
+                                            
+                                            {profile.providerDetails.clientType && profile.providerDetails.clientType.length > 0 && (
+                                                <div className="col-span-2">
+                                                    <p className="text-slate-600 mb-1">Client Types:</p>
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {profile.providerDetails.clientType.map((type, idx) => (
+                                                            <span key={idx} className="px-2 py-0.5 bg-teal-50 text-teal-700 text-xs rounded-full">
+                                                                {type}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                            
+                                            {profile.providerDetails.licenses && (
+                                                <div className="col-span-2 text-slate-600">
+                                                    Licenses: <span className="text-slate-900 font-medium">{profile.providerDetails.licenses}</span>
+                                                </div>
+                                            )}
                                             
                                             {/* Resume Download */}
                                             {profile.providerDetails.resumeFileName && (
