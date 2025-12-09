@@ -41,6 +41,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const { id } = req.query;
       const updates = req.body;
 
+      console.log('[ADMIN] PUT request - id:', id, 'updates:', updates);
+
       if (!id) {
         return res.status(400).json({ error: 'id query parameter required' });
       }
@@ -48,23 +50,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: 'Invalid update payload' });
       }
 
-      const result = await profiles.findOneAndUpdate(
-        { _id: new ObjectId(id as string) },
-        {
-          $set: {
-            ...updates,
-            updatedAt: new Date().toISOString()
-          }
-        },
-        { returnDocument: 'after' }
-      );
+      try {
+        const objectId = new ObjectId(id as string);
+        console.log('[ADMIN] Converted to ObjectId:', objectId);
 
-      if (!result.value) {
-        return res.status(404).json({ error: 'Profile not found' });
+        const result = await profiles.findOneAndUpdate(
+          { _id: objectId },
+          {
+            $set: {
+              ...updates,
+              updatedAt: new Date().toISOString()
+            }
+          },
+          { returnDocument: 'after' }
+        );
+
+        console.log('[ADMIN] Update result:', result);
+
+        if (!result) {
+          console.log('[ADMIN] Profile not found for id:', id);
+          return res.status(404).json({ error: 'Profile not found' });
+        }
+
+        console.log('[ADMIN] Updated profile:', id, 'new status:', result.status);
+        return res.status(200).json({ message: 'Profile updated', profile: result });
+      } catch (updateErr: any) {
+        console.error('[ADMIN] Update error:', updateErr);
+        return res.status(500).json({ error: 'Update failed', details: updateErr.message });
       }
-
-      console.log('[ADMIN] Updated profile:', id, 'status:', result.value?.status);
-      return res.status(200).json({ message: 'Profile updated', profile: result.value });
     }
 
     // POST to reset all profiles

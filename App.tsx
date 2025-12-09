@@ -4,6 +4,7 @@ import { Login } from './components/Login';
 import { ProfileWizard } from './components/ProfileWizard';
 import { ProfileView } from './components/ProfileView';
 import { AdminDashboard } from './components/AdminDashboard';
+import { AdminLogin } from './components/AdminLogin';
 
 const App: React.FC = () => {
   return (
@@ -13,6 +14,7 @@ const App: React.FC = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/create" element={<ProfileWizard />} />
         <Route path="/profile" element={<ProfileView />} />
+        <Route path="/admin-login" element={<AdminLogin />} />
         <Route path="/admin" element={<AdminDashboard />} />
       </Routes>
     </HashRouter>

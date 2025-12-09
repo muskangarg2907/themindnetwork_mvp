@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/Button';
 
 interface Profile {
@@ -14,6 +15,7 @@ interface Profile {
 }
 
 export const AdminDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
@@ -21,6 +23,14 @@ export const AdminDashboard: React.FC = () => {
   const [notifyTimestamp, setNotifyTimestamp] = useState<string | null>(null);
   const notifyRef = useRef<string | null>(null);
   const [newProfilesAvailable, setNewProfilesAvailable] = useState(false);
+
+  // Check authentication
+  useEffect(() => {
+    const adminAuth = localStorage.getItem('adminAuth');
+    if (adminAuth !== 'authenticated') {
+      navigate('/admin-login');
+    }
+  }, [navigate]);
 
   useEffect(() => {
     // Initial fetch only. Manual refresh button is provided for updates.
@@ -89,19 +99,28 @@ export const AdminDashboard: React.FC = () => {
   const handleApprove = async (id: string) => {
     setLoading(true);
     try {
+      console.log('[ADMIN] Approving profile:', id);
       const res = await fetch(`/api/admin/profiles?id=${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'approved' })
       });
+      
+      console.log('[ADMIN] Approve response status:', res.status);
+      const data = await res.json();
+      console.log('[ADMIN] Approve response data:', data);
+      
       if (res.ok) {
-        const updatedProfile = await res.json();
         // Update selectedProfile immediately with response data
         if (selectedProfile?._id === id) {
-          setSelectedProfile(updatedProfile.profile || updatedProfile);
+          const updated = data.profile || data;
+          console.log('[ADMIN] Updating selected profile with:', updated);
+          setSelectedProfile(updated);
         }
         // Then refresh the full list
         await fetchProfiles();
+      } else {
+        console.error('[ADMIN] Approve failed:', data);
       }
     } catch (err) {
       console.error('Error approving:', err);
@@ -112,19 +131,28 @@ export const AdminDashboard: React.FC = () => {
   const handleReject = async (id: string) => {
     setLoading(true);
     try {
+      console.log('[ADMIN] Rejecting profile:', id);
       const res = await fetch(`/api/admin/profiles?id=${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'rejected' })
       });
+      
+      console.log('[ADMIN] Reject response status:', res.status);
+      const data = await res.json();
+      console.log('[ADMIN] Reject response data:', data);
+      
       if (res.ok) {
-        const updatedProfile = await res.json();
         // Update selectedProfile immediately with response data
         if (selectedProfile?._id === id) {
-          setSelectedProfile(updatedProfile.profile || updatedProfile);
+          const updated = data.profile || data;
+          console.log('[ADMIN] Updating selected profile with:', updated);
+          setSelectedProfile(updated);
         }
         // Then refresh the full list
         await fetchProfiles();
+      } else {
+        console.error('[ADMIN] Reject failed:', data);
       }
     } catch (err) {
       console.error('Error rejecting:', err);
@@ -198,8 +226,8 @@ export const AdminDashboard: React.FC = () => {
               <i className="fas fa-sync-alt mr-2"></i> Refresh
             </Button>
             <Button variant="outline" onClick={() => {
-              localStorage.clear();
-              window.location.href = '/';
+              localStorage.removeItem('adminAuth');
+              navigate('/admin-login');
             }} className="bg-slate-100 text-slate-700 hover:bg-slate-200">
               <i className="fas fa-sign-out-alt mr-2"></i> Logout
             </Button>

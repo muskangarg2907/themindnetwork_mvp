@@ -16,6 +16,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
+      console.log('[BIO] No GEMINI_API_KEY configured, using fallback');
       const name = profile?.basicInfo?.fullName || 'Provider';
       const text = `${name} is a mental health provider with expertise in their field.`;
       return res.status(200).json({ text });
@@ -23,13 +24,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const prompt = `Create a professional 3-sentence bio for a mental health provider based on this profile data: ${JSON.stringify(profile)}. Focus on their expertise, approach, and who they help.`;
     
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
+    // Use the correct Gemini API format with API key in URL
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
     const body = {
       contents: [{
         parts: [{ text: prompt }]
       }]
     };
 
+    console.log('[BIO] Calling Gemini API...');
     const r = await fetch(url, {
       method: 'POST',
       headers: {
@@ -46,6 +49,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const json = await r.json();
+    console.log('[BIO] Gemini response received');
     const text = json?.candidates?.[0]?.content?.parts?.[0]?.text || `${profile?.basicInfo?.fullName || 'Provider'} is a mental health provider.`;
     return res.status(200).json({ text });
   } catch (err: any) {
