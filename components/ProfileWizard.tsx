@@ -164,6 +164,9 @@ export const ProfileWizard: React.FC = () => {
         setCurrentStep(WizardStep.BASIC_INFO);
     } else if (currentStep === WizardStep.PROVIDER_PRACTICE) {
         setCurrentStep(WizardStep.PROVIDER_PROFESSIONAL);
+    } else if (currentStep === WizardStep.ROLE_SELECTION) {
+        // Go back to login page
+        navigate('/login');
     }
   };
 
@@ -196,9 +199,6 @@ export const ProfileWizard: React.FC = () => {
   if (currentStep === WizardStep.CLIENT_PREFERENCES || currentStep === WizardStep.PROVIDER_PRACTICE) currentStepIndex = 3;
 
   const progress = (currentStepIndex / totalSteps) * 100;
-
-  const isFinalStep = currentStep === WizardStep.CLIENT_PREFERENCES || currentStep === WizardStep.PROVIDER_PRACTICE;
-
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50">
       <div className="w-full max-w-2xl bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden flex flex-col h-[800px]">
@@ -217,6 +217,21 @@ export const ProfileWizard: React.FC = () => {
                         className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 transition-all duration-500 ease-out"
                         style={{ width: `${progress}%` }}
                     ></div>
+                </div>
+            </div>
+        )}
+
+        {/* Role Selection Header with Back Button */}
+        {currentStep === WizardStep.ROLE_SELECTION && (
+            <div className="bg-white p-6 border-b border-slate-100">
+                <button 
+                    onClick={() => navigate('/login')}
+                    className="text-sm text-teal-600 hover:text-teal-700 font-medium flex items-center gap-2"
+                >
+                    <i className="fas fa-arrow-left"></i> Back to Login
+                </button>
+            </div>
+        )}          ></div>
                 </div>
             </div>
         )}
