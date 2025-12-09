@@ -32,7 +32,20 @@ export const StepProviderPractice: React.FC<StepProps> = ({ data, updateData }) 
 
   const toTitleCase = (str: string) => {
     return str.replace(/\b\w/g, char => char.toUpperCase());
-   const handleArrayChange = (name: string, value: string) => {
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    let { name, value } = e.target;
+
+    // Capitalize specific fields
+    if (['offlineLocation', 'budgetRange', 'therapeuticFocus'].includes(name)) {
+        value = toTitleCase(value);
+    }
+
+    updateDetails(name, value);
+  };
+
+  const handleArrayChange = (name: string, value: string) => {
     const arr = value.split(',').map(s => toTitleCase(s.trim()));
     updateDetails(name, arr);
   };
@@ -63,19 +76,6 @@ export const StepProviderPractice: React.FC<StepProps> = ({ data, updateData }) 
       };
       reader.readAsDataURL(file);
     }
-  };let { name, value } = e.target;
-
-    // Capitalize specific fields
-    if (['offlineLocation', 'budgetRange', 'therapeuticFocus'].includes(name)) {
-        value = toTitleCase(value);
-    }
-
-    updateDetails(name, value);
-  };
-
-   const handleArrayChange = (name: string, value: string) => {
-    const arr = value.split(',').map(s => toTitleCase(s.trim()));
-    updateDetails(name, arr);
   };
 
   return (
