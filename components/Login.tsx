@@ -174,7 +174,13 @@ export const Login: React.FC = () => {
                              <p className="text-sm text-slate-600">
                                  Enter the OTP sent to <span className="font-semibold text-slate-800">{countryCode} {phoneNumber}</span>
                              </p>
-                             <button onClick={() => setStep('phone')} className="text-xs text-teal-600 hover:underline mt-1 font-medium">Change Number</button>
+                             <button onClick={() => {
+                               setStep('phone');
+                               setOtp('');
+                               setError('');
+                             }} className="text-xs text-teal-600 hover:underline mt-1 font-medium">
+                               Change Number
+                             </button>
                          </div>
                          <div className="flex flex-col gap-1.5 w-full">
                             <label className="text-sm font-semibold text-slate-700 ml-1">Enter 4-Digit OTP</label>
@@ -196,6 +202,18 @@ export const Login: React.FC = () => {
                             isLoading={isLoading}
                         >
                             Verify & Login
+                        </Button>
+                        <Button 
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => {
+                              setStep('phone');
+                              setPhoneNumber('');
+                              setOtp('');
+                              setError('');
+                            }}
+                        >
+                            <i className="fas fa-arrow-left mr-2"></i> Back to Phone Number
                         </Button>
                         <p className="text-center text-xs text-slate-400 mt-4">
                             Didn't receive code? <span className="text-teal-600 cursor-pointer hover:underline font-medium">Resend</span>
