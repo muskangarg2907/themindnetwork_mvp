@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
+import { auth } from '../services/firebase';
+import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
 
 const COUNTRY_CODES = [
   { code: '+91', country: 'IN' },
@@ -22,13 +24,29 @@ export const Login: React.FC = () => {
   const [otp, setOtp] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const otpInputRef = React.useRef<HTMLInputElement>(null);
-
   // Auto-focus OTP input when step changes to OTP
   React.useEffect(() => {
     if (step === 'otp' && otpInputRef.current) {
       otpInputRef.current.focus();
     }
+  }, [step]);
+
+  // Setup reCAPTCHA on component mount
+  useEffect(() => {
+    if (!window.recaptchaVerifier) {
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        size: 'invisible',
+        callback: () => {
+          // reCAPTCHA solved - allow send OTP
+        },
+        'expired-callback': () => {
+          setError('reCAPTCHA expired. Please try again.');
+        }
+      });
+    }
+  }, []);
   }, [step]);
 
   // Add keyboard listener for Enter key
@@ -44,56 +62,78 @@ export const Login: React.FC = () => {
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [step, phoneNumber, otp]);
-
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Allow only numbers
-    const val = e.target.value.replace(/\D/g, '');
-    // Limit to 10 digits
-    if (val.length <= 10) {
-        setPhoneNumber(val);
-        // Clear error if user starts typing again
-        if (error) setError('');
-    }
-  };
-
-  const handleSendOtp = () => {
+  const handleSendOtp = async () => {
     if (phoneNumber.length !== 10) {
         setError('Please enter a valid 10-digit mobile number.');
         return;
     }
     setError('');
     setIsLoading(true);
-    // Move directly to OTP step
-    setIsLoading(false);
-    setStep('otp');
-  };
-
+    
+    const fullPhone = `${countryCode}${phoneNumber}`;
+    
+    try {
+      const appVerifier = window.recaptchaVerifier;
   const handleVerifyOtp = async () => {
-    if (otp.length !== 4) {
-        setError('Please enter the 4-digit OTP.');
+    if (otp.length !== 6) {
+        setError('Please enter the 6-digit OTP.');
         return;
     }
+    
+    if (!confirmationResult) {
+        setError('Please request OTP first.');
+        return;
+    }
+    
     setError('');
     setIsLoading(true);
 
     const fullPhone = `${countryCode} ${phoneNumber}`;
 
     try {
-      // First check if profile exists BEFORE setting auth tokens
+      // Verify OTP with Firebase
+      await confirmationResult.confirm(otp);
+      console.log('[LOGIN] OTP verified successfully');
+      
+      // Set auth tokens
+      localStorage.setItem('authToken', 'firebase_verified');
+      localStorage.setItem('userPhone', fullPhone);
+      
+      // Check if profile exists
       console.log('[LOGIN] Checking if profile exists for phone:', fullPhone);
       const resp = await fetch(`/api/profiles/lookup?phone=${encodeURIComponent(fullPhone)}`);
       
       console.log('[LOGIN] Lookup response status:', resp.status);
       
-      // Set auth tokens after we know the phone is valid
-      localStorage.setItem('authToken', 'simulated_token_phone_123');
-      localStorage.setItem('userPhone', fullPhone);
-      
       if (resp.ok) {
         // EXISTING USER - Profile found
+        const profile = await resp.json();
+        console.log('[LOGIN] EXISTING USER - Found profile:', profile._id, profile.basicInfo?.fullName);
+        localStorage.setItem('userProfile', JSON.stringify(profile));
+        setIsLoading(false);
+        navigate('/profile');
+        return;
+      }
+
+      // NEW USER - Profile not found, start signup flow
+      if (resp.status === 404) {
+        console.log('[LOGIN] NEW USER - No profile found, starting signup');
+        setIsLoading(false);
+        navigate('/create');
+        return;
+      }
+
+      // Server error - still allow them to create profile
+      const errBody = await resp.json().catch(() => ({}));
+      console.warn('[LOGIN] Lookup error:', errBody, '- allowing profile creation');
+      setIsLoading(false);
+      navigate('/create');
+    } catch (err: any) {
+      console.error('[LOGIN] OTP verification error:', err);
+      setIsLoading(false);
+      setError(err.message || 'Invalid OTP. Please try again.');
+    }
+  };    // EXISTING USER - Profile found
         const profile = await resp.json();
         console.log('[LOGIN] EXISTING USER - Found profile:', profile._id, profile.basicInfo?.fullName);
         localStorage.setItem('userProfile', JSON.stringify(profile));
@@ -183,16 +223,16 @@ export const Login: React.FC = () => {
                              </button>
                          </div>
                          <div className="flex flex-col gap-1.5 w-full">
-                            <label className="text-sm font-semibold text-slate-700 ml-1">Enter 4-Digit OTP</label>
+                            <label className="text-sm font-semibold text-slate-700 ml-1">Enter 6-Digit OTP</label>
                             <input
                                 ref={otpInputRef}
                                 type="text"
                                 inputMode="numeric"
-                                maxLength={4}
+                                maxLength={6}
                                 className={`w-full bg-white border ${error ? 'border-red-500' : 'border-slate-300'} text-slate-900 rounded-lg px-4 py-3 text-center text-2xl font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all shadow-sm`}
-                                placeholder="••••"
+                                placeholder="••••••"
                                 value={otp}
-                                onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                                onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                             />
                             {error && <span className="text-xs font-medium text-red-600 ml-1">{error}</span>}
                          </div>
@@ -234,6 +274,9 @@ export const Login: React.FC = () => {
                     By continuing, you agree to TheMindNetwork's Terms of Service and Privacy Policy.
                 </div>
             </div>
+            
+            {/* Hidden reCAPTCHA container */}
+            <div id="recaptcha-container"></div>
         </div>
     </div>
   );
