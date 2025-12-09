@@ -29,9 +29,11 @@ const INITIAL_PROFILE: UserProfile = {
 export const ProfileWizard: React.FC = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState<WizardStep>(WizardStep.ROLE_SELECTION);
-  const [profileData, setProfileData] = useState<UserProfile>(INITIAL_PROFILE);
+  const [profileData, setProfileData] = useState<UserProfile>(initialData);
   const [isGenerating, setIsGenerating] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [showManualBioInput, setShowManualBioInput] = useState(false);
+  const [manualBio, setManualBio] = useState('');
 
   // Add keyboard listener for Enter key
   React.useEffect(() => {
@@ -115,10 +117,23 @@ export const ProfileWizard: React.FC = () => {
     setIsGenerating(true);
     let summary = '';
     
-    if (profileData.role === 'client') {
-        summary = await generateProfileSummary(profileData);
+    // If manual bio input is shown, use it
+    if (showManualBioInput && manualBio.trim()) {
+      summary = manualBio.trim();
     } else {
+      // Try AI generation
+      if (profileData.role === 'client') {
+        summary = await generateProfileSummary(profileData);
+      } else {
         summary = await generateProviderBio(profileData);
+      }
+      
+      // Check if AI generation failed
+      if (!summary || summary.includes('failed') || summary.includes('unavailable') || summary.includes('not available')) {
+        setIsGenerating(false);
+        setShowManualBioInput(true);
+        return; // Wait for user to enter manual bio
+      }
     }
     
     const finalProfile: UserProfile = {
@@ -230,7 +245,60 @@ export const ProfileWizard: React.FC = () => {
 
         {/* Content Area */}
         <div className="flex-1 p-8 overflow-y-auto custom-scrollbar relative">
-            {getStepComponent()}
+            {showManualBioInput ? (
+              <div className="space-y-6 animate-fade-in max-w-2xl mx-auto">
+                <div className="text-center mb-8">
+                  <div className="w-16 h-16 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center text-2xl mx-auto mb-4">
+                    <i className="fas fa-pen"></i>
+                  </div>
+                  <h2 className="text-2xl font-bold text-slate-800 mb-2">Write Your {profileData.role === 'provider' ? 'Bio' : 'Summary'}</h2>
+                  <p className="text-slate-500">AI generation is currently unavailable. Please write a brief professional {profileData.role === 'provider' ? 'bio' : 'summary'} about yourself.</p>
+                </div>
+                
+                <div className="flex flex-col gap-1.5 w-full">
+                  <label className="text-sm font-semibold text-slate-700 ml-1">
+                    Professional {profileData.role === 'provider' ? 'Bio' : 'Summary'} *
+                  </label>
+                  <textarea
+                    className="w-full bg-white border border-slate-300 text-slate-900 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all shadow-sm"
+                    placeholder={profileData.role === 'provider' 
+                      ? "Example: I am a licensed therapist specializing in anxiety and depression. I use evidence-based approaches to help clients achieve their goals. I work with individuals and couples in a supportive environment."
+                      : "Example: I'm seeking support for managing stress and anxiety. I prefer online sessions and am looking for a therapist who specializes in cognitive behavioral therapy."
+                    }
+                    value={manualBio}
+                    onChange={(e) => setManualBio(e.target.value)}
+                    rows={6}
+                    maxLength={500}
+                  />
+                  <div className="text-xs text-slate-500 ml-1">
+                    {manualBio.length}/500 characters
+                  </div>
+                </div>
+                
+                <div className="flex gap-3">
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      setShowManualBioInput(false);
+                      setManualBio('');
+                    }}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleSubmit}
+                    disabled={!manualBio.trim() || manualBio.trim().length < 50}
+                    isLoading={isGenerating}
+                    className="flex-1"
+                  >
+                    Continue with Manual {profileData.role === 'provider' ? 'Bio' : 'Summary'}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              getStepComponent()
+            )}
         </div>
 
         {/* Error Message */}
@@ -244,7 +312,7 @@ export const ProfileWizard: React.FC = () => {
         )}
 
         {/* Footer */}
-        {currentStep !== WizardStep.ROLE_SELECTION && (
+        {currentStep !== WizardStep.ROLE_SELECTION && !showManualBioInput && (
             <div className="bg-slate-50 p-6 border-t border-slate-200 flex justify-between items-center">
                 <Button 
                     variant="outline" 
