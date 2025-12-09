@@ -17,7 +17,7 @@ const INITIAL_PROFILE: UserProfile = {
   role: 'client', // Default, but will be set by user
   basicInfo: { fullName: '', email: '', phone: '', dob: '', location: '', gender: '' },
   clinical: { presentingProblem: '', currentMood: '', hasPriorTherapy: false, medications: '', riskFactors: [] },
-  preferences: { communicationStyle: '', providerGenderPreference: '', insuranceProvider: '' },
+  preferences: { providerGenderPreference: '' },
   providerDetails: { 
       qualification: '', yearsExperience: '', specializations: [], mode: 'online', 
       languages: [], clientType: [], budgetRange: '', licenses: '', 

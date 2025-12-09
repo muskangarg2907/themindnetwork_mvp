@@ -22,9 +22,7 @@ export interface UserProfile {
     riskFactors: string[]; 
   };
   preferences?: {
-    communicationStyle: string;
     providerGenderPreference: string;
-    insuranceProvider: string;
   };
   // Provider specific data
   providerDetails?: {

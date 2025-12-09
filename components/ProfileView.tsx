@@ -109,6 +109,33 @@ export const ProfileView: React.FC = () => {
       }
   };
 
+  const handleResumeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Max 5MB
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size must be less than 5MB');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const base64 = event.target?.result as string;
+        if (editData.providerDetails) {
+          setEditData({
+            ...editData,
+            providerDetails: {
+              ...editData.providerDetails,
+              resumeFileData: base64,
+              resumeFileName: file.name
+            }
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8 relative">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -316,6 +343,56 @@ export const ProfileView: React.FC = () => {
                                         onChange={(e) => handleDetailChange('website', e.target.value)}
                                         placeholder="https://..."
                                     />
+                                    
+                                    {/* Resume Upload in Edit Mode */}
+                                    <div className="flex flex-col gap-1.5 w-full">
+                                        <label className="text-sm font-semibold text-slate-700 ml-1">
+                                            Resume/CV Upload
+                                        </label>
+                                        <div className="relative">
+                                            <input
+                                                type="file"
+                                                accept=".pdf,.doc,.docx"
+                                                onChange={handleResumeUpload}
+                                                className="hidden"
+                                                id="resume-edit-upload"
+                                            />
+                                            <label
+                                                htmlFor="resume-edit-upload"
+                                                className="flex items-center justify-between gap-2 bg-white border-2 border-dashed border-slate-300 text-slate-600 rounded-lg px-4 py-4 cursor-pointer hover:border-teal-400 hover:bg-teal-50 transition-all"
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <i className="fas fa-cloud-upload-alt text-lg"></i>
+                                                    <span className="font-medium text-sm">
+                                                        {editData.providerDetails.resumeFileName || 'Click to upload PDF or DOC (max 5MB)'}
+                                                    </span>
+                                                </div>
+                                                {editData.providerDetails.resumeFileName && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            setEditData({
+                                                                ...editData,
+                                                                providerDetails: {
+                                                                    ...editData.providerDetails!,
+                                                                    resumeFileData: '',
+                                                                    resumeFileName: ''
+                                                                }
+                                                            });
+                                                        }}
+                                                        className="bg-red-100 text-red-600 rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-200"
+                                                    >
+                                                        <i className="fas fa-times text-xs"></i>
+                                                    </button>
+                                                )}
+                                            </label>
+                                        </div>
+                                        <span className="text-xs text-slate-500 ml-1">
+                                            Accepted formats: PDF, DOC, DOCX (Maximum size: 5MB)
+                                        </span>
+                                    </div>
+                                    
                                     <TextArea
                                         label="Therapy Style / Bio"
                                         value={editData.providerDetails.therapyStyle}
