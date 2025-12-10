@@ -128,6 +128,18 @@ export const Login: React.FC = () => {
       console.log('[LOGIN] Calling signInWithPhoneNumber with:', fullPhone);
       const confirmation = await signInWithPhoneNumber(auth, fullPhone, appVerifier);
       setConfirmationResult(confirmation);
+      
+      // Track OTP request
+      try {
+        await fetch('/api/analytics/auth-tracking', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: fullPhone, event: 'otp_requested', timestamp: new Date().toISOString() })
+        });
+      } catch (e) {
+        console.log('[LOGIN] Failed to track OTP request:', e);
+      }
+      
       setIsLoading(false);
       setStep('otp');
       console.log('[LOGIN] OTP sent successfully to', fullPhone);
@@ -191,6 +203,17 @@ export const Login: React.FC = () => {
       // Verify OTP with Firebase
       await confirmationResult.confirm(otp);
       console.log('[LOGIN] OTP verified successfully');
+      
+      // Track OTP verification
+      try {
+        await fetch('/api/analytics/auth-tracking', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: fullPhone, event: 'otp_verified', timestamp: new Date().toISOString() })
+        });
+      } catch (e) {
+        console.log('[LOGIN] Failed to track OTP verification:', e);
+      }
       
       // Set auth tokens
       localStorage.setItem('authToken', 'firebase_verified');

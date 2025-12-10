@@ -256,9 +256,21 @@ export const ProfileView: React.FC = () => {
                             <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500">
                                 <i className="fas fa-map-marker-alt"></i>
                             </div>
-                            <div>
+                            <div className="flex-1">
                                 <p className="text-xs text-slate-400">Location</p>
-                                <p className="text-sm font-medium">{profile.basicInfo.location}</p>
+                                {isEditing ? (
+                                    <input 
+                                        type="text"
+                                        value={editedProfile.basicInfo?.location || ''}
+                                        onChange={(e) => setEditedProfile({
+                                            ...editedProfile,
+                                            basicInfo: { ...editedProfile.basicInfo!, location: e.target.value }
+                                        })}
+                                        className="text-sm font-medium border border-slate-300 rounded px-2 py-1 w-full"
+                                    />
+                                ) : (
+                                    <p className="text-sm font-medium">{profile.basicInfo.location}</p>
+                                )}
                             </div>
                         </li>
                     </ul>
