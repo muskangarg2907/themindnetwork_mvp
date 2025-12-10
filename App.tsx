@@ -5,6 +5,7 @@ import { ProfileWizard } from './components/ProfileWizard';
 import { ProfileView } from './components/ProfileView';
 import { AdminDashboard } from './components/AdminDashboard';
 import { AdminLogin } from './components/AdminLogin';
+import { FirebaseDiagnostic } from './components/FirebaseDiagnostic';
 
 const App: React.FC = () => {
   return (
@@ -16,6 +17,7 @@ const App: React.FC = () => {
         <Route path="/profile" element={<ProfileView />} />
         <Route path="/admin-login" element={<AdminLogin />} />
         <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/firebase-test" element={<FirebaseDiagnostic />} />
       </Routes>
     </HashRouter>
   );

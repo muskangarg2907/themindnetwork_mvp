@@ -1,8 +1,8 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 
 // Firebase configuration
-// You'll need to replace these with your actual Firebase config from Firebase Console
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "YOUR_API_KEY",
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "YOUR_PROJECT_ID.firebaseapp.com",
@@ -17,4 +17,25 @@ const app = initializeApp(firebaseConfig);
 
 // Initialize Firebase Authentication
 export const auth = getAuth(app);
+
+// Initialize App Check ONLY in production (not localhost)
+if (typeof window !== 'undefined' && !import.meta.env.DEV) {
+  const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_V3_SITE_KEY;
+  
+  if (recaptchaSiteKey) {
+    try {
+      initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider(recaptchaSiteKey),
+        isTokenAutoRefreshEnabled: true
+      });
+      console.log('[Firebase] App Check initialized for production');
+    } catch (error) {
+      console.error('[Firebase] App Check initialization failed:', error);
+    }
+  }
+} else {
+  console.log('[Firebase] App Check DISABLED for local development - use test numbers or real numbers will fail');
+  console.log('[Firebase] Test numbers: 1111111111 (OTP: 123456), 2222222222 (OTP: 654321)');
+}
+
 export default app;

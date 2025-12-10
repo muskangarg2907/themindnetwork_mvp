@@ -34,19 +34,24 @@ export const Login: React.FC = () => {
     }
   }, [step]);
 
-  // Setup reCAPTCHA on component mount
+  // Cleanup on unmount
   useEffect(() => {
-    if (!window.recaptchaVerifier) {
-      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        size: 'invisible',
-        callback: () => {
-          // reCAPTCHA solved - allow send OTP
-        },
-        'expired-callback': () => {
-          setError('reCAPTCHA expired. Please try again.');
+    return () => {
+      if (window.recaptchaVerifier) {
+        try {
+          window.recaptchaVerifier.clear();
+        } catch (e) {
+          // Ignore cleanup errors
         }
-      });
-    }
+      }
+      window.recaptchaVerifier = null;
+      
+      // Clear container
+      const container = document.getElementById('recaptcha-container');
+      if (container) {
+        container.innerHTML = '';
+      }
+    };
   }, []);
 
   // Add keyboard listener for Enter key
@@ -86,9 +91,41 @@ export const Login: React.FC = () => {
     setIsLoading(true);
     
     const fullPhone = `${countryCode}${phoneNumber}`;
+    console.log('[LOGIN] Attempting to send OTP to:', fullPhone);
+    console.log('[LOGIN] Country code:', countryCode, 'Phone:', phoneNumber);
     
     try {
+      // Clear any existing verifier and container first
+      if (window.recaptchaVerifier) {
+        try {
+          window.recaptchaVerifier.clear();
+          console.log('[LOGIN] Cleared existing verifier');
+        } catch (e) {
+          console.log('[LOGIN] Error clearing existing verifier:', e);
+        }
+        window.recaptchaVerifier = null;
+      }
+      
+      const container = document.getElementById('recaptcha-container');
+      if (container) {
+        container.innerHTML = '';
+        console.log('[LOGIN] Cleared container HTML');
+      }
+      
+      // Small delay to ensure DOM cleanup
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Create fresh verifier
+      console.log('[LOGIN] Creating reCAPTCHA verifier');
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        size: 'invisible',
+        callback: () => {
+          console.log('[LOGIN] reCAPTCHA solved');
+        }
+      });
+
       const appVerifier = window.recaptchaVerifier;
+      console.log('[LOGIN] Calling signInWithPhoneNumber with:', fullPhone);
       const confirmation = await signInWithPhoneNumber(auth, fullPhone, appVerifier);
       setConfirmationResult(confirmation);
       setIsLoading(false);
@@ -96,8 +133,41 @@ export const Login: React.FC = () => {
       console.log('[LOGIN] OTP sent successfully to', fullPhone);
     } catch (err: any) {
       console.error('[LOGIN] Error sending OTP:', err);
+      console.error('[LOGIN] Error code:', err.code);
+      console.error('[LOGIN] Error message:', err.message);
+      console.error('[LOGIN] Full error:', JSON.stringify(err, null, 2));
       setIsLoading(false);
-      setError(err.message || 'Failed to send OTP. Please try again.');
+      
+      // Reset verifier on error - clear both verifier and container
+      if (window.recaptchaVerifier) {
+        try {
+          window.recaptchaVerifier.clear();
+        } catch (e) {
+          console.log('[LOGIN] Error clearing verifier:', e);
+        }
+      }
+      window.recaptchaVerifier = null;
+      
+      // Clear the container HTML for next attempt
+      const container = document.getElementById('recaptcha-container');
+      if (container) {
+        container.innerHTML = '';
+      }
+      
+      // Friendly error messages for OTP sending
+      if (err.code === 'auth/too-many-requests') {
+        setError('Too many requests. Please try again in a few minutes.');
+      } else if (err.code === 'auth/invalid-phone-number') {
+        setError('Invalid phone number. Please check and try again.');
+      } else if (err.code === 'auth/quota-exceeded') {
+        setError('SMS quota exceeded. Please try again later.');
+      } else if (err.code === 'auth/invalid-app-credential') {
+        setError('App configuration error. Please contact support.');
+      } else if (err.code === 'auth/captcha-check-failed') {
+        setError('Security verification failed. Please refresh and try again.');
+      } else {
+        setError(`Failed to send OTP: ${err.code || 'Unknown error'}. Please try again.`);
+      }
     }
   };
 
@@ -158,7 +228,23 @@ export const Login: React.FC = () => {
     } catch (err: any) {
       console.error('[LOGIN] OTP verification error:', err);
       setIsLoading(false);
-      setError(err.message || 'Invalid OTP. Please try again.');
+      
+      // Friendly error messages based on error code
+      if (err.code === 'auth/invalid-verification-code') {
+        setError('Incorrect OTP. Please check and try again.');
+      } else if (err.code === 'auth/code-expired') {
+        setError('OTP expired. Please request a new one.');
+      } else if (err.code === 'auth/too-many-requests') {
+        setError('Too many attempts. Please try again later.');
+      } else {
+        setError('Invalid OTP. Please check and try again.');
+      }
+      
+      // Clear the OTP input to allow re-entry
+      setOtp('');
+      if (otpInputRef.current) {
+        otpInputRef.current.focus();
+      }
     }
   };  return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
