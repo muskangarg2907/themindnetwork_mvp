@@ -44,9 +44,8 @@ export const ProfileView: React.FC = () => {
 
   const handleSave = async () => {
       try {
-        // Use _id if available, otherwise use id
-        const profileId = editData._id || editData.id;
-        console.log('[PROFILE] Saving profile with id:', profileId);
+        const profileId = editData._id;
+        console.log('[PROFILE] Saving profile with _id:', profileId);
         
         // Save to backend with _id field
         const response = await fetch('/api/profiles', {
@@ -149,7 +148,7 @@ export const ProfileView: React.FC = () => {
                  <div>
                     <h1 className="text-2xl font-bold text-slate-800">{profile.basicInfo.fullName}</h1>
                     <div className="flex items-center gap-2">
-                         <span className="text-xs text-slate-500">TheMindNetwork ID: {profile.id.slice(0,8)}</span>
+                         <span className="text-xs text-slate-500">TheMindNetwork ID: {profile._id?.slice(0,8)}</span>
                          <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wide ${isProvider ? 'bg-blue-100 text-blue-700' : 'bg-teal-100 text-teal-700'}`}>
                              {isProvider ? 'Provider' : 'Client'}
                          </span>

@@ -1,5 +1,4 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { randomUUID } from 'crypto';
 import { ObjectId } from 'mongodb';
 import { getProfilesCollection } from '../db.js';
 
@@ -35,8 +34,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!payload || typeof payload !== 'object') {
         return res.status(400).json({ error: 'Invalid payload' });
       }
-
-      const id = randomUUID();
       
       // Normalize phone in basicInfo for consistent lookup
       const normalizedPayload = {
@@ -48,17 +45,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       };
 
       const record = {
-        _id: id,
         ...normalizedPayload,
         createdAt: new Date().toISOString()
       };
 
-      console.log('[PROFILES] POST: Saving profile', id, 'with phone:', record.basicInfo?.phone);
+      console.log('[PROFILES] POST: Saving profile with phone:', record.basicInfo?.phone);
 
       try {
-        await profiles.insertOne(record);
-        console.log('[PROFILES] POST: Profile saved successfully');
-        return res.status(201).json({ _id: id, ...normalizedPayload, createdAt: record.createdAt });
+        const result = await profiles.insertOne(record);
+        console.log('[PROFILES] POST: Profile saved successfully with _id:', result.insertedId);
+        return res.status(201).json({ _id: result.insertedId, ...normalizedPayload, createdAt: record.createdAt });
       } catch (err) {
         console.error('[PROFILES] POST: Insert failed:', err);
         return res.status(500).json({ error: 'Failed to save profile', details: (err as any)?.message });

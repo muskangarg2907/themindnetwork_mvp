@@ -2,7 +2,7 @@
 export type UserRole = 'client' | 'provider';
 
 export interface UserProfile {
-  id: string;
+  _id?: string;
   role: UserRole; 
   status: 'draft' | 'pending_verification' | 'verified';
   basicInfo: {

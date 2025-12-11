@@ -12,7 +12,6 @@ import { generateProfileSummary, generateProviderBio } from '../services/geminiS
 import { saveProfile } from '../services/api';
 
 const INITIAL_PROFILE: UserProfile = {
-  id: crypto.randomUUID(),
   status: 'draft',
   role: 'client', // Default, but will be set by user
   basicInfo: { fullName: '', email: '', phone: '', dob: '', location: '', gender: '' },
