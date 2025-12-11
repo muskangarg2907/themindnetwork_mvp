@@ -130,7 +130,7 @@ export const Landing: React.FC = () => {
 
           <div className="flex flex-col items-center gap-6 mb-12">
             <Button 
-              onClick={() => navigate('/login', { state: { role: 'client' } })}
+              onClick={() => navigate('/login')}
               className="text-lg px-12 py-6 rounded-2xl shadow-lg shadow-teal-500/30 hover:shadow-xl hover:shadow-teal-500/40 transition-all"
             >
               Get Started Free <i className="fas fa-arrow-right ml-3"></i>
@@ -321,7 +321,7 @@ export const Landing: React.FC = () => {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
-              onClick={() => navigate('/login', { state: { role: 'client' } })}
+              onClick={() => navigate('/login')}
               className="text-lg px-12 py-5 rounded-2xl shadow-lg shadow-teal-500/30"
             >
               Get Started Free <i className="fas fa-arrow-right ml-2"></i>
@@ -339,17 +339,24 @@ export const Landing: React.FC = () => {
             <span>Join Our Professional Network</span>
           </div>
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Want to Join Our Network of Professionals?
+            Are you a provider who wants to join us?
           </h2>
           <p className="text-xl text-slate-300 mb-10">
             Connect with clients who need your expertise. Grow your practice with TheMindNetwork.
           </p>
-          <div className="flex justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
               onClick={() => navigate('/login', { state: { role: 'provider' } })}
               className="text-lg px-12 py-5 rounded-2xl bg-teal-500 hover:bg-teal-600 text-white shadow-lg shadow-teal-500/30"
             >
-              Get in Touch <i className="fas fa-user-doctor ml-2"></i>
+              Register Now <i className="fas fa-user-doctor ml-2"></i>
+            </Button>
+            <Button 
+              onClick={() => window.open('https://calendar.app.google/a9nJB8iRiUyDRcNi6', '_blank')}
+              variant="outline"
+              className="text-lg px-12 py-5 rounded-2xl bg-transparent border-2 border-teal-400 text-teal-300 hover:bg-teal-500/10 shadow-lg"
+            >
+              Book Consult <i className="fas fa-calendar ml-2"></i>
             </Button>
           </div>
           <p className="text-sm text-slate-400 mt-6">✨ Expand your reach and help more people</p>
