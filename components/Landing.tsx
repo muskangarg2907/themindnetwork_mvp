@@ -367,14 +367,14 @@ export const Landing: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
               onClick={() => navigate('/login', { state: { role: 'provider' } })}
-              className="text-lg px-12 py-5 rounded-2xl bg-teal-500 hover:bg-teal-600 text-white shadow-lg shadow-teal-500/30"
+              className="text-base sm:text-lg px-8 sm:px-12 py-3 sm:py-5 rounded-xl sm:rounded-2xl bg-teal-500 hover:bg-teal-600 text-white shadow-lg shadow-teal-500/30"
             >
               Register Now <i className="fas fa-user-doctor ml-2"></i>
             </Button>
             <Button 
               onClick={() => window.open('https://calendar.app.google/a9nJB8iRiUyDRcNi6', '_blank')}
               variant="outline"
-              className="text-lg px-12 py-5 rounded-2xl bg-transparent border-2 border-teal-400 text-teal-300 hover:bg-teal-500/10 shadow-lg"
+              className="text-base sm:text-lg px-8 sm:px-12 py-3 sm:py-5 rounded-xl sm:rounded-2xl bg-transparent border-2 border-teal-400 text-teal-300 hover:bg-teal-500/10 shadow-lg"
             >
               Book Consult <i className="fas fa-calendar ml-2"></i>
             </Button>
