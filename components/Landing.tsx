@@ -64,13 +64,22 @@ export const Landing: React.FC = () => {
             </div>
             <span className="text-2xl font-bold text-slate-800">TheMindNetwork</span>
           </div>
-          <Button 
-            onClick={() => navigate('/login')}
-            variant="secondary"
-            className="px-6 py-2"
-          >
-            Login <i className="fas fa-sign-in-alt ml-2"></i>
-          </Button>
+          <div className="flex items-center gap-4">
+            <Button 
+              onClick={() => navigate('/login', { state: { role: 'provider' } })}
+              variant="outline"
+              className="px-6 py-2 border-2 border-teal-500 text-teal-600 hover:bg-teal-50"
+            >
+              For Providers <i className="fas fa-user-doctor ml-2"></i>
+            </Button>
+            <Button 
+              onClick={() => navigate('/login')}
+              variant="secondary"
+              className="px-6 py-2"
+            >
+              Login <i className="fas fa-sign-in-alt ml-2"></i>
+            </Button>
+          </div>
         </div>
       </nav>
 
@@ -88,13 +97,12 @@ export const Landing: React.FC = () => {
           </h1>
           
           <p className="text-xl md:text-2xl text-slate-600 mb-12 max-w-3xl mx-auto leading-relaxed">
-            Connect with verified mental health professionals who understand your needs. 
-            Experience personalized care with unlimited consultations and find your perfect therapist match.
+            Find your perfect therapist match with personalized care and unlimited consultations.
           </p>
 
           <div className="flex flex-col items-center gap-6 mb-12">
             <Button 
-              onClick={() => navigate('/login')}
+              onClick={() => navigate('/login', { state: { role: 'client' } })}
               className="text-lg px-12 py-6 rounded-2xl shadow-lg shadow-teal-500/30 hover:shadow-xl hover:shadow-teal-500/40 transition-all"
             >
               Get Started Free <i className="fas fa-arrow-right ml-3"></i>
@@ -195,7 +203,7 @@ export const Landing: React.FC = () => {
                 </ul>
 
                 <Button
-                  onClick={() => navigate('/login')}
+                  onClick={() => navigate('/login', { state: { role: 'client' } })}
                   variant={plan.highlight ? 'primary' : 'secondary'}
                   className="w-full py-4 rounded-xl text-lg font-semibold"
                 >
@@ -216,9 +224,76 @@ export const Landing: React.FC = () => {
           <p className="text-xl text-slate-600 mb-10">
             Join thousands who found their perfect therapist match through TheMindNetwork
           </p>
+
+          {/* Testimonials */}
+          <div className="grid md:grid-cols-3 gap-6 mb-12">
+            <div className="bg-white rounded-2xl p-6 shadow-md">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center">
+                  <span className="text-teal-600 font-semibold">PS</span>
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold text-slate-900">Priya Sharma</p>
+                  <div className="flex text-yellow-500 text-sm">
+                    <i className="fas fa-star"></i>
+                    <i className="fas fa-star"></i>
+                    <i className="fas fa-star"></i>
+                    <i className="fas fa-star"></i>
+                    <i className="fas fa-star"></i>
+                  </div>
+                </div>
+              </div>
+              <p className="text-slate-600 text-sm text-left">
+                "Finally found someone who gets me. The matching was spot on and my therapist genuinely cares. Feeling so much lighter now!"
+              </p>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 shadow-md">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                  <span className="text-blue-600 font-semibold">RK</span>
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold text-slate-900">Rohan Kapoor</p>
+                  <div className="flex text-yellow-500 text-sm">
+                    <i className="fas fa-star"></i>
+                    <i className="fas fa-star"></i>
+                    <i className="fas fa-star"></i>
+                    <i className="fas fa-star"></i>
+                    <i className="fas fa-star"></i>
+                  </div>
+                </div>
+              </div>
+              <p className="text-slate-600 text-sm text-left">
+                "Was skeptical at first but this changed everything. My therapist helped me work through anxiety I'd been ignoring for years."
+              </p>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 shadow-md">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+                  <span className="text-purple-600 font-semibold">AM</span>
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold text-slate-900">Ananya Mehta</p>
+                  <div className="flex text-yellow-500 text-sm">
+                    <i className="fas fa-star"></i>
+                    <i className="fas fa-star"></i>
+                    <i className="fas fa-star"></i>
+                    <i className="fas fa-star"></i>
+                    <i className="fas fa-star"></i>
+                  </div>
+                </div>
+              </div>
+              <p className="text-slate-600 text-sm text-left">
+                "Best decision I made this year. The whole process was smooth and I connected with an amazing therapist on my first try."
+              </p>
+            </div>
+          </div>
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
-              onClick={() => navigate('/login')}
+              onClick={() => navigate('/login', { state: { role: 'client' } })}
               className="text-lg px-12 py-5 rounded-2xl shadow-lg shadow-teal-500/30"
             >
               Get Started Free <i className="fas fa-arrow-right ml-2"></i>
@@ -234,6 +309,31 @@ export const Landing: React.FC = () => {
             )}
           </div>
           <p className="text-sm text-slate-500 mt-6">🔒 Your privacy and data are 100% secure</p>
+        </div>
+      </div>
+
+      {/* Provider CTA Section */}
+      <div className="py-24 px-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-teal-500/20 border border-teal-400/30 text-teal-300 text-sm mb-6">
+            <i className="fas fa-star"></i>
+            <span>Join Our Professional Network</span>
+          </div>
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+            Want to Join Our Network of Professionals?
+          </h2>
+          <p className="text-xl text-slate-300 mb-10">
+            Connect with clients who need your expertise. Grow your practice with TheMindNetwork.
+          </p>
+          <div className="flex justify-center">
+            <Button 
+              onClick={() => navigate('/login', { state: { role: 'provider' } })}
+              className="text-lg px-12 py-5 rounded-2xl bg-teal-500 hover:bg-teal-600 text-white shadow-lg shadow-teal-500/30"
+            >
+              Get in Touch <i className="fas fa-user-doctor ml-2"></i>
+            </Button>
+          </div>
+          <p className="text-sm text-slate-400 mt-6">✨ Expand your reach and help more people</p>
         </div>
       </div>
     </div>

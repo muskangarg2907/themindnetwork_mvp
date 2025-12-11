@@ -137,8 +137,12 @@ app.get('/api/profiles/:id', async (req, res) => {
 
 app.post('/api/profiles', async (req, res) => {
   try {
+    console.log('Received profile POST request:', JSON.stringify(req.body, null, 2));
     const payload = req.body;
-    if (!payload || typeof payload !== 'object') return res.status(400).json({ error: 'Invalid payload' });
+    if (!payload || typeof payload !== 'object') {
+      console.error('Invalid payload received');
+      return res.status(400).json({ error: 'Invalid payload' });
+    }
     const id = randomUUID();
     if (usePostgres) {
       const q = await pool.query('INSERT INTO profiles(id, data) VALUES($1, $2) RETURNING id, data, created_at, updated_at', [id, payload]);
@@ -149,9 +153,11 @@ app.post('/api/profiles', async (req, res) => {
     const record = { id, ...payload, createdAt: new Date().toISOString() };
     profiles.push(record);
     await writeProfilesFile(profiles);
+    console.log('Profile saved successfully:', id);
     return res.status(201).json(record);
   } catch (err) {
     console.error('POST /api/profiles error:', err);
+    console.error('Error stack:', err.stack);
     res.status(500).json({ error: 'Failed to save profile', details: err.message });
   }
 });
@@ -264,6 +270,98 @@ app.delete('/api/profiles/:id', async (req, res) => {
   } catch (err) {
     console.error('DELETE /api/profiles/:id error:', err);
     res.status(500).json({ error: 'Failed to delete profile', details: err.message });
+  }
+});
+
+// Admin endpoints (for local dev - these are serverless functions in production)
+app.get('/api/admin/profiles', async (req, res) => {
+  try {
+    if (usePostgres) {
+      const q = await pool.query('SELECT id, data, created_at, updated_at FROM profiles ORDER BY created_at DESC');
+      const allProfiles = q.rows.map(r => ({ _id: r.id, ...r.data, createdAt: r.created_at, updatedAt: r.updated_at }));
+      return res.json({ profiles: allProfiles, total: allProfiles.length });
+    }
+    const profiles = await readProfilesFile();
+    // Add _id field for compatibility with frontend (which expects _id, not id)
+    const normalized = profiles.map(p => ({ ...p, _id: p._id || p.id }));
+    return res.json({ profiles: normalized, total: normalized.length });
+  } catch (err) {
+    console.error('GET /api/admin/profiles error:', err);
+    res.status(500).json({ error: 'Failed to fetch profiles', details: err.message });
+  }
+});
+
+app.delete('/api/admin/profiles', async (req, res) => {
+  try {
+    const id = req.query.id;
+    if (!id) return res.status(400).json({ error: 'id query parameter required' });
+    
+    if (usePostgres) {
+      const q = await pool.query('DELETE FROM profiles WHERE id = $1 RETURNING id', [id]);
+      if (q.rowCount === 0) return res.status(404).json({ error: 'Profile not found' });
+      return res.json({ message: 'Profile deleted', success: true });
+    }
+    const profiles = await readProfilesFile();
+    // Support both id and _id
+    const idx = profiles.findIndex(p => p.id === id || p._id === id);
+    if (idx === -1) return res.status(404).json({ error: 'Profile not found' });
+    profiles.splice(idx, 1);
+    await writeProfilesFile(profiles);
+    return res.json({ message: 'Profile deleted', success: true });
+  } catch (err) {
+    console.error('DELETE /api/admin/profiles error:', err);
+    res.status(500).json({ error: 'Failed to delete profile', details: err.message });
+  }
+});
+
+app.put('/api/admin/profiles', async (req, res) => {
+  try {
+    const id = req.query.id;
+    if (!id) return res.status(400).json({ error: 'id query parameter required' });
+    
+    const updates = req.body;
+    
+    if (usePostgres) {
+      const existing = await pool.query('SELECT data FROM profiles WHERE id = $1', [id]);
+      if (existing.rowCount === 0) return res.status(404).json({ error: 'Profile not found' });
+      const merged = { ...existing.rows[0].data, ...updates };
+      const q = await pool.query('UPDATE profiles SET data = $1, updated_at = now() WHERE id = $2 RETURNING id, data, created_at, updated_at', [merged, id]);
+      const r = q.rows[0];
+      return res.json({ _id: r.id, ...r.data, createdAt: r.created_at, updatedAt: r.updated_at });
+    }
+    
+    const profiles = await readProfilesFile();
+    // Support both id and _id
+    const profile = profiles.find(p => p.id === id || p._id === id);
+    if (!profile) return res.status(404).json({ error: 'Profile not found' });
+    Object.assign(profile, updates);
+    profile.updatedAt = new Date().toISOString();
+    await writeProfilesFile(profiles);
+    // Return with _id for frontend compatibility
+    return res.json({ ...profile, _id: profile._id || profile.id });
+  } catch (err) {
+    console.error('PUT /api/admin/profiles error:', err);
+    res.status(500).json({ error: 'Failed to update profile', details: err.message });
+  }
+});
+
+app.get('/api/admin/notify', async (req, res) => {
+  try {
+    // In local dev, just return a success response
+    res.json({ lastUpdate: new Date().toISOString(), source: 'local-dev' });
+  } catch (err) {
+    console.error('GET /api/admin/notify error:', err);
+    res.status(500).json({ error: 'Notify check failed', details: err.message });
+  }
+});
+
+app.post('/api/admin/notify', async (req, res) => {
+  try {
+    // In local dev, just acknowledge the notification
+    res.json({ success: true, note: 'Notified admin (local dev)', lastUpdate: new Date().toISOString() });
+  } catch (err) {
+    console.error('POST /api/admin/notify error:', err);
+    res.status(500).json({ error: 'Notify failed', details: err.message });
   }
 });
 

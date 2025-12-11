@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { UserProfile, UserRole, WizardStep } from '../types';
 import { StepBasicInfo } from './wizard/StepBasicInfo';
 import { StepClinical } from './wizard/StepProfessional';
@@ -7,6 +7,7 @@ import { StepPreferences } from './wizard/StepPreferences';
 import { StepRoleSelection } from './wizard/StepRoleSelection';
 import { StepProviderProfessional } from './wizard/StepProviderProfessional';
 import { StepProviderPractice } from './wizard/StepProviderPractice';
+import { StepChatbotIntake } from './wizard/StepChatbotIntake';
 import { Button } from './ui/Button';
 import { generateProfileSummary, generateProviderBio } from '../services/geminiService';
 import { saveProfile } from '../services/api';
@@ -27,15 +28,40 @@ const INITIAL_PROFILE: UserProfile = {
 
 export const ProfileWizard: React.FC = () => {
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState<WizardStep>(WizardStep.ROLE_SELECTION);
-  const [profileData, setProfileData] = useState<UserProfile>(INITIAL_PROFILE);
+  const location = useLocation();
+  const preselectedRole = (location.state as any)?.preselectedRole as UserRole | undefined;
+  const phoneFromAuth = (location.state as any)?.phone as string | undefined;
+  
+  // Determine initial step and role based on preselection
+  const getInitialStep = () => {
+    if (preselectedRole === 'client') {
+      return WizardStep.BASIC_INFO;
+    }
+    return WizardStep.ROLE_SELECTION;
+  };
+  
+  const getInitialProfile = () => {
+    const baseProfile = { ...INITIAL_PROFILE };
+    if (preselectedRole) {
+      baseProfile.role = preselectedRole;
+    }
+    if (phoneFromAuth) {
+      baseProfile.basicInfo.phone = phoneFromAuth;
+    }
+    return baseProfile;
+  };
+  
+  const [currentStep, setCurrentStep] = useState<WizardStep>(getInitialStep());
+  const [profileData, setProfileData] = useState<UserProfile>(getInitialProfile());
   const [isGenerating, setIsGenerating] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
   // Add keyboard listener for Enter key
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' && currentStep !== WizardStep.ROLE_SELECTION) {
+      // Exclude role selection AND chatbot intake from Enter key handling
+      // Chatbot has its own Enter key handler
+      if (e.key === 'Enter' && currentStep !== WizardStep.ROLE_SELECTION && currentStep !== WizardStep.CHATBOT_INTAKE) {
         e.preventDefault();
         handleNext();
       }
@@ -91,10 +117,14 @@ export const ProfileWizard: React.FC = () => {
 
     if (currentStep === WizardStep.BASIC_INFO) {
         if (profileData.role === 'client') {
-            nextStep = WizardStep.CLINICAL_INTAKE;
+            nextStep = WizardStep.CHATBOT_INTAKE;
         } else {
             nextStep = WizardStep.PROVIDER_PROFESSIONAL;
         }
+    } else if (currentStep === WizardStep.CHATBOT_INTAKE) {
+        // After chatbot, skip preferences and submit directly
+        await handleSubmit();
+        return;
     } else if (currentStep === WizardStep.CLINICAL_INTAKE) {
         nextStep = WizardStep.CLIENT_PREFERENCES;
     } else if (currentStep === WizardStep.PROVIDER_PROFESSIONAL) {
@@ -172,6 +202,8 @@ export const ProfileWizard: React.FC = () => {
     setErrorMsg('');
     if (currentStep === WizardStep.BASIC_INFO) {
         setCurrentStep(WizardStep.ROLE_SELECTION);
+    } else if (currentStep === WizardStep.CHATBOT_INTAKE) {
+        setCurrentStep(WizardStep.BASIC_INFO);
     } else if (currentStep === WizardStep.CLINICAL_INTAKE) {
         setCurrentStep(WizardStep.BASIC_INFO);
     } else if (currentStep === WizardStep.CLIENT_PREFERENCES) {
@@ -192,6 +224,8 @@ export const ProfileWizard: React.FC = () => {
         return <StepRoleSelection setRole={handleRoleSelect} />;
       case WizardStep.BASIC_INFO:
         return <StepBasicInfo data={profileData} updateData={updateData} />;
+      case WizardStep.CHATBOT_INTAKE:
+        return <StepChatbotIntake data={profileData} updateData={updateData} onComplete={handleNext} />;
       case WizardStep.CLINICAL_INTAKE:
         return <StepClinical data={profileData} updateData={updateData} />;
       case WizardStep.CLIENT_PREFERENCES:
@@ -207,16 +241,18 @@ export const ProfileWizard: React.FC = () => {
 
   // Progress Bar logic
   const isClient = profileData.role === 'client';
-  const totalSteps = isClient ? 3 : 3; // Basic, Clinical, Prefs OR Basic, Prof, Practice
+  const totalSteps = isClient ? 2 : 3; // For clients: Basic + Chatbot. For providers: Basic, Prof, Practice
   
   let currentStepIndex = 0;
   if (currentStep === WizardStep.BASIC_INFO) currentStepIndex = 1;
+  if (currentStep === WizardStep.CHATBOT_INTAKE) currentStepIndex = 2;
   if (currentStep === WizardStep.CLINICAL_INTAKE || currentStep === WizardStep.PROVIDER_PROFESSIONAL) currentStepIndex = 2;
   if (currentStep === WizardStep.CLIENT_PREFERENCES || currentStep === WizardStep.PROVIDER_PRACTICE) currentStepIndex = 3;
 
   const progress = (currentStepIndex / totalSteps) * 100;
 
   const isFinalStep = currentStep === WizardStep.CLIENT_PREFERENCES || currentStep === WizardStep.PROVIDER_PRACTICE;
+  const isChatbotStep = currentStep === WizardStep.CHATBOT_INTAKE;
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50">
       <div className="w-full max-w-2xl bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden flex flex-col h-[800px]">
@@ -267,7 +303,7 @@ export const ProfileWizard: React.FC = () => {
         )}
 
         {/* Footer */}
-        {currentStep !== WizardStep.ROLE_SELECTION && (
+        {currentStep !== WizardStep.ROLE_SELECTION && !isChatbotStep && (
             <div className="bg-slate-50 p-6 border-t border-slate-200 flex justify-between items-center">
                 <Button 
                     variant="outline" 

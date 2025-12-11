@@ -18,11 +18,15 @@ export interface UserProfile {
     presentingProblem: string;
     currentMood: string;
     hasPriorTherapy: boolean;
+    priorExperience?: string;
     medications: string;
     riskFactors: string[]; 
   };
   preferences?: {
     providerGenderPreference: string;
+    mode?: string; // online, offline, both
+    budget?: string;
+    bio?: string;
   };
   // Provider specific data
   providerDetails?: {
@@ -50,11 +54,12 @@ export enum WizardStep {
   ROLE_SELECTION = 0,
   BASIC_INFO = 1,
   // Client Path
-  CLINICAL_INTAKE = 2,
-  CLIENT_PREFERENCES = 3,
+  CHATBOT_INTAKE = 2,
+  CLINICAL_INTAKE = 3,
+  CLIENT_PREFERENCES = 4,
   // Provider Path
-  PROVIDER_PROFESSIONAL = 4,
-  PROVIDER_PRACTICE = 5,
+  PROVIDER_PROFESSIONAL = 5,
+  PROVIDER_PRACTICE = 6,
   
   COMPLETED = 99
 }

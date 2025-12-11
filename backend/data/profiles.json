@@ -58,14 +58,6 @@
     "aiSummary": "Muskan Garg is a provider. A professional bio is not available in local mode."
   },
   {
-    "id": "75159959-c127-4819-b6cd-b58b1ce18c68",
-    "basicInfo": {
-      "fullName": "Test User",
-      "email": "test@example.com"
-    },
-    "createdAt": "2025-12-08T09:21:51.164Z"
-  },
-  {
     "id": "be000ad4-a571-4d38-b355-c628c98ec491",
     "status": "pending_verification",
     "role": "provider",
@@ -106,5 +98,89 @@
     },
     "createdAt": "2025-12-08T16:07:52.230Z",
     "aiSummary": "Muskan Garg is a provider. A professional bio is not available in local mode."
+  },
+  {
+    "id": "497b22d5-b0ad-4171-bad3-5c23dedbcd70",
+    "status": "pending_verification",
+    "role": "client",
+    "basicInfo": {
+      "fullName": "Testing",
+      "email": "pika@gmail.com",
+      "phone": "+91 1111111111",
+      "dob": "2025-12-03",
+      "location": "kolkata",
+      "gender": "Male"
+    },
+    "clinical": {
+      "presentingProblem": "sick of panic attacks",
+      "currentMood": "",
+      "hasPriorTherapy": true,
+      "priorExperience": "umm, i dont think it is for me",
+      "medications": "",
+      "riskFactors": []
+    },
+    "preferences": {
+      "providerGenderPreference": "",
+      "mode": "both",
+      "budget": "500",
+      "bio": "umm rigid"
+    },
+    "providerDetails": {
+      "qualification": "",
+      "yearsExperience": "",
+      "specializations": [],
+      "mode": "online",
+      "languages": [],
+      "clientType": [],
+      "budgetRange": "",
+      "licenses": "",
+      "therapeuticFocus": "",
+      "therapyStyle": "",
+      "resumeLink": ""
+    },
+    "createdAt": "2025-12-11T09:51:09.429Z",
+    "aiSummary": ""
+  },
+  {
+    "id": "a4ff945a-5d1e-4003-b21a-1bf10f77cb65",
+    "status": "pending_verification",
+    "role": "client",
+    "basicInfo": {
+      "fullName": "Testing2",
+      "email": "female@gmail.com",
+      "phone": "+91 2222222222",
+      "dob": "2025-12-01",
+      "location": "bellandur, bangalore",
+      "gender": "Female"
+    },
+    "clinical": {
+      "presentingProblem": "panic",
+      "currentMood": "",
+      "hasPriorTherapy": true,
+      "priorExperience": "meh, not good",
+      "medications": "",
+      "riskFactors": []
+    },
+    "preferences": {
+      "providerGenderPreference": "",
+      "mode": "both",
+      "budget": "1000-2000",
+      "bio": "interesting"
+    },
+    "providerDetails": {
+      "qualification": "",
+      "yearsExperience": "",
+      "specializations": [],
+      "mode": "online",
+      "languages": [],
+      "clientType": [],
+      "budgetRange": "",
+      "licenses": "",
+      "therapeuticFocus": "",
+      "therapyStyle": "",
+      "resumeLink": ""
+    },
+    "createdAt": "2025-12-11T09:55:07.152Z",
+    "aiSummary": ""
   }
 ]

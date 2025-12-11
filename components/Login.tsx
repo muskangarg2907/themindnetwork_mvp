@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { auth } from '../services/firebase';
@@ -16,6 +16,8 @@ const COUNTRY_CODES = [
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const preselectedRole = (location.state as any)?.role; // 'client' or 'provider' or undefined
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   
   const [countryCode, setCountryCode] = useState('+91');
@@ -108,12 +110,19 @@ export const Login: React.FC = () => {
       
       const container = document.getElementById('recaptcha-container');
       if (container) {
-        container.innerHTML = '';
-        console.log('[LOGIN] Cleared container HTML');
+        // Remove and recreate the container to fully reset it
+        const parent = container.parentNode;
+        const newContainer = document.createElement('div');
+        newContainer.id = 'recaptcha-container';
+        if (parent) {
+          parent.removeChild(container);
+          parent.appendChild(newContainer);
+        }
+        console.log('[LOGIN] Recreated container element');
       }
       
       // Small delay to ensure DOM cleanup
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 150));
       
       // Create fresh verifier
       console.log('[LOGIN] Creating reCAPTCHA verifier');
@@ -126,7 +135,14 @@ export const Login: React.FC = () => {
 
       const appVerifier = window.recaptchaVerifier;
       console.log('[LOGIN] Calling signInWithPhoneNumber with:', fullPhone);
-      const confirmation = await signInWithPhoneNumber(auth, fullPhone, appVerifier);
+      
+      // Add timeout wrapper
+      const signInPromise = signInWithPhoneNumber(auth, fullPhone, appVerifier);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timed out. Please try again.')), 30000)
+      );
+      
+      const confirmation = await Promise.race([signInPromise, timeoutPromise]) as ConfirmationResult;
       setConfirmationResult(confirmation);
       
       // Track OTP request
@@ -177,8 +193,11 @@ export const Login: React.FC = () => {
         setError('App configuration error. Please contact support.');
       } else if (err.code === 'auth/captcha-check-failed') {
         setError('Security verification failed. Please refresh and try again.');
+      } else if (err.message?.includes('timed out') || err.message?.includes('Timeout')) {
+        setError('Request timed out. Please check your internet connection and try again.');
       } else {
-        setError(`Failed to send OTP: ${err.code || 'Unknown error'}. Please try again.`);
+        const errorMsg = err.code || err.message || 'Unknown error';
+        setError(`Failed to send OTP: ${errorMsg}. Please refresh the page and try again.`);
       }
     }
   };
@@ -239,7 +258,7 @@ export const Login: React.FC = () => {
       if (resp.status === 404) {
         console.log('[LOGIN] NEW USER - No profile found, starting signup');
         setIsLoading(false);
-        navigate('/create');
+        navigate('/create', { state: { phone: fullPhone, preselectedRole } });
         return;
       }
 
