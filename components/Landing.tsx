@@ -326,15 +326,6 @@ export const Landing: React.FC = () => {
             >
               Get Started Free <i className="fas fa-arrow-right ml-2"></i>
             </Button>
-            {localStorage.getItem('userProfile') && (
-              <Button 
-                variant="secondary"
-                onClick={() => navigate('/profile')}
-                className="text-lg px-12 py-5 rounded-2xl"
-              >
-                Go to Profile <i className="fas fa-user ml-2"></i>
-              </Button>
-            )}
           </div>
           <p className="text-sm text-slate-500 mt-6">🔒 Your privacy and data are 100% secure</p>
         </div>
