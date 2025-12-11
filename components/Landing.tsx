@@ -7,7 +7,6 @@ export const Landing: React.FC = () => {
   const navigate = useNavigate();
   const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
   const [contactStatus, setContactStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,12 +85,12 @@ export const Landing: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-teal-50">
       {/* Navigation Bar */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-blue-600 flex items-center justify-center">
               <i className="fas fa-brain text-white text-xl"></i>
             </div>
-            <span className="text-xl md:text-2xl font-bold text-slate-800">TheMindNetwork</span>
+            <span className="text-lg sm:text-xl md:text-2xl font-bold text-slate-800">TheMindNetwork</span>
           </div>
           
           {/* Desktop Menu */}
@@ -112,69 +111,17 @@ export const Landing: React.FC = () => {
             </Button>
           </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg hover:bg-slate-100 transition-colors"
-            aria-label="Toggle menu"
-          >
-            <i className={`fas ${mobileMenuOpen ? 'fa-times' : 'fa-bars'} text-2xl text-slate-800`}></i>
-          </button>
+          {/* Mobile Login Button */}
+          <div className="md:hidden">
+            <Button 
+              onClick={() => navigate('/login')}
+              variant="secondary"
+              className="px-4 py-2 text-sm"
+            >
+              Login <i className="fas fa-sign-in-alt ml-1"></i>
+            </Button>
+          </div>
         </div>
-
-        {/* Mobile Side Menu */}
-        {mobileMenuOpen && (
-          <>
-            {/* Backdrop */}
-            <div 
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm md:hidden z-40"
-              onClick={() => setMobileMenuOpen(false)}
-            ></div>
-            
-            {/* Side Menu */}
-            <div className="fixed top-0 right-0 h-full w-72 bg-white/100 shadow-2xl md:hidden animate-slide-in z-50 border-l border-slate-200">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-8">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500 to-blue-600 flex items-center justify-center">
-                      <i className="fas fa-brain text-white text-sm"></i>
-                    </div>
-                    <span className="text-lg font-bold text-slate-800">TheMindNetwork</span>
-                  </div>
-                  <button
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="p-2 rounded-lg hover:bg-slate-100"
-                  >
-                    <i className="fas fa-times text-xl text-slate-600"></i>
-                  </button>
-                </div>
-
-                <div className="space-y-4">
-                  <Button 
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      navigate('/login', { state: { role: 'provider' } });
-                    }}
-                    variant="outline"
-                    className="w-full justify-center px-6 py-3 border-2 border-teal-500 text-teal-600 hover:bg-teal-50"
-                  >
-                    For Providers <i className="fas fa-user-doctor ml-2"></i>
-                  </Button>
-                  <Button 
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      navigate('/login');
-                    }}
-                    variant="secondary"
-                    className="w-full justify-center px-6 py-3"
-                  >
-                    Login <i className="fas fa-sign-in-alt ml-2"></i>
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
       </nav>
 
       {/* Hero Section */}
