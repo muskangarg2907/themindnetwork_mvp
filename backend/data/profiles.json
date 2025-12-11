@@ -58,30 +58,30 @@
     "aiSummary": "Muskan Garg is a provider. A professional bio is not available in local mode."
   },
   {
-    "id": "5c1c42e4-b488-4272-8d3c-19c74913105e",
+    "id": "f3ad167d-c62c-4f10-8f34-53c5a32efe0e",
     "status": "pending_verification",
     "role": "client",
     "basicInfo": {
-      "fullName": "Muski Here",
-      "email": "pika@gmail.com",
+      "fullName": "Muskan",
+      "email": "muskan@gmail.com",
       "phone": "+91 1111111111",
-      "dob": "2025-12-01",
-      "location": "punjab",
+      "dob": "2025-08-07",
+      "location": "",
       "gender": "Female"
     },
     "clinical": {
-      "presentingProblem": "no",
+      "presentingProblem": "umm nothing really, just bored",
       "currentMood": "",
-      "hasPriorTherapy": null,
-      "priorExperience": "",
+      "hasPriorTherapy": true,
+      "priorExperience": "found it doesnt much for me",
       "medications": "",
       "riskFactors": []
     },
     "preferences": {
       "providerGenderPreference": "",
-      "mode": "both",
-      "budget": "1000",
-      "bio": "cool"
+      "mode": "online",
+      "budget": "500",
+      "bio": "chilll and cool and cold meh"
     },
     "providerDetails": {
       "qualification": "",
@@ -96,7 +96,51 @@
       "therapyStyle": "",
       "resumeLink": ""
     },
-    "createdAt": "2025-12-11T10:23:22.427Z",
+    "createdAt": "2025-12-11T12:29:41.437Z",
+    "aiSummary": ""
+  },
+  {
+    "id": "aaf5f832-9fb4-4201-b588-9f719d697187",
+    "status": "pending_verification",
+    "role": "provider",
+    "basicInfo": {
+      "fullName": "Provider",
+      "email": "mind@gmail.com",
+      "phone": "+91 2222222222",
+      "dob": "2025-12-08",
+      "location": "",
+      "gender": "Male"
+    },
+    "clinical": {
+      "presentingProblem": "",
+      "currentMood": "",
+      "hasPriorTherapy": false,
+      "medications": "",
+      "riskFactors": []
+    },
+    "preferences": {
+      "providerGenderPreference": ""
+    },
+    "providerDetails": {
+      "qualification": "MA",
+      "yearsExperience": "2",
+      "specializations": [
+        "Trauma"
+      ],
+      "mode": "online",
+      "languages": [
+        "English"
+      ],
+      "clientType": [
+        "Individuals"
+      ],
+      "budgetRange": "200-1000",
+      "licenses": "-",
+      "therapeuticFocus": "Trauma",
+      "therapyStyle": "relational",
+      "resumeLink": ""
+    },
+    "createdAt": "2025-12-11T12:32:24.263Z",
     "aiSummary": ""
   }
 ]

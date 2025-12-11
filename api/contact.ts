@@ -1,4 +1,29 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { MongoClient } from 'mongodb';
+
+let cachedClient: MongoClient | null = null;
+
+async function connectToMongoDB() {
+  if (cachedClient) {
+    return cachedClient;
+  }
+
+  const uri = process.env.MONGODB_URI;
+  if (!uri) {
+    console.warn('MONGODB_URI not set');
+    return null;
+  }
+
+  try {
+    const client = new MongoClient(uri);
+    await client.connect();
+    cachedClient = client;
+    return client;
+  } catch (error) {
+    console.error('MongoDB connection error:', error);
+    return null;
+  }
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Set CORS headers
@@ -32,15 +57,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Invalid email format' });
     }
 
-    // For now, we'll use a simple email service or just log it
-    // You can integrate with SendGrid, Resend, or any email service
-    
+    const submission = {
+      name,
+      email,
+      message,
+      timestamp: new Date(),
+      read: false
+    };
+
+    // Store in MongoDB
+    const client = await connectToMongoDB();
+    if (client) {
+      try {
+        const db = client.db('themindnetwork');
+        const result = await db.collection('contact_submissions').insertOne(submission);
+        console.log('Contact form saved to MongoDB:', result.insertedId);
+      } catch (mongoErr) {
+        console.error('Failed to save to MongoDB:', mongoErr);
+        // Don't fail the request if MongoDB fails
+      }
+    }
+
     // Log the contact form submission
     console.log('Contact Form Submission:', {
       name,
       email,
       message,
-      timestamp: new Date().toISOString()
+      timestamp: submission.timestamp.toISOString()
     });
 
     // Send email using Resend (you'll need to install and configure)

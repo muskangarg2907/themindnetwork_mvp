@@ -455,31 +455,3 @@ process.on('SIGINT', async () => {
   }
   process.exit(0);
 });
-
-// Generic error handler for unexpected errors
-app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err);
-  res.status(500).json({ error: 'Internal Server Error', details: err?.message });
-});
-
-async function start() {
-  await ensureSchema();
-  await connectMongo();
-  const port = process.env.PORT || 4000;
-  app.listen(port, () => console.log(`Server listening on ${port}`));
-}
-
-start().catch(err => {
-  console.error('Failed to start server', err);
-  process.exit(1);
-});
-
-// Graceful shutdown
-process.on('SIGINT', async () => {
-  console.log('Shutting down gracefully...');
-  if (mongoClient) {
-    await mongoClient.close();
-  }
-  process.exit(0);
-});
-
