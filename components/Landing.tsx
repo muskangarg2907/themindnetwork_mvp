@@ -337,14 +337,7 @@ export const Landing: React.FC = () => {
               onClick={() => navigate('/login')}
               className="text-lg px-12 py-5 rounded-2xl shadow-lg shadow-teal-500/30 hover:shadow-xl transition-all w-full sm:w-auto"
             >
-              Get Started Free <i className="fas fa-arrow-right ml-2"></i>
-            </Button>
-            <Button 
-              onClick={() => navigate('/login', { state: { role: 'provider' } })}
-              variant="outline"
-              className="text-lg px-12 py-5 rounded-2xl border-2 border-teal-500 text-teal-600 hover:bg-teal-50 shadow-lg w-full sm:w-auto"
-            >
-              Join as Provider <i className="fas fa-user-doctor ml-2"></i>
+              Get Started <i className="fas fa-arrow-right ml-2"></i>
             </Button>
           </div>
           <p className="text-sm text-slate-500 mt-6">🔒 Your privacy and data are 100% secure</p>
