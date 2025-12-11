@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const { randomUUID } = require('crypto');
 const { Pool } = require('pg');
+const { MongoClient } = require('mongodb');
 const fs = require('fs').promises;
 const path = require('path');
 
@@ -10,13 +11,21 @@ const DATA_DIR = path.join(__dirname, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'profiles.json');
 
 const DATABASE_URL = process.env.DATABASE_URL;
+const MONGODB_URI = process.env.MONGODB_URI;
 const usePostgres = Boolean(DATABASE_URL);
+const useMongo = Boolean(MONGODB_URI);
 
 if (!DATABASE_URL) {
   console.warn('Warning: DATABASE_URL not set. Falling back to file-based storage for local testing.');
 }
 
+if (!MONGODB_URI) {
+  console.warn('Warning: MONGODB_URI not set. Contact form submissions will be logged to console only.');
+}
+
 const pool = usePostgres ? new Pool({ connectionString: DATABASE_URL }) : null;
+let mongoClient = null;
+let mongoDb = null;
 
 async function ensureSchema() {
   if (!usePostgres) return;
@@ -29,6 +38,19 @@ async function ensureSchema() {
     );
   `;
   await pool.query(create);
+}
+
+async function connectMongo() {
+  if (!useMongo) return;
+  try {
+    mongoClient = new MongoClient(MONGODB_URI);
+    await mongoClient.connect();
+    mongoDb = mongoClient.db('themindnetwork');
+    console.log('✅ Connected to MongoDB');
+  } catch (err) {
+    console.error('Failed to connect to MongoDB:', err);
+    mongoDb = null;
+  }
 }
 
 async function readProfilesFile() {
@@ -345,16 +367,6 @@ app.put('/api/admin/profiles', async (req, res) => {
   }
 });
 
-app.get('/api/admin/notify', async (req, res) => {
-  try {
-    // In local dev, just return a success response
-    res.json({ lastUpdate: new Date().toISOString(), source: 'local-dev' });
-  } catch (err) {
-    console.error('GET /api/admin/notify error:', err);
-    res.status(500).json({ error: 'Notify check failed', details: err.message });
-  }
-});
-
 app.post('/api/admin/notify', async (req, res) => {
   try {
     // In local dev, just acknowledge the notification
@@ -380,16 +392,32 @@ app.post('/api/contact', async (req, res) => {
       return res.status(400).json({ error: 'Invalid email format' });
     }
 
-    // Log the contact form submission
+    const submission = {
+      name,
+      email,
+      message,
+      timestamp: new Date(),
+      read: false
+    };
+
+    // Store in MongoDB if available
+    if (mongoDb) {
+      try {
+        const result = await mongoDb.collection('contact_submissions').insertOne(submission);
+        console.log('📧 Contact form saved to MongoDB:', result.insertedId);
+      } catch (mongoErr) {
+        console.error('Failed to save to MongoDB:', mongoErr);
+        // Don't fail the request if MongoDB fails
+      }
+    }
+
+    // Also log to console for visibility
     console.log('📧 Contact Form Submission:', {
       name,
       email,
       message,
-      timestamp: new Date().toISOString()
+      timestamp: submission.timestamp.toISOString()
     });
-
-    // For local development, we just log it
-    // In production (Vercel), the api/contact.ts endpoint will handle email sending
     
     res.json({ 
       success: true, 
@@ -409,6 +437,7 @@ app.use((err, req, res, next) => {
 
 async function start() {
   await ensureSchema();
+  await connectMongo();
   const port = process.env.PORT || 4000;
   app.listen(port, () => console.log(`Server listening on ${port}`));
 }
@@ -417,3 +446,40 @@ start().catch(err => {
   console.error('Failed to start server', err);
   process.exit(1);
 });
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  console.log('Shutting down gracefully...');
+  if (mongoClient) {
+    await mongoClient.close();
+  }
+  process.exit(0);
+});
+
+// Generic error handler for unexpected errors
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ error: 'Internal Server Error', details: err?.message });
+});
+
+async function start() {
+  await ensureSchema();
+  await connectMongo();
+  const port = process.env.PORT || 4000;
+  app.listen(port, () => console.log(`Server listening on ${port}`));
+}
+
+start().catch(err => {
+  console.error('Failed to start server', err);
+  process.exit(1);
+});
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  console.log('Shutting down gracefully...');
+  if (mongoClient) {
+    await mongoClient.close();
+  }
+  process.exit(0);
+});
+
