@@ -131,17 +131,17 @@ export const Landing: React.FC = () => {
         </div>
       </div>
 
-        {/* Plans Section */}
-        <div className="py-24 px-6 bg-white">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-20">
-              <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
-                Choose Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-blue-600">Care Plan</span>
-              </h2>
-              <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-                Flexible options designed for your mental health journey
-              </p>
-            </div>
+      {/* Plans Section */}
+      <div className="py-24 px-6 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-20">
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
+              Choose Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-blue-600">Care Plan</span>
+            </h2>
+            <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+              Flexible options designed for your mental health journey
+            </p>
+          </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
               {plans.map((plan, index) => (
@@ -197,17 +197,17 @@ export const Landing: React.FC = () => {
           </div>
         </div>
 
-        {/* CTA Section */}
-        <div className="py-24 px-6 bg-gradient-to-br from-teal-50 to-blue-50">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
-              Ready to Begin Your Journey?
-            </h2>
-            <p className="text-xl text-slate-600 mb-10">
-              Join thousands who found their perfect therapist match through TheMindNetwork
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button 
+      {/* CTA Section */}
+      <div className="py-24 px-6 bg-gradient-to-br from-teal-50 to-blue-50">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
+            Ready to Begin Your Journey?
+          </h2>
+          <p className="text-xl text-slate-600 mb-10">
+            Join thousands who found their perfect therapist match through TheMindNetwork
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button 
                 onClick={() => navigate('/login')}
                 className="text-lg px-12 py-5 rounded-2xl shadow-lg shadow-teal-500/30"
               >
