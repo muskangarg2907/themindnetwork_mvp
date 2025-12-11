@@ -13,7 +13,7 @@ export const Landing: React.FC = () => {
     setContactStatus('sending');
     
     try {
-      const res = await fetch('/api/contact', {
+      const res = await fetch('/api/utils?action=contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(contactForm)
