@@ -7,6 +7,7 @@ export const Landing: React.FC = () => {
   const navigate = useNavigate();
   const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
   const [contactStatus, setContactStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,9 +91,11 @@ export const Landing: React.FC = () => {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-blue-600 flex items-center justify-center">
               <i className="fas fa-brain text-white text-xl"></i>
             </div>
-            <span className="text-2xl font-bold text-slate-800">TheMindNetwork</span>
+            <span className="text-xl md:text-2xl font-bold text-slate-800">TheMindNetwork</span>
           </div>
-          <div className="flex items-center gap-4">
+          
+          {/* Desktop Menu */}
+          <div className="hidden md:flex items-center gap-4">
             <Button 
               onClick={() => navigate('/login', { state: { role: 'provider' } })}
               variant="outline"
@@ -108,7 +111,70 @@ export const Landing: React.FC = () => {
               Login <i className="fas fa-sign-in-alt ml-2"></i>
             </Button>
           </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2 rounded-lg hover:bg-slate-100 transition-colors"
+            aria-label="Toggle menu"
+          >
+            <i className={`fas ${mobileMenuOpen ? 'fa-times' : 'fa-bars'} text-2xl text-slate-800`}></i>
+          </button>
         </div>
+
+        {/* Mobile Side Menu */}
+        {mobileMenuOpen && (
+          <>
+            {/* Backdrop */}
+            <div 
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm md:hidden"
+              onClick={() => setMobileMenuOpen(false)}
+            ></div>
+            
+            {/* Side Menu */}
+            <div className="fixed top-0 right-0 h-full w-72 bg-white shadow-2xl md:hidden animate-slide-in z-50">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500 to-blue-600 flex items-center justify-center">
+                      <i className="fas fa-brain text-white text-sm"></i>
+                    </div>
+                    <span className="text-lg font-bold text-slate-800">TheMindNetwork</span>
+                  </div>
+                  <button
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="p-2 rounded-lg hover:bg-slate-100"
+                  >
+                    <i className="fas fa-times text-xl text-slate-600"></i>
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <Button 
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      navigate('/login', { state: { role: 'provider' } });
+                    }}
+                    variant="outline"
+                    className="w-full justify-center px-6 py-3 border-2 border-teal-500 text-teal-600 hover:bg-teal-50"
+                  >
+                    For Providers <i className="fas fa-user-doctor ml-2"></i>
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      navigate('/login');
+                    }}
+                    variant="secondary"
+                    className="w-full justify-center px-6 py-3"
+                  >
+                    Login <i className="fas fa-sign-in-alt ml-2"></i>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </nav>
 
       {/* Hero Section */}
@@ -139,29 +205,29 @@ export const Landing: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-3 text-left">
               <div className="w-8 h-8 rounded-lg bg-teal-100 flex items-center justify-center flex-shrink-0 mt-1">
                 <i className="fas fa-user-doctor text-teal-600"></i>
               </div>
-              <div>
+              <div className="flex-1">
                 <p className="font-semibold text-slate-800">Verified Professionals</p>
                 <p className="text-sm text-slate-600">High-quality certified therapists</p>
               </div>
             </div>
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-3 text-left">
               <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0 mt-1">
                 <i className="fas fa-comments text-blue-600"></i>
               </div>
-              <div>
+              <div className="flex-1">
                 <p className="font-semibold text-slate-800">Unlimited Consultations</p>
                 <p className="text-sm text-slate-600">Free guidance to find your match</p>
               </div>
             </div>
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-3 text-left">
               <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0 mt-1">
                 <i className="fas fa-heart text-purple-600"></i>
               </div>
-              <div>
+              <div className="flex-1">
                 <p className="font-semibold text-slate-800">Flexible Options</p>
                 <p className="text-sm text-slate-600">Try different therapists risk-free</p>
               </div>
@@ -319,12 +385,19 @@ export const Landing: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button 
               onClick={() => navigate('/login')}
-              className="text-lg px-12 py-5 rounded-2xl shadow-lg shadow-teal-500/30"
+              className="text-lg px-12 py-5 rounded-2xl shadow-lg shadow-teal-500/30 hover:shadow-xl transition-all w-full sm:w-auto"
             >
               Get Started Free <i className="fas fa-arrow-right ml-2"></i>
+            </Button>
+            <Button 
+              onClick={() => navigate('/login', { state: { role: 'provider' } })}
+              variant="outline"
+              className="text-lg px-12 py-5 rounded-2xl border-2 border-teal-500 text-teal-600 hover:bg-teal-50 shadow-lg w-full sm:w-auto"
+            >
+              Join as Provider <i className="fas fa-user-doctor ml-2"></i>
             </Button>
           </div>
           <p className="text-sm text-slate-500 mt-6">🔒 Your privacy and data are 100% secure</p>
