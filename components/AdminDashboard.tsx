@@ -27,8 +27,12 @@ export const AdminDashboard: React.FC = () => {
   // Check authentication
   useEffect(() => {
     const adminAuth = localStorage.getItem('adminAuth');
+    console.log('[ADMIN] Auth check:', adminAuth);
     if (adminAuth !== 'authenticated') {
+      console.log('[ADMIN] Not authenticated, redirecting to login');
       navigate('/admin-login');
+    } else {
+      console.log('[ADMIN] Authenticated, proceeding to dashboard');
     }
   }, [navigate]);
 
@@ -78,9 +82,22 @@ export const AdminDashboard: React.FC = () => {
   const fetchProfiles = async () => {
     setLoading(true);
     try {
+      console.log('[ADMIN] Fetching profiles from /api/admin/profiles');
       const res = await fetch('/api/admin/profiles');
+      console.log('[ADMIN] Response status:', res.status);
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('[ADMIN] Fetch failed:', res.status, errorText);
+        setProfiles([]);
+        setLoading(false);
+        return;
+      }
+      
       const data = await res.json();
+      console.log('[ADMIN] Received data:', data);
       const profileList = data.profiles || [];
+      console.log('[ADMIN] Profile count:', profileList.length);
       setProfiles(profileList);
       
       // If a profile is selected, update it with fresh data from the list
