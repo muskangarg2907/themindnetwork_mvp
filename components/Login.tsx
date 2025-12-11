@@ -266,7 +266,7 @@ export const Login: React.FC = () => {
       const errBody = await resp.json().catch(() => ({}));
       console.warn('[LOGIN] Lookup error:', errBody, '- allowing profile creation');
       setIsLoading(false);
-      navigate('/create');
+      navigate('/create', { state: { phone: fullPhone, preselectedRole } });
     } catch (err: any) {
       console.error('[LOGIN] OTP verification error:', err);
       setIsLoading(false);
