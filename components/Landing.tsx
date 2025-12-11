@@ -132,7 +132,7 @@ export const Landing: React.FC = () => {
             ></div>
             
             {/* Side Menu */}
-            <div className="fixed top-0 right-0 h-full w-72 bg-white shadow-2xl md:hidden animate-slide-in z-50">
+            <div className="fixed top-0 right-0 h-full w-72 bg-white/100 shadow-2xl md:hidden animate-slide-in z-50 border-l border-slate-200">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-8">
                   <div className="flex items-center gap-2">
