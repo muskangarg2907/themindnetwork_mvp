@@ -36,11 +36,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       console.log('[LOOKUP] Searching for phone:', phoneNumber, 'normalized:', norm);
       
       const found = await profiles.findOne({
-        'basicInfo.phone': norm
+        'basicInfo.phone': norm,
+        status: 'approved'
       });
 
       if (!found) {
-        console.log('[LOOKUP] NO MATCH FOUND');
+        console.log('[LOOKUP] NO MATCH FOUND (or not approved)');
         return res.status(404).json({ error: 'Not found', searched: norm });
       }
       

@@ -117,7 +117,7 @@ export const AdminDashboard: React.FC = () => {
     setLoading(true);
     try {
       console.log('[ADMIN] Approving profile:', id);
-      const res = await fetch(`/api/admin/profiles?id=${id}`, {
+      const res = await fetch(`/api/admin?action=profiles&id=${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'approved' })

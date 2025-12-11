@@ -16,6 +16,15 @@ export const ProfileView: React.FC = () => {
     const stored = localStorage.getItem('userProfile');
     if (stored) {
       const parsed = JSON.parse(stored);
+      
+      // Safety check: if it's an array, something went wrong
+      if (Array.isArray(parsed)) {
+        console.error('[PROFILE] ERROR: Stored profile is an array! Clearing and redirecting to login.');
+        localStorage.removeItem('userProfile');
+        navigate('/login');
+        return;
+      }
+      
       setProfile(parsed);
       setEditData(parsed);
     } else {
@@ -41,6 +50,19 @@ export const ProfileView: React.FC = () => {
 
   const isClient = profile.role === 'client';
   const isProvider = profile.role === 'provider';
+  
+  // Additional safety check for basicInfo
+  if (!profile.basicInfo) {
+    console.error('[PROFILE] basicInfo is missing from profile:', profile);
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-slate-600">Profile data is incomplete. Please log in again.</p>
+          <Button onClick={() => navigate('/login')} className="mt-4">Back to Login</Button>
+        </div>
+      </div>
+    );
+  }
 
   const handleSave = async () => {
       try {

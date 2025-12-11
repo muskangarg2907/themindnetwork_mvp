@@ -59,7 +59,7 @@
   },
   {
     "id": "f3ad167d-c62c-4f10-8f34-53c5a32efe0e",
-    "status": "pending_verification",
+    "status": "approved",
     "role": "client",
     "basicInfo": {
       "fullName": "Muskan",
@@ -97,50 +97,7 @@
       "resumeLink": ""
     },
     "createdAt": "2025-12-11T12:29:41.437Z",
-    "aiSummary": ""
-  },
-  {
-    "id": "aaf5f832-9fb4-4201-b588-9f719d697187",
-    "status": "pending_verification",
-    "role": "provider",
-    "basicInfo": {
-      "fullName": "Provider",
-      "email": "mind@gmail.com",
-      "phone": "+91 2222222222",
-      "dob": "2025-12-08",
-      "location": "",
-      "gender": "Male"
-    },
-    "clinical": {
-      "presentingProblem": "",
-      "currentMood": "",
-      "hasPriorTherapy": false,
-      "medications": "",
-      "riskFactors": []
-    },
-    "preferences": {
-      "providerGenderPreference": ""
-    },
-    "providerDetails": {
-      "qualification": "MA",
-      "yearsExperience": "2",
-      "specializations": [
-        "Trauma"
-      ],
-      "mode": "online",
-      "languages": [
-        "English"
-      ],
-      "clientType": [
-        "Individuals"
-      ],
-      "budgetRange": "200-1000",
-      "licenses": "-",
-      "therapeuticFocus": "Trauma",
-      "therapyStyle": "relational",
-      "resumeLink": ""
-    },
-    "createdAt": "2025-12-11T12:32:24.263Z",
-    "aiSummary": ""
+    "aiSummary": "",
+    "updatedAt": "2025-12-11T13:11:23.547Z"
   }
 ]

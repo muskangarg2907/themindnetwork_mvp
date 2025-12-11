@@ -145,17 +145,6 @@ export const Login: React.FC = () => {
       const confirmation = await Promise.race([signInPromise, timeoutPromise]) as ConfirmationResult;
       setConfirmationResult(confirmation);
       
-      // Track OTP request
-      try {
-        await fetch('/api/analytics/auth-tracking', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone: fullPhone, event: 'otp_requested', timestamp: new Date().toISOString() })
-        });
-      } catch (e) {
-        console.log('[LOGIN] Failed to track OTP request:', e);
-      }
-      
       setIsLoading(false);
       setStep('otp');
       console.log('[LOGIN] OTP sent successfully to', fullPhone);
@@ -223,17 +212,7 @@ export const Login: React.FC = () => {
       await confirmationResult.confirm(otp);
       console.log('[LOGIN] OTP verified successfully');
       
-      // Track OTP verification
-      try {
-        await fetch('/api/analytics/auth-tracking', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone: fullPhone, event: 'otp_verified', timestamp: new Date().toISOString() })
-        });
-      } catch (e) {
-        console.log('[LOGIN] Failed to track OTP verification:', e);
-      }
-      
+
       // Set auth tokens
       localStorage.setItem('authToken', 'firebase_verified');
       localStorage.setItem('userPhone', fullPhone);
@@ -248,6 +227,15 @@ export const Login: React.FC = () => {
         // EXISTING USER - Profile found
         const profile = await resp.json();
         console.log('[LOGIN] EXISTING USER - Found profile:', profile._id, profile.basicInfo?.fullName);
+        console.log('[LOGIN] Profile type check:', Array.isArray(profile) ? 'ARRAY (ERROR!)' : 'OBJECT (CORRECT)');
+        
+        if (Array.isArray(profile)) {
+          console.error('[LOGIN] ERROR: Lookup returned array instead of single profile!');
+          setError('Profile lookup error. Please try again.');
+          setIsLoading(false);
+          return;
+        }
+        
         localStorage.setItem('userProfile', JSON.stringify(profile));
         setIsLoading(false);
         navigate('/profile');

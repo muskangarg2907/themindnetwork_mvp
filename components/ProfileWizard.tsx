@@ -160,23 +160,7 @@ export const ProfileWizard: React.FC = () => {
                         } catch (e) {
                             console.warn('Failed to persist userPhone locally', e);
                         }
-                        // Track profile submission
-                        try {
-                            const phoneForTracking = finalProfile?.basicInfo?.phone;
-                            if (phoneForTracking) {
-                                await fetch('/api/analytics/auth-tracking', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ 
-                                        phone: phoneForTracking, 
-                                        event: 'profile_submitted', 
-                                        timestamp: new Date().toISOString() 
-                                    })
-                                });
-                            }
-                        } catch (e) {
-                            console.warn('Failed to track profile submission:', e);
-                        }
+                        
                         // Notify admin interface that a new profile was created
                         try {
                             await fetch('/api/admin?action=notify', {

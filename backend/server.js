@@ -106,327 +106,292 @@ app.get('/api/profiles', async (req, res) => {
   }
 });
 
-// Lookup profile by phone. Query param: ?phone=<phone>
-app.get('/api/profiles/lookup', async (req, res) => {
+// Consolidated ADMIN endpoint (matches /api/admin.ts)
+app.all('/api/admin', async (req, res) => {
+  const { action, id } = req.query;
+
   try {
-    const phone = req.query.phone;
-    if (!phone) return res.status(400).json({ error: 'phone query parameter required' });
-    const norm = normalizePhone(phone);
+    // PROFILES MANAGEMENT
+    if (action === 'profiles') {
+      if (req.method === 'GET') {
+        let profiles = [];
+        if (usePostgres) {
+          const q = await pool.query('SELECT id, data, created_at, updated_at FROM profiles ORDER BY created_at DESC');
+          profiles = q.rows.map(r => ({ _id: r.id, ...r.data, createdAt: r.created_at, updatedAt: r.updated_at }));
+        } else {
+          profiles = await readProfilesFile();
+          profiles = profiles.map(p => ({ ...p, _id: p._id || p.id }));
+        }
+        return res.json({ profiles, total: profiles.length });
+      }
 
-    let profiles = [];
-    if (usePostgres) {
-      const q = await pool.query('SELECT id, data, created_at, updated_at FROM profiles');
-      profiles = q.rows.map(r => ({ id: r.id, ...r.data, createdAt: r.created_at, updatedAt: r.updated_at }));
-    } else {
-      profiles = await readProfilesFile();
-    }
+      if (req.method === 'DELETE' && id) {
+        if (usePostgres) {
+          await pool.query('DELETE FROM profiles WHERE id = $1', [id]);
+        } else {
+          let profiles = await readProfilesFile();
+          profiles = profiles.filter(p => (p.id !== id && p._id !== id));
+          await writeProfilesFile(profiles);
+        }
+        console.log('[ADMIN] Deleted profile:', id);
+        return res.json({ message: 'Profile deleted', success: true });
+      }
 
-    const found = profiles.find(p => {
-      const pPhone = p?.basicInfo?.phone || p?.phone || '';
-      const pNorm = normalizePhone(pPhone);
-      if (!pNorm) return false;
-      // match by last 10 digits if available, else full match
-      if (norm.length >= 10 && pNorm.endsWith(norm.slice(-10))) return true;
-      return pNorm === norm;
-    });
-
-    if (!found) return res.status(404).json({ error: 'Not found' });
-    return res.json(found);
-  } catch (err) {
-    console.error('GET /api/profiles/lookup error:', err);
-    res.status(500).json({ error: 'Lookup failed', details: err.message });
-  }
-});
-
-app.get('/api/profiles/:id', async (req, res) => {
-  try {
-    const id = req.params.id;
-    if (usePostgres) {
-      const q = await pool.query('SELECT id, data, created_at, updated_at FROM profiles WHERE id = $1', [id]);
-      if (q.rowCount === 0) return res.status(404).json({ error: 'Not found' });
-      const r = q.rows[0];
-      return res.json({ id: r.id, ...r.data, createdAt: r.created_at, updatedAt: r.updated_at });
-    }
-    const profiles = await readProfilesFile();
-    const p = profiles.find(x => x.id === id);
-    if (!p) return res.status(404).json({ error: 'Not found' });
-    return res.json(p);
-  } catch (err) {
-    console.error('GET /api/profiles/:id error:', err);
-    res.status(500).json({ error: 'Failed to fetch profile', details: err.message });
-  }
-});
-
-app.post('/api/profiles', async (req, res) => {
-  try {
-    console.log('Received profile POST request:', JSON.stringify(req.body, null, 2));
-    const payload = req.body;
-    if (!payload || typeof payload !== 'object') {
-      console.error('Invalid payload received');
-      return res.status(400).json({ error: 'Invalid payload' });
-    }
-    const id = randomUUID();
-    if (usePostgres) {
-      const q = await pool.query('INSERT INTO profiles(id, data) VALUES($1, $2) RETURNING id, data, created_at, updated_at', [id, payload]);
-      const r = q.rows[0];
-      return res.status(201).json({ id: r.id, ...r.data, createdAt: r.created_at, updatedAt: r.updated_at });
-    }
-    const profiles = await readProfilesFile();
-    const record = { id, ...payload, createdAt: new Date().toISOString() };
-    profiles.push(record);
-    await writeProfilesFile(profiles);
-    console.log('Profile saved successfully:', id);
-    return res.status(201).json(record);
-  } catch (err) {
-    console.error('POST /api/profiles error:', err);
-    console.error('Error stack:', err.stack);
-    res.status(500).json({ error: 'Failed to save profile', details: err.message });
-  }
-});
-
-// Simple AI-generation endpoints (server-side). If GEMINI_API_KEY is set, these
-// could call Google Generative API. For local/dev, return placeholder text.
-app.post('/api/generate/summary', async (req, res) => {
-  try {
-    const profile = req.body;
-    const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
-    if (!apiKey) {
-      // Fallback placeholder
-      const name = profile?.basicInfo?.fullName || 'Client';
-      const text = `${name} submitted an intake form. Summary: brief clinical intake summary unavailable in local mode.`;
-      return res.json({ text });
-    }
-
-    // If API key exists, attempt a simple REST call to the Generative API.
-    const prompt = `Create a brief clinical intake summary (max 3 sentences) for a mental health profile. Use data: ${JSON.stringify(profile)}`;
-    const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
-    const body = {
-      "instructions": prompt
-    };
-    const r = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify(body)
-    });
-    const json = await r.json();
-    // Attempt to pull text from common response shapes.
-    const text = json?.candidates?.[0]?.content || json?.output?.[0]?.content || json?.text || JSON.stringify(json);
-    return res.json({ text });
-  } catch (err) {
-    console.error('POST /api/generate/summary error:', err);
-    return res.status(500).json({ error: 'Generation failed', details: err?.message });
-  }
-});
-
-app.post('/api/generate/bio', async (req, res) => {
-  try {
-    const profile = req.body;
-    const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
-    if (!apiKey) {
-      const name = profile?.basicInfo?.fullName || 'Provider';
-      const text = `${name} is a provider. A professional bio is not available in local mode.`;
-      return res.json({ text });
-    }
-
-    const prompt = `Create a professional 3-sentence bio for provider using data: ${JSON.stringify(profile)}`;
-    const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
-    const body = { "instructions": prompt };
-    const r = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify(body)
-    });
-    const json = await r.json();
-    const text = json?.candidates?.[0]?.content || json?.output?.[0]?.content || json?.text || JSON.stringify(json);
-    return res.json({ text });
-  } catch (err) {
-    console.error('POST /api/generate/bio error:', err);
-    return res.status(500).json({ error: 'Generation failed', details: err?.message });
-  }
-});
-
-app.put('/api/profiles/:id', async (req, res) => {
-  try {
-    const payload = req.body;
-    const id = req.params.id;
-    if (!payload || typeof payload !== 'object') return res.status(400).json({ error: 'Invalid payload' });
-    if (usePostgres) {
-      const q = await pool.query('UPDATE profiles SET data = $2, updated_at = now() WHERE id = $1 RETURNING id, data, created_at, updated_at', [id, payload]);
-      if (q.rowCount === 0) return res.status(404).json({ error: 'Not found' });
-      const r = q.rows[0];
-      return res.json({ id: r.id, ...r.data, createdAt: r.created_at, updatedAt: r.updated_at });
-    }
-    const profiles = await readProfilesFile();
-    const idx = profiles.findIndex(p => p.id === id);
-    if (idx === -1) return res.status(404).json({ error: 'Not found' });
-    profiles[idx] = { ...profiles[idx], ...payload, updatedAt: new Date().toISOString() };
-    await writeProfilesFile(profiles);
-    return res.json(profiles[idx]);
-  } catch (err) {
-    console.error('PUT /api/profiles/:id error:', err);
-    res.status(500).json({ error: 'Failed to update profile', details: err.message });
-  }
-});
-
-app.delete('/api/profiles/:id', async (req, res) => {
-  try {
-    const id = req.params.id;
-    if (usePostgres) {
-      const q = await pool.query('DELETE FROM profiles WHERE id = $1 RETURNING id, data, created_at, updated_at', [id]);
-      if (q.rowCount === 0) return res.status(404).json({ error: 'Not found' });
-      const r = q.rows[0];
-      return res.json({ id: r.id, ...r.data, createdAt: r.created_at, updatedAt: r.updated_at });
-    }
-    const profiles = await readProfilesFile();
-    const idx = profiles.findIndex(p => p.id === id);
-    if (idx === -1) return res.status(404).json({ error: 'Not found' });
-    const removed = profiles.splice(idx, 1)[0];
-    await writeProfilesFile(profiles);
-    return res.json(removed);
-  } catch (err) {
-    console.error('DELETE /api/profiles/:id error:', err);
-    res.status(500).json({ error: 'Failed to delete profile', details: err.message });
-  }
-});
-
-// Admin endpoints (for local dev - these are serverless functions in production)
-app.get('/api/admin/profiles', async (req, res) => {
-  try {
-    if (usePostgres) {
-      const q = await pool.query('SELECT id, data, created_at, updated_at FROM profiles ORDER BY created_at DESC');
-      const allProfiles = q.rows.map(r => ({ _id: r.id, ...r.data, createdAt: r.created_at, updatedAt: r.updated_at }));
-      return res.json({ profiles: allProfiles, total: allProfiles.length });
-    }
-    const profiles = await readProfilesFile();
-    // Add _id field for compatibility with frontend (which expects _id, not id)
-    const normalized = profiles.map(p => ({ ...p, _id: p._id || p.id }));
-    return res.json({ profiles: normalized, total: normalized.length });
-  } catch (err) {
-    console.error('GET /api/admin/profiles error:', err);
-    res.status(500).json({ error: 'Failed to fetch profiles', details: err.message });
-  }
-});
-
-app.delete('/api/admin/profiles', async (req, res) => {
-  try {
-    const id = req.query.id;
-    if (!id) return res.status(400).json({ error: 'id query parameter required' });
-    
-    if (usePostgres) {
-      const q = await pool.query('DELETE FROM profiles WHERE id = $1 RETURNING id', [id]);
-      if (q.rowCount === 0) return res.status(404).json({ error: 'Profile not found' });
-      return res.json({ message: 'Profile deleted', success: true });
-    }
-    const profiles = await readProfilesFile();
-    // Support both id and _id
-    const idx = profiles.findIndex(p => p.id === id || p._id === id);
-    if (idx === -1) return res.status(404).json({ error: 'Profile not found' });
-    profiles.splice(idx, 1);
-    await writeProfilesFile(profiles);
-    return res.json({ message: 'Profile deleted', success: true });
-  } catch (err) {
-    console.error('DELETE /api/admin/profiles error:', err);
-    res.status(500).json({ error: 'Failed to delete profile', details: err.message });
-  }
-});
-
-app.put('/api/admin/profiles', async (req, res) => {
-  try {
-    const id = req.query.id;
-    if (!id) return res.status(400).json({ error: 'id query parameter required' });
-    
-    const updates = req.body;
-    
-    if (usePostgres) {
-      const existing = await pool.query('SELECT data FROM profiles WHERE id = $1', [id]);
-      if (existing.rowCount === 0) return res.status(404).json({ error: 'Profile not found' });
-      const merged = { ...existing.rows[0].data, ...updates };
-      const q = await pool.query('UPDATE profiles SET data = $1, updated_at = now() WHERE id = $2 RETURNING id, data, created_at, updated_at', [merged, id]);
-      const r = q.rows[0];
-      return res.json({ _id: r.id, ...r.data, createdAt: r.created_at, updatedAt: r.updated_at });
-    }
-    
-    const profiles = await readProfilesFile();
-    // Support both id and _id
-    const profile = profiles.find(p => p.id === id || p._id === id);
-    if (!profile) return res.status(404).json({ error: 'Profile not found' });
-    Object.assign(profile, updates);
-    profile.updatedAt = new Date().toISOString();
-    await writeProfilesFile(profiles);
-    // Return with _id for frontend compatibility
-    return res.json({ ...profile, _id: profile._id || profile.id });
-  } catch (err) {
-    console.error('PUT /api/admin/profiles error:', err);
-    res.status(500).json({ error: 'Failed to update profile', details: err.message });
-  }
-});
-
-app.post('/api/admin/notify', async (req, res) => {
-  try {
-    // In local dev, just acknowledge the notification
-    res.json({ success: true, note: 'Notified admin (local dev)', lastUpdate: new Date().toISOString() });
-  } catch (err) {
-    console.error('POST /api/admin/notify error:', err);
-    res.status(500).json({ error: 'Notify failed', details: err.message });
-  }
-});
-
-// Contact form endpoint
-app.post('/api/contact', async (req, res) => {
-  try {
-    const { name, email, message } = req.body;
-
-    if (!name || !email || !message) {
-      return res.status(400).json({ error: 'All fields are required' });
-    }
-
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({ error: 'Invalid email format' });
-    }
-
-    const submission = {
-      name,
-      email,
-      message,
-      timestamp: new Date(),
-      read: false
-    };
-
-    // Store in MongoDB if available
-    if (mongoDb) {
-      try {
-        const result = await mongoDb.collection('contact_submissions').insertOne(submission);
-        console.log('📧 Contact form saved to MongoDB:', result.insertedId);
-      } catch (mongoErr) {
-        console.error('Failed to save to MongoDB:', mongoErr);
-        // Don't fail the request if MongoDB fails
+      if (req.method === 'PUT' && id) {
+        const updates = req.body || {};
+        if (usePostgres) {
+          const q = await pool.query(
+            'UPDATE profiles SET data = data || $1::jsonb, updated_at = now() WHERE id = $2 RETURNING id, data, created_at, updated_at',
+            [JSON.stringify(updates), id]
+          );
+          if (q.rows.length === 0) return res.status(404).json({ error: 'Profile not found' });
+          return res.json({ _id: q.rows[0].id, ...q.rows[0].data });
+        } else {
+          const profiles = await readProfilesFile();
+          const profile = profiles.find(p => p.id === id || p._id === id);
+          if (!profile) return res.status(404).json({ error: 'Profile not found' });
+          Object.assign(profile, updates);
+          profile.updatedAt = new Date().toISOString();
+          await writeProfilesFile(profiles);
+          return res.json({ ...profile, _id: profile._id || profile.id });
+        }
       }
     }
 
-    // Also log to console for visibility
-    console.log('📧 Contact Form Submission:', {
-      name,
-      email,
-      message,
-      timestamp: submission.timestamp.toISOString()
-    });
-    
-    res.json({ 
-      success: true, 
-      message: 'Thank you for your message! We will get back to you soon.' 
-    });
+    // NOTIFY MANAGEMENT
+    if (action === 'notify') {
+      if (req.method === 'POST') {
+        return res.json({ success: true, note: 'Notified admin (local dev)', lastUpdate: new Date().toISOString() });
+      }
+      if (req.method === 'GET') {
+        return res.json({ lastUpdate: new Date().toISOString() });
+      }
+    }
+
+    // RESET
+    if (action === 'reset') {
+      if (req.method === 'DELETE') {
+        if (!usePostgres) {
+          await writeProfilesFile([]);
+        }
+        return res.json({ message: 'All profiles deleted', success: true });
+      }
+    }
+
+    return res.status(400).json({ error: 'Invalid action parameter' });
   } catch (err) {
-    console.error('POST /api/contact error:', err);
-    res.status(500).json({ error: 'Failed to submit contact form', details: err.message });
+    console.error('Admin endpoint error:', err);
+    res.status(500).json({ error: 'Admin operation failed', details: err.message });
   }
+});
+
+// Consolidated PROFILES endpoint (matches /api/profiles.ts)
+app.all('/api/profiles', async (req, res) => {
+  const action = Array.isArray(req.query.action) ? req.query.action[0] : req.query.action;
+  const phone = Array.isArray(req.query.phone) ? req.query.phone[0] : req.query.phone;
+  
+  console.log('[PROFILES] Request:', req.method, 'action:', action, 'phone:', phone ? 'provided' : 'none', 'query:', JSON.stringify(req.query));
+
+  try {
+    // LOOKUP by phone
+    if (action === 'lookup' || phone) {
+      const phoneNumber = phone || req.query.phone;
+      if (!phoneNumber) {
+        return res.status(400).json({ error: 'phone query parameter required' });
+      }
+      const norm = normalizePhone(phoneNumber);
+      
+      console.log('[LOOKUP] Searching for phone:', phoneNumber, 'normalized:', norm);
+      
+      let profiles = [];
+      if (usePostgres) {
+        const q = await pool.query('SELECT id, data FROM profiles');
+        profiles = q.rows.map(r => ({ id: r.id, ...r.data }));
+      } else {
+        profiles = await readProfilesFile();
+      }
+      
+      // Only return approved profiles (matches Vercel endpoint)
+      const found = profiles.find(p => {
+        const phoneMatch = normalizePhone(p.basicInfo?.phone || '') === norm;
+        const isApproved = p.status === 'approved';
+        return phoneMatch && isApproved;
+      });
+      
+      if (!found) {
+        console.log('[LOOKUP] NO MATCH FOUND (or not approved)');
+        return res.status(404).json({ error: 'Not found', searched: norm });
+      }
+      
+      console.log('[LOOKUP] FOUND:', found.id || found._id);
+      return res.json({ ...found, _id: found._id || found.id });
+    }
+
+    // GET all profiles
+    if (req.method === 'GET') {
+      console.log('[PROFILES] GET: Fetching all profiles');
+      let profiles = [];
+      if (usePostgres) {
+        const q = await pool.query('SELECT id, data, created_at FROM profiles ORDER BY created_at DESC');
+        profiles = q.rows.map(r => ({ _id: r.id, ...r.data, createdAt: r.created_at }));
+      } else {
+        profiles = await readProfilesFile();
+        profiles = profiles.map(p => ({ ...p, _id: p._id || p.id }));
+      }
+      return res.json(profiles);
+    }
+
+    // POST create profile (existing logic)
+    if (req.method === 'POST') {
+      const payload = req.body;
+      if (!payload || typeof payload !== 'object') {
+        return res.status(400).json({ error: 'Invalid payload' });
+      }
+
+      const normalizedPayload = {
+        ...payload,
+        basicInfo: {
+          ...payload.basicInfo,
+          phone: normalizePhone(payload.basicInfo?.phone || '')
+        }
+      };
+
+      const id = randomUUID();
+      const record = { id, ...normalizedPayload, createdAt: new Date().toISOString() };
+
+      if (usePostgres) {
+        await pool.query('INSERT INTO profiles (id, data, created_at) VALUES ($1, $2, now())', [id, record]);
+      } else {
+        const profiles = await readProfilesFile();
+        profiles.push(record);
+        await writeProfilesFile(profiles);
+      }
+
+      return res.status(201).json({ _id: id, ...normalizedPayload, createdAt: record.createdAt });
+    }
+
+    // PUT update profile
+    if (req.method === 'PUT') {
+      const payload = req.body;
+      if (!payload || !payload._id) {
+        return res.status(400).json({ error: 'Missing _id' });
+      }
+
+      const { _id, ...updates } = payload;
+      
+      if (usePostgres) {
+        const q = await pool.query(
+          'UPDATE profiles SET data = data || $1::jsonb, updated_at = now() WHERE id = $2 RETURNING id, data',
+          [JSON.stringify(updates), _id]
+        );
+        if (q.rows.length === 0) return res.status(404).json({ error: 'Profile not found' });
+        return res.json({ _id: q.rows[0].id, ...q.rows[0].data });
+      } else {
+        const profiles = await readProfilesFile();
+        const profile = profiles.find(p => p.id === _id || p._id === _id);
+        if (!profile) return res.status(404).json({ error: 'Profile not found' });
+        Object.assign(profile, updates);
+        profile.updatedAt = new Date().toISOString();
+        await writeProfilesFile(profiles);
+        return res.json({ ...profile, _id: profile._id || profile.id });
+      }
+    }
+
+    return res.status(405).json({ error: 'Method not allowed' });
+  } catch (err) {
+    console.error('Profiles endpoint error:', err);
+    res.status(500).json({ error: 'Profile operation failed', details: err.message });
+  }
+});
+
+// Consolidated GENERATE endpoint (matches /api/generate.ts)
+app.post('/api/generate', async (req, res) => {
+  const { type } = req.query;
+  const profile = req.body;
+
+  try {
+    // BIO GENERATION
+    if (type === 'bio') {
+      const name = profile?.basicInfo?.fullName || 'Provider';
+      const text = `${name} is a mental health provider with expertise in their field.`;
+      return res.json({ text });
+    }
+
+    // SUMMARY GENERATION
+    if (type === 'summary') {
+      const name = profile?.basicInfo?.fullName || 'Client';
+      const text = `${name} submitted an intake form.`;
+      return res.json({ text });
+    }
+
+    return res.status(400).json({ error: 'Invalid type parameter' });
+  } catch (err) {
+    console.error('Generate endpoint error:', err);
+    res.status(500).json({ error: 'Generation failed', details: err.message });
+  }
+});
+
+// Consolidated UTILS endpoint (matches /api/utils.ts)
+app.all('/api/utils', async (req, res) => {
+  const { action } = req.query;
+  
+  console.log('[UTILS] Request:', req.method, 'action:', action);
+
+  // HEALTH CHECK
+  if (!action || action === 'health') {
+    try {
+      if (usePostgres) {
+        await pool.query('SELECT 1');
+      }
+      return res.json({ ok: true, db: usePostgres });
+    } catch (err) {
+      return res.json({ ok: true, db: false, error: err.message });
+    }
+  }
+
+  // CONTACT FORM
+  if (action === 'contact' && req.method === 'POST') {
+    try {
+      const { name, email, message } = req.body;
+
+      if (!name || !email || !message) {
+        return res.status(400).json({ error: 'All fields are required' });
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ error: 'Invalid email format' });
+      }
+
+      const submission = { name, email, message, timestamp: new Date(), read: false };
+
+      if (mongoDb) {
+        try {
+          const result = await mongoDb.collection('contact_submissions').insertOne(submission);
+          console.log('📧 Contact form saved to MongoDB:', result.insertedId);
+        } catch (mongoErr) {
+          console.error('Failed to save to MongoDB:', mongoErr);
+        }
+      }
+
+      console.log('📧 Contact Form Submission:', {
+        name,
+        email,
+        message,
+        timestamp: submission.timestamp.toISOString()
+      });
+      
+      return res.json({ 
+        success: true, 
+        message: 'Thank you for your message! We will get back to you soon.' 
+      });
+    } catch (err) {
+      console.error('Contact form error:', err);
+      return res.status(500).json({ error: 'Failed to submit contact form', details: err.message });
+    }
+  }
+
+  return res.status(400).json({ error: 'Invalid action parameter' });
 });
 
 // Generic error handler for unexpected errors
