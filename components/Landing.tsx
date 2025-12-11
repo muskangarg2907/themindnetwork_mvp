@@ -146,7 +146,7 @@ export const Landing: React.FC = () => {
               onClick={() => navigate('/login')}
               className="text-lg px-12 py-6 rounded-2xl shadow-lg shadow-teal-500/30 hover:shadow-xl hover:shadow-teal-500/40 transition-all"
             >
-              Get Started Free <i className="fas fa-arrow-right ml-3"></i>
+              Find Therapist <i className="fas fa-arrow-right ml-3"></i>
             </Button>
             <p className="text-sm text-slate-500">No credit card required • Start in 2 minutes</p>
           </div>
@@ -357,19 +357,19 @@ export const Landing: React.FC = () => {
           <p className="text-xl text-slate-300 mb-10">
             Connect with clients who need your expertise. Grow your practice with TheMindNetwork.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-row gap-3 sm:gap-4 justify-center">
             <Button 
               onClick={() => navigate('/login', { state: { role: 'provider' } })}
-              className="text-base sm:text-lg px-8 sm:px-12 py-3 sm:py-5 rounded-xl sm:rounded-2xl bg-teal-500 hover:bg-teal-600 text-white shadow-lg shadow-teal-500/30"
+              className="text-sm sm:text-base md:text-lg px-4 sm:px-8 md:px-12 py-3 sm:py-3 md:py-5 rounded-xl sm:rounded-xl md:rounded-2xl bg-teal-500 hover:bg-teal-600 text-white shadow-lg shadow-teal-500/30"
             >
-              Register Now <i className="fas fa-user-doctor ml-2"></i>
+              Register Now <i className="fas fa-user-doctor ml-1 sm:ml-2"></i>
             </Button>
             <Button 
               onClick={() => window.open('https://calendar.app.google/a9nJB8iRiUyDRcNi6', '_blank')}
               variant="outline"
-              className="text-base sm:text-lg px-8 sm:px-12 py-3 sm:py-5 rounded-xl sm:rounded-2xl bg-transparent border-2 border-teal-400 text-teal-300 hover:bg-teal-500/10 shadow-lg"
+              className="text-sm sm:text-base md:text-lg px-4 sm:px-8 md:px-12 py-3 sm:py-3 md:py-5 rounded-xl sm:rounded-xl md:rounded-2xl bg-transparent border-2 border-teal-400 text-teal-300 hover:bg-teal-500/10 shadow-lg"
             >
-              Book Consult <i className="fas fa-calendar ml-2"></i>
+              Book Consult <i className="fas fa-calendar ml-1 sm:ml-2"></i>
             </Button>
           </div>
           <p className="text-sm text-slate-400 mt-6">✨ Expand your reach and help more people</p>
