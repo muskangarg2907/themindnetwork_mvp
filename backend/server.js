@@ -365,6 +365,42 @@ app.post('/api/admin/notify', async (req, res) => {
   }
 });
 
+// Contact form endpoint
+app.post('/api/contact', async (req, res) => {
+  try {
+    const { name, email, message } = req.body;
+
+    if (!name || !email || !message) {
+      return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+
+    // Log the contact form submission
+    console.log('📧 Contact Form Submission:', {
+      name,
+      email,
+      message,
+      timestamp: new Date().toISOString()
+    });
+
+    // For local development, we just log it
+    // In production (Vercel), the api/contact.ts endpoint will handle email sending
+    
+    res.json({ 
+      success: true, 
+      message: 'Thank you for your message! We will get back to you soon.' 
+    });
+  } catch (err) {
+    console.error('POST /api/contact error:', err);
+    res.status(500).json({ error: 'Failed to submit contact form', details: err.message });
+  }
+});
+
 // Generic error handler for unexpected errors
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);

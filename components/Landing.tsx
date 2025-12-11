@@ -1,9 +1,37 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/Button';
+import { Input } from './ui/Input';
 
 export const Landing: React.FC = () => {
   const navigate = useNavigate();
+  const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
+  const [contactStatus, setContactStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setContactStatus('sending');
+    
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(contactForm)
+      });
+      
+      if (res.ok) {
+        setContactStatus('success');
+        setContactForm({ name: '', email: '', message: '' });
+        setTimeout(() => setContactStatus('idle'), 5000);
+      } else {
+        setContactStatus('error');
+        setTimeout(() => setContactStatus('idle'), 5000);
+      }
+    } catch (error) {
+      setContactStatus('error');
+      setTimeout(() => setContactStatus('idle'), 5000);
+    }
+  };
 
   const plans = [
     {
@@ -334,6 +362,100 @@ export const Landing: React.FC = () => {
             </Button>
           </div>
           <p className="text-sm text-slate-400 mt-6">✨ Expand your reach and help more people</p>
+        </div>
+      </div>
+
+      {/* Contact Form Section */}
+      <div className="py-24 px-6 bg-white">
+        <div className="max-w-2xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
+              Get in <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-blue-600">Touch</span>
+            </h2>
+            <p className="text-xl text-slate-600">
+              Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
+            </p>
+          </div>
+
+          <form onSubmit={handleContactSubmit} className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-3xl p-8 shadow-xl border-2 border-slate-100">
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Name <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  type="text"
+                  required
+                  value={contactForm.name}
+                  onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                  placeholder="Your name"
+                  className="w-full"
+                  disabled={contactStatus === 'sending'}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Email <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  type="email"
+                  required
+                  value={contactForm.email}
+                  onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                  placeholder="your.email@example.com"
+                  className="w-full"
+                  disabled={contactStatus === 'sending'}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Message <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  required
+                  value={contactForm.message}
+                  onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+                  placeholder="Tell us how we can help..."
+                  rows={5}
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-teal-500 focus:outline-none transition-colors resize-none"
+                  disabled={contactStatus === 'sending'}
+                />
+              </div>
+
+              {contactStatus === 'success' && (
+                <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 flex items-center gap-3">
+                  <i className="fas fa-check-circle text-green-600 text-xl"></i>
+                  <p className="text-green-700 font-medium">Thanks for reaching out! We'll get back to you soon.</p>
+                </div>
+              )}
+
+              {contactStatus === 'error' && (
+                <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 flex items-center gap-3">
+                  <i className="fas fa-exclamation-circle text-red-600 text-xl"></i>
+                  <p className="text-red-700 font-medium">Oops! Something went wrong. Please try again.</p>
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                className="w-full py-4 text-lg rounded-xl"
+                disabled={contactStatus === 'sending'}
+              >
+                {contactStatus === 'sending' ? (
+                  <>
+                    <i className="fas fa-spinner fa-spin mr-2"></i>
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    Send Message <i className="fas fa-paper-plane ml-2"></i>
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
