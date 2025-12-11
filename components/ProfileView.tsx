@@ -156,10 +156,13 @@ export const ProfileView: React.FC = () => {
                  </div>
             </div>
             <div className="flex gap-2 w-full md:w-auto">
-                <Button variant="secondary" onClick={() => setIsEditing(!isEditing)} className="flex-1 md:flex-none">
-                    <i className={`fas ${isEditing ? 'fa-times' : 'fa-edit'} mr-2`}></i>
-                    {isEditing ? 'Cancel' : 'Edit Profile'}
-                </Button>
+                {/* Only show edit button for providers, not for seekers/clients */}
+                {isProvider && (
+                    <Button variant="secondary" onClick={() => setIsEditing(!isEditing)} className="flex-1 md:flex-none">
+                        <i className={`fas ${isEditing ? 'fa-times' : 'fa-edit'} mr-2`}></i>
+                        {isEditing ? 'Cancel' : 'Edit Profile'}
+                    </Button>
+                )}
                 <Button variant="outline" onClick={() => {
                     localStorage.removeItem('authToken');
                     localStorage.removeItem('userProfile');
