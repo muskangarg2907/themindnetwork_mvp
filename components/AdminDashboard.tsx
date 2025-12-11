@@ -44,7 +44,7 @@ export const AdminDashboard: React.FC = () => {
     let mounted = true;
     const fetchNotify = async () => {
       try {
-        const res = await fetch('/api/admin/notify');
+        const res = await fetch('/api/admin?action=notify');
         if (!res.ok) {
           // 404 means no notify record yet
           return null;
@@ -82,8 +82,8 @@ export const AdminDashboard: React.FC = () => {
   const fetchProfiles = async () => {
     setLoading(true);
     try {
-      console.log('[ADMIN] Fetching profiles from /api/admin/profiles');
-      const res = await fetch('/api/admin/profiles');
+      console.log('[ADMIN] Fetching profiles from /api/admin?action=profiles');
+      const res = await fetch('/api/admin?action=profiles');
       console.log('[ADMIN] Response status:', res.status);
       
       if (!res.ok) {
@@ -149,7 +149,7 @@ export const AdminDashboard: React.FC = () => {
     setLoading(true);
     try {
       console.log('[ADMIN] Rejecting profile:', id);
-      const res = await fetch(`/api/admin/profiles?id=${id}`, {
+      const res = await fetch(`/api/admin?action=profiles&id=${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'rejected' })
@@ -181,7 +181,7 @@ export const AdminDashboard: React.FC = () => {
     if (!window.confirm('Are you sure you want to delete this profile?')) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/profiles?id=${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin?action=profiles&id=${id}`, { method: 'DELETE' });
       if (res.ok) {
         setSelectedProfile(null);
         await fetchProfiles();
@@ -211,7 +211,7 @@ export const AdminDashboard: React.FC = () => {
               await fetchProfiles();
               // update notify timestamp after manual refresh
               try {
-                const r = await fetch('/api/admin/notify');
+                const r = await fetch('/api/admin?action=notify');
                 if (r.ok) {
                   const d = await r.json();
                   setNotifyTimestamp(d.lastUpdate || null);

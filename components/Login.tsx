@@ -240,7 +240,7 @@ export const Login: React.FC = () => {
       
       // Check if profile exists
       console.log('[LOGIN] Checking if profile exists for phone:', fullPhone);
-      const resp = await fetch(`/api/profiles/lookup?phone=${encodeURIComponent(fullPhone)}`);
+      const resp = await fetch(`/api/profiles?action=lookup&phone=${encodeURIComponent(fullPhone)}`);
       
       console.log('[LOGIN] Lookup response status:', resp.status);
       

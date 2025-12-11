@@ -179,7 +179,7 @@ export const ProfileWizard: React.FC = () => {
                         }
                         // Notify admin interface that a new profile was created
                         try {
-                            await fetch('/api/admin/notify', {
+                            await fetch('/api/admin?action=notify', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ source: 'profile_wizard' })

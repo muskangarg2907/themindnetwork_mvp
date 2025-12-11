@@ -4,7 +4,7 @@ const API_BASE = '';
 
 export const generateProfileSummary = async (profile: Partial<UserProfile>): Promise<string> => {
   try {
-    const res = await fetch(`${API_BASE}/api/generate/summary`, {
+    const res = await fetch(`${API_BASE}/api/generate?type=summary`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(profile),
@@ -24,7 +24,7 @@ export const generateProfileSummary = async (profile: Partial<UserProfile>): Pro
 
 export const generateProviderBio = async (profile: Partial<UserProfile>): Promise<string> => {
   try {
-    const res = await fetch(`${API_BASE}/api/generate/bio`, {
+    const res = await fetch(`${API_BASE}/api/generate?type=bio`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(profile),
