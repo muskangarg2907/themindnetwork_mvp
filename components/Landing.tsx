@@ -10,6 +10,7 @@ export const Landing: React.FC = () => {
       name: 'Explore',
       icon: 'fa-compass',
       price: '₹1,549',
+      oldPrice: '₹1,999',
       description: 'Try different therapists and find your perfect match',
       features: [
         'Unlimited consultations with our team',
@@ -38,6 +39,8 @@ export const Landing: React.FC = () => {
       name: 'Connect',
       icon: 'fa-handshake',
       price: '₹199',
+      oldPrice: '₹499',
+      noSessionText: true,
       description: 'Quick connection with the right therapist',
       features: [
         'Free consultation',
@@ -99,7 +102,7 @@ export const Landing: React.FC = () => {
             <p className="text-sm text-slate-500">No credit card required • Start in 2 minutes</p>
           </div>
 
-          <div className="flex flex-wrap gap-8 justify-center text-left max-w-2xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 rounded-lg bg-teal-100 flex items-center justify-center flex-shrink-0 mt-1">
                 <i className="fas fa-user-doctor text-teal-600"></i>
@@ -143,59 +146,66 @@ export const Landing: React.FC = () => {
             </p>
           </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-              {plans.map((plan, index) => (
-                <div 
-                  key={index}
-                  className={`relative bg-white border-2 rounded-3xl p-8 hover:scale-105 transition-all duration-300 ${
-                    plan.highlight 
-                      ? 'border-teal-500 shadow-2xl shadow-teal-500/20' 
-                      : 'border-slate-200 hover:border-slate-300 shadow-lg'
-                  }`}
-                >
-                  {plan.highlight && (
-                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-6 py-2 bg-gradient-to-r from-teal-600 to-blue-600 rounded-full text-white text-xs font-bold shadow-lg">
-                      MOST POPULAR
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {plans.map((plan, index) => (
+              <div 
+                key={index}
+                className={`relative bg-white border-2 rounded-3xl p-8 hover:scale-105 transition-all duration-300 ${
+                  plan.highlight 
+                    ? 'border-teal-500 shadow-2xl shadow-teal-500/20' 
+                    : 'border-slate-200 hover:border-slate-300 shadow-lg'
+                }`}
+              >
+                {plan.highlight && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-6 py-2 bg-gradient-to-r from-teal-600 to-blue-600 rounded-full text-white text-xs font-bold shadow-lg">
+                    MOST POPULAR
+                  </div>
+                )}
+
+                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 ${
+                  plan.highlight ? 'bg-gradient-to-br from-teal-500 to-blue-600' : 'bg-slate-100'
+                }`}>
+                  <i className={`fas ${plan.icon} text-2xl ${
+                    plan.highlight ? 'text-white' : 'text-slate-600'
+                  }`}></i>
+                </div>
+
+                <h3 className="text-2xl font-bold text-slate-900 mb-3">{plan.name}</h3>
+                <p className="text-slate-600 mb-6">{plan.description}</p>
+
+                <div className="mb-8">
+                  {plan.oldPrice && (
+                    <div className="mb-2">
+                      <span className="text-2xl text-slate-400 line-through">{plan.oldPrice}</span>
                     </div>
                   )}
-
-                  <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 ${
-                    plan.highlight ? 'bg-gradient-to-br from-teal-500 to-blue-600' : 'bg-slate-100'
-                  }`}>
-                    <i className={`fas ${plan.icon} text-2xl ${
-                      plan.highlight ? 'text-white' : 'text-slate-600'
-                    }`}></i>
-                  </div>
-
-                  <h3 className="text-2xl font-bold text-slate-900 mb-3">{plan.name}</h3>
-                  <p className="text-slate-600 mb-6">{plan.description}</p>
-
-                  <div className="mb-8">
-                    <span className="text-5xl font-bold text-slate-900">{plan.price}</span>
+                  <span className="text-5xl font-bold text-slate-900">{plan.price}</span>
+                  {!plan.noSessionText && (
                     <p className="text-sm text-slate-500 mt-2">for your first 3 sessions</p>
-                  </div>
-
-                  <ul className="space-y-4 mb-8">
-                    {plan.features.map((feature, i) => (
-                      <li key={i} className="flex items-start gap-3 text-slate-700">
-                        <i className="fas fa-check-circle text-teal-600 mt-1 flex-shrink-0"></i>
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <Button
-                    onClick={() => navigate('/login')}
-                    variant={plan.highlight ? 'primary' : 'secondary'}
-                    className="w-full py-4 rounded-xl text-lg font-semibold"
-                  >
-                    {plan.cta} <i className="fas fa-arrow-right ml-2"></i>
-                  </Button>
+                  )}
                 </div>
-              ))}
-            </div>
+
+                <ul className="space-y-4 mb-8">
+                  {plan.features.map((feature, i) => (
+                    <li key={i} className="flex items-start gap-3 text-slate-700">
+                      <i className="fas fa-check-circle text-teal-600 mt-1 flex-shrink-0"></i>
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <Button
+                  onClick={() => navigate('/login')}
+                  variant={plan.highlight ? 'primary' : 'secondary'}
+                  className="w-full py-4 rounded-xl text-lg font-semibold"
+                >
+                  {plan.cta} <i className="fas fa-arrow-right ml-2"></i>
+                </Button>
+              </div>
+            ))}
           </div>
         </div>
+      </div>
 
       {/* CTA Section */}
       <div className="py-24 px-6 bg-gradient-to-br from-teal-50 to-blue-50">
@@ -208,23 +218,22 @@ export const Landing: React.FC = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
-                onClick={() => navigate('/login')}
-                className="text-lg px-12 py-5 rounded-2xl shadow-lg shadow-teal-500/30"
+              onClick={() => navigate('/login')}
+              className="text-lg px-12 py-5 rounded-2xl shadow-lg shadow-teal-500/30"
+            >
+              Get Started Free <i className="fas fa-arrow-right ml-2"></i>
+            </Button>
+            {localStorage.getItem('userProfile') && (
+              <Button 
+                variant="secondary"
+                onClick={() => navigate('/profile')}
+                className="text-lg px-12 py-5 rounded-2xl"
               >
-                Get Started Free <i className="fas fa-arrow-right ml-2"></i>
+                Go to Profile <i className="fas fa-user ml-2"></i>
               </Button>
-              {localStorage.getItem('userProfile') && (
-                <Button 
-                  variant="secondary"
-                  onClick={() => navigate('/profile')}
-                  className="text-lg px-12 py-5 rounded-2xl"
-                >
-                  Go to Profile <i className="fas fa-user ml-2"></i>
-                </Button>
-              )}
-            </div>
-            <p className="text-sm text-slate-500 mt-6">🔒 Your privacy and data are 100% secure</p>
+            )}
           </div>
+          <p className="text-sm text-slate-500 mt-6">🔒 Your privacy and data are 100% secure</p>
         </div>
       </div>
     </div>
