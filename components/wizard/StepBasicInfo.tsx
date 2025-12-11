@@ -37,6 +37,29 @@ export const StepBasicInfo: React.FC<StepProps> = ({ data, updateData }) => {
     if (value.trim() !== '') {
         setErrors(prev => ({ ...prev, [name]: '' }));
     }
+    
+    // Validate email format
+    if (name === 'email' && value.trim() !== '') {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(value)) {
+            setErrors(prev => ({ ...prev, email: 'Please enter a valid email address' }));
+        } else {
+            setErrors(prev => ({ ...prev, email: '' }));
+        }
+    }
+    
+    // Validate DOB is before today
+    if (name === 'dob' && value !== '') {
+        const selectedDate = new Date(value);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Reset time to start of day
+        
+        if (selectedDate >= today) {
+            setErrors(prev => ({ ...prev, dob: 'Date of birth must be before today' }));
+        } else {
+            setErrors(prev => ({ ...prev, dob: '' }));
+        }
+    }
   };
 
   return (
@@ -62,6 +85,8 @@ export const StepBasicInfo: React.FC<StepProps> = ({ data, updateData }) => {
           type="date"
           value={data.basicInfo.dob || ''} 
           onChange={handleChange}
+          error={errors.dob}
+          max={new Date().toISOString().split('T')[0]}
         />
         <div className="flex flex-col gap-1.5 w-full">
             <label className="text-sm font-semibold text-slate-700 ml-1">Gender</label>
