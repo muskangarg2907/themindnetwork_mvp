@@ -228,6 +228,7 @@ export const Login: React.FC = () => {
         const profile = await resp.json();
         console.log('[LOGIN] EXISTING USER - Found profile:', profile._id, profile.basicInfo?.fullName);
         console.log('[LOGIN] Profile type check:', Array.isArray(profile) ? 'ARRAY (ERROR!)' : 'OBJECT (CORRECT)');
+        console.log('[LOGIN] Profile role:', profile.role, '| Button flow role:', preselectedRole);
         
         if (Array.isArray(profile)) {
           console.error('[LOGIN] ERROR: Lookup returned array instead of single profile!');
@@ -236,6 +237,8 @@ export const Login: React.FC = () => {
           return;
         }
         
+        // Override button flow - if user already has a profile, use existing profile regardless of which button they clicked
+        console.log('[LOGIN] User already has a profile - ignoring button flow, loading existing profile');
         localStorage.setItem('userProfile', JSON.stringify(profile));
         setIsLoading(false);
         navigate('/profile');
