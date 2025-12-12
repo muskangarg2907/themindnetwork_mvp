@@ -11,7 +11,24 @@ export const ProfileView: React.FC = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<UserProfile | null>(null);
-  const [pollingEnabled, setPollingEnabled] = useState(!(location.state as any)?.isNewlyCreated);  useEffect(() => {
+  const [pollingEnabled, setPollingEnabled] = useState(!(location.state as any)?.isNewlyCreated);
+  const [showPaymentSuccess, setShowPaymentSuccess] = useState(false);
+  const [selectedPlanName, setSelectedPlanName] = useState<string>('');
+
+  useEffect(() => {
+    // Check for payment success message
+    if ((location.state as any)?.paymentSuccess) {
+      setShowPaymentSuccess(true);
+      setSelectedPlanName((location.state as any)?.plan || '');
+      
+      // Auto-hide success message after 5 seconds
+      const timer = setTimeout(() => {
+        setShowPaymentSuccess(false);
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [location.state]);  useEffect(() => {
     // Retrieve from storage
     const stored = localStorage.getItem('userProfile');
     if (stored) {
@@ -197,6 +214,26 @@ export const ProfileView: React.FC = () => {
         </div>
 
         {/* Verification/Status Banners */}
+        {showPaymentSuccess && (
+            <div className="bg-green-50 border border-green-200 p-6 rounded-xl flex items-start gap-4 animate-slide-up shadow-lg">
+                <div className="text-green-600 text-xl mt-1">
+                    <i className="fas fa-check-circle"></i>
+                </div>
+                <div className="flex-1">
+                    <h3 className="font-bold text-green-800 text-lg">Payment Successful!</h3>
+                    <p className="text-green-700 mt-1">
+                        You've successfully subscribed to the <strong>{selectedPlanName}</strong> plan. Our team will reach out to you shortly to schedule your first session.
+                    </p>
+                </div>
+                <button 
+                    onClick={() => setShowPaymentSuccess(false)}
+                    className="text-green-600 hover:text-green-800"
+                >
+                    <i className="fas fa-times"></i>
+                </button>
+            </div>
+        )}
+        
         {profile.status === 'pending_verification' && (
             <div className="bg-yellow-50 border border-yellow-200 p-6 rounded-xl flex items-start gap-4 animate-slide-up shadow-sm">
                 <div className="text-yellow-600 text-xl mt-1">
@@ -246,6 +283,34 @@ export const ProfileView: React.FC = () => {
                 <button onClick={handleSave} className="bg-white text-teal-600 px-6 py-2 rounded-lg font-bold hover:bg-teal-50 transition-colors">
                     Save Changes
                 </button>
+            </div>
+        )}
+
+        {/* Plan Selection CTA for Clients */}
+        {isClient && profile.status === 'approved' && (
+            <div className="bg-gradient-to-br from-teal-50 to-blue-50 border-2 border-teal-200 p-6 rounded-2xl shadow-lg animate-slide-up">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-blue-600 flex items-center justify-center flex-shrink-0">
+                            <i className="fas fa-sparkles text-white text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-bold text-slate-900 mb-1">
+                                Ready to Start Your Journey?
+                            </h3>
+                            <p className="text-slate-600">
+                                Choose a plan and get matched with the perfect therapist for your needs
+                            </p>
+                        </div>
+                    </div>
+                    <Button 
+                        onClick={() => navigate('/plans')}
+                        className="whitespace-nowrap shadow-lg shadow-teal-500/30"
+                    >
+                        <i className="fas fa-rocket mr-2"></i>
+                        Select Your Plan
+                    </Button>
+                </div>
             </div>
         )}
 
