@@ -95,12 +95,13 @@ export const Landing: React.FC = () => {
           
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-3">
-            <button 
+            <Button 
               onClick={() => navigate('/login', { state: { role: 'provider' } })}
-              className="text-sm font-medium text-teal-600 hover:text-teal-700 transition-colors"
+              variant="secondary"
+              className="px-4 py-1.5 text-sm"
             >
               For Providers
-            </button>
+            </Button>
             <Button 
               onClick={() => navigate('/login')}
               variant="secondary"
