@@ -94,14 +94,13 @@ export const Landing: React.FC = () => {
           </div>
           
           {/* Desktop Menu */}
-          <div className="hidden md:flex items-center gap-4">
-            <Button 
+          <div className="hidden md:flex items-center gap-3">
+            <button 
               onClick={() => navigate('/login', { state: { role: 'provider' } })}
-              variant="outline"
-              className="px-6 py-2 border-2 border-teal-500 text-teal-600 hover:bg-teal-50"
+              className="text-sm font-medium text-teal-600 hover:text-teal-700 transition-colors"
             >
-              For Providers <i className="fas fa-user-doctor ml-2"></i>
-            </Button>
+              For Providers
+            </button>
             <Button 
               onClick={() => navigate('/login')}
               variant="secondary"
@@ -143,7 +142,7 @@ export const Landing: React.FC = () => {
 
           <div className="flex flex-col items-center gap-6 mb-12">
             <Button 
-              onClick={() => navigate('/login')}
+              onClick={() => navigate('/login', { state: { role: 'client' } })}
               className="text-lg px-12 py-6 rounded-2xl shadow-lg shadow-teal-500/30 hover:shadow-xl hover:shadow-teal-500/40 transition-all"
             >
               Find Therapist <i className="fas fa-arrow-right ml-3"></i>
