@@ -61,6 +61,10 @@ export const ProfileView: React.FC = () => {
       setProfile(parsed);
       setEditData(parsed);
       secureLog('[PROFILE] Loaded profile from localStorage. Payments count:', parsed?.payments?.length || 0);
+      secureLog('[PROFILE] Is client?', parsed?.role === 'client', '| Role:', parsed?.role);
+      if (parsed?.payments?.length > 0) {
+        secureLog('[PROFILE] Payment details:', JSON.stringify(parsed.payments[0], null, 2));
+      }
     } else {
       navigate('/login');
     }
@@ -362,7 +366,7 @@ export const ProfileView: React.FC = () => {
                 <div className="space-y-4">
                     {profile.payments.map((payment, index) => (
                         <div 
-                            key={payment.razorpayPaymentId || index}
+                            key={`${payment.planId}-${index}`}
                             className={`border-2 p-4 rounded-xl ${
                                 payment.status === 'success' 
                                     ? 'bg-green-50 border-green-200' 
@@ -399,14 +403,10 @@ export const ProfileView: React.FC = () => {
                                         <p className="font-medium text-slate-900 uppercase">{payment.paymentMethod}</p>
                                     </div>
                                 )}
-                                {payment.razorpayPaymentId && (
-                                    <div className="col-span-2 sm:col-span-1">
-                                        <p className="text-xs text-slate-500">Payment ID</p>
-                                        <p className="font-mono text-xs text-slate-700 truncate" title={payment.razorpayPaymentId}>
-                                            {payment.razorpayPaymentId}
-                                        </p>
-                                    </div>
-                                )}
+                                <div>
+                                    <p className="text-xs text-slate-500">Plan ID</p>
+                                    <p className="font-mono text-xs text-slate-700">{payment.planId}</p>
+                                </div>
                             </div>
                             {payment.status === 'failed' && (
                                 <div className="mt-3 pt-3 border-t border-red-300">
