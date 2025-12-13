@@ -18,20 +18,24 @@ const app = initializeApp(firebaseConfig);
 // Initialize Firebase Authentication
 export const auth = getAuth(app);
 
-// Initialize App Check ONLY in production (not localhost)
+// Initialize App Check ONLY in production (not localhost) and ONLY if reCAPTCHA v3 key is configured
 if (typeof window !== 'undefined' && !import.meta.env.DEV) {
   const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_V3_SITE_KEY;
   
-  if (recaptchaSiteKey) {
+  if (recaptchaSiteKey && recaptchaSiteKey !== 'YOUR_RECAPTCHA_V3_SITE_KEY') {
     try {
       initializeAppCheck(app, {
         provider: new ReCaptchaV3Provider(recaptchaSiteKey),
         isTokenAutoRefreshEnabled: true
       });
-      console.log('[Firebase] App Check initialized for production');
+      console.log('[Firebase] App Check initialized for production with reCAPTCHA v3');
     } catch (error) {
       console.error('[Firebase] App Check initialization failed:', error);
+      console.warn('[Firebase] Continuing without App Check - OTP should still work');
     }
+  } else {
+    console.warn('[Firebase] App Check DISABLED in production - VITE_RECAPTCHA_V3_SITE_KEY not configured');
+    console.warn('[Firebase] OTP will work but without additional security from App Check');
   }
 } else {
   console.log('[Firebase] App Check DISABLED for local development - use test numbers or real numbers will fail');

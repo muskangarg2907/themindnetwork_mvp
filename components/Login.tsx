@@ -4,6 +4,7 @@ import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { auth } from '../services/firebase';
 import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
+import { sanitizeForStorage, secureLog } from '../services/security';
 
 const COUNTRY_CODES = [
   { code: '+91', country: 'IN' },
@@ -209,8 +210,9 @@ export const Login: React.FC = () => {
 
     try {
       // Verify OTP with Firebase
-      await confirmationResult.confirm(otp);
-      console.log('[LOGIN] OTP verified successfully');
+      console.log('[LOGIN] Attempting to verify OTP...');
+      const result = await confirmationResult.confirm(otp);
+      console.log('[LOGIN] OTP verified successfully', result);
       
 
       // Set auth tokens
@@ -260,6 +262,9 @@ export const Login: React.FC = () => {
       navigate('/create', { state: { phone: fullPhone, preselectedRole } });
     } catch (err: any) {
       console.error('[LOGIN] OTP verification error:', err);
+      console.error('[LOGIN] Error code:', err.code);
+      console.error('[LOGIN] Error message:', err.message);
+      console.error('[LOGIN] Full error:', JSON.stringify(err, null, 2));
       setIsLoading(false);
       
       // Friendly error messages based on error code
@@ -269,8 +274,11 @@ export const Login: React.FC = () => {
         setError('OTP expired. Please request a new one.');
       } else if (err.code === 'auth/too-many-requests') {
         setError('Too many attempts. Please try again later.');
+      } else if (err.code === 'auth/missing-app-credential' || err.code === 'auth/app-not-authorized') {
+        setError('Firebase configuration error. Please contact support.');
+        console.error('[LOGIN] Firebase App Check or configuration issue detected');
       } else {
-        setError('Invalid OTP. Please check and try again.');
+        setError(`Verification failed: ${err.message || 'Invalid OTP. Please try again.'}`);
       }
       
       // Clear the OTP input to allow re-entry
