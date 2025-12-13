@@ -1,24 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/Button';
-
-interface Profile {
-  _id: string;
-  basicInfo: {
-    fullName: string;
-    email: string;
-    phone: string;
-  };
-  status: 'pending_verification' | 'approved' | 'rejected';
-  role: 'provider' | 'client';
-  createdAt: string;
-}
+import { UserProfile } from '../types';
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [profiles, setProfiles] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
+  const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
   const [editStatus, setEditStatus] = useState('pending_verification');
 
   // Check authentication
@@ -57,11 +46,19 @@ export const AdminDashboard: React.FC = () => {
       console.log('[ADMIN] Received data:', data);
       const profileList = data.profiles || [];
       console.log('[ADMIN] Profile count:', profileList.length);
+      
+      // Debug: Check if any profiles have payments
+      const profilesWithPayments = profileList.filter((p: UserProfile) => p.payments && p.payments.length > 0);
+      console.log('[ADMIN] Profiles with payments:', profilesWithPayments.length);
+      if (profilesWithPayments.length > 0) {
+        console.log('[ADMIN] Sample payment data:', profilesWithPayments[0].payments);
+      }
+      
       setProfiles(profileList);
       
       // If a profile is selected, update it with fresh data from the list
       if (selectedProfile) {
-        const updatedSelected = profileList.find((p: Profile) => p._id === selectedProfile._id);
+        const updatedSelected = profileList.find((p: UserProfile) => p._id === selectedProfile._id);
         if (updatedSelected) {
           setSelectedProfile(updatedSelected);
         }
@@ -226,10 +223,20 @@ export const AdminDashboard: React.FC = () => {
                   }`}
                 >
                   <div className="flex justify-between items-start">
-                    <div>
-                      <p className="font-bold text-slate-800">{p.basicInfo.fullName}</p>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-bold text-slate-800">{p.basicInfo.fullName}</p>
+                        {p.role === 'client' && p.payments && p.payments.length > 0 && (
+                          <span className="text-xs bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full font-bold">
+                            <i className="fas fa-coins mr-1"></i>{p.payments.length}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-sm text-slate-600">{p.basicInfo.email}</p>
                       <p className="text-sm text-slate-600">{p.basicInfo.phone}</p>
+                      <p className="text-xs text-slate-500 mt-1">
+                        <span className="font-semibold capitalize">{p.role}</span>
+                      </p>
                     </div>
                     <span
                       className={`text-xs px-2 py-1 rounded-full font-bold uppercase ${
@@ -278,7 +285,12 @@ export const AdminDashboard: React.FC = () => {
                 </div>
 
                 {/* Payment Information for Clients */}
-                {selectedProfile.role === 'client' && selectedProfile.payments && selectedProfile.payments.length > 0 && (
+                {(() => {
+                  const isClient = selectedProfile.role === 'client';
+                  const hasPayments = selectedProfile.payments && selectedProfile.payments.length > 0;
+                  console.log('[ADMIN DETAIL] Role:', selectedProfile.role, '| Is client?', isClient, '| Has payments?', hasPayments, '| Payment count:', selectedProfile.payments?.length || 0);
+                  
+                  return isClient && hasPayments && (
                   <div className="pt-4 border-t border-slate-200">
                     <h3 className="text-lg font-bold mb-3 text-slate-900">
                       Payment History ({selectedProfile.payments.length})
@@ -341,7 +353,8 @@ export const AdminDashboard: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                )}
+                  );
+                })()}
 
                 <div className="pt-4 space-y-2">
                   <Button
