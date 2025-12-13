@@ -8,6 +8,7 @@ import { StepRoleSelection } from './wizard/StepRoleSelection';
 import { StepProviderProfessional } from './wizard/StepProviderProfessional';
 import { StepProviderPractice } from './wizard/StepProviderPractice';
 import { StepChatbotIntake } from './wizard/StepChatbotIntake';
+import { sanitizeForStorage, secureLog } from '../services/security';
 import { Button } from './ui/Button';
 import { generateProfileSummary, generateProviderBio } from '../services/geminiService';
 import { saveProfile } from '../services/api';
@@ -151,8 +152,8 @@ export const ProfileWizard: React.FC = () => {
 
         try {
                         const saved = await saveProfile(finalProfile);
-                        // Optionally keep a local copy
-                        localStorage.setItem('userProfile', JSON.stringify(saved));
+                        // Sanitize before storing to protect health data
+                        localStorage.setItem('userProfile', JSON.stringify(sanitizeForStorage(saved)));
                         // Ensure phone is available for lookup flows
                         try {
                             const phoneToStore = saved?.basicInfo?.phone;
@@ -160,6 +161,8 @@ export const ProfileWizard: React.FC = () => {
                         } catch (e) {
                             console.warn('Failed to persist userPhone locally', e);
                         }
+                        
+                        secureLog('[WIZARD] Profile created successfully');
                         
                         // Notify admin interface that a new profile was created
                         try {

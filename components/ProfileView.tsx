@@ -4,6 +4,7 @@ import { UserProfile } from '../types';
 import { ChatBot } from './ChatBot';
 import { Button } from './ui/Button';
 import { Input, TextArea } from './ui/Input';
+import { sanitizeForStorage, secureLog } from '../services/security';
 
 export const ProfileView: React.FC = () => {
   const navigate = useNavigate();
@@ -100,10 +101,10 @@ export const ProfileView: React.FC = () => {
         }
         
         const savedProfile = await response.json();
-        console.log('[PROFILE] Save successful:', savedProfile);
+        secureLog('[PROFILE] Save successful');
         setProfile(savedProfile);
         setEditData(savedProfile);
-        localStorage.setItem('userProfile', JSON.stringify(savedProfile));
+        localStorage.setItem('userProfile', JSON.stringify(sanitizeForStorage(savedProfile)));
         setIsEditing(false);
       } catch (err) {
         console.error('Error saving profile:', err);

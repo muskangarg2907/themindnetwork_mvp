@@ -146,6 +146,19 @@ export const AdminDashboard: React.FC = () => {
   };
 
   const handleReject = async (id: string) => {
+    // Check if profile has any successful payments
+    const profile = profiles.find(p => p._id === id);
+    const hasPayments = profile?.payments?.some(p => p.status === 'success');
+    
+    if (hasPayments) {
+      const confirmMessage = `⚠️ WARNING: This profile has made successful payments!\n\nAre you ABSOLUTELY SURE you want to reject this account?\n\nThis action may result in customer complaints and refund requests.`;
+      if (!window.confirm(confirmMessage)) return;
+      
+      // Double confirmation for paid accounts
+      const doubleConfirm = window.confirm('FINAL CONFIRMATION: Reject this paying customer account?');
+      if (!doubleConfirm) return;
+    }
+    
     setLoading(true);
     try {
       console.log('[ADMIN] Rejecting profile:', id);
@@ -178,7 +191,25 @@ export const AdminDashboard: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this profile?')) return;
+    // Check if profile has any successful payments
+    const profile = profiles.find(p => p._id === id);
+    const hasPayments = profile?.payments?.some(p => p.status === 'success');
+    
+    if (hasPayments) {
+      const totalPaid = profile.payments
+        .filter(p => p.status === 'success')
+        .reduce((sum, p) => sum + p.amount, 0);
+      
+      const confirmMessage = `🚨 CRITICAL WARNING: This profile has made ${profile.payments.filter(p => p.status === 'success').length} successful payment(s) totaling ₹${totalPaid}!\n\nDeleting this account is a SERIOUS action that may result in:\n- Customer complaints\n- Refund requests\n- Legal issues\n\nAre you ABSOLUTELY SURE you want to DELETE this paying customer account?`;
+      if (!window.confirm(confirmMessage)) return;
+      
+      // Double confirmation for paid accounts
+      const doubleConfirm = window.confirm('FINAL CONFIRMATION: Type the amount to confirm deletion: ₹' + totalPaid);
+      if (!doubleConfirm) return;
+    } else {
+      if (!window.confirm('Are you sure you want to delete this profile?')) return;
+    }
+    
     setLoading(true);
     try {
       const res = await fetch(`/api/admin?action=profiles&id=${id}`, { method: 'DELETE' });

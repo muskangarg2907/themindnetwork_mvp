@@ -16,48 +16,6 @@
     "createdAt": "2025-12-08T09:13:49.195Z"
   },
   {
-    "id": "be000ad4-a571-4d38-b355-c628c98ec491",
-    "status": "pending_verification",
-    "role": "provider",
-    "basicInfo": {
-      "fullName": "Muskan Garg",
-      "email": "muskangarg.official@gmail.com",
-      "phone": "+91 9501366244",
-      "dob": "1999-07-29",
-      "location": "Bangalore",
-      "gender": "Female"
-    },
-    "clinical": {
-      "presentingProblem": "",
-      "currentMood": "",
-      "hasPriorTherapy": false,
-      "medications": "",
-      "riskFactors": []
-    },
-    "preferences": {
-      "communicationStyle": "",
-      "providerGenderPreference": "",
-      "insuranceProvider": ""
-    },
-    "providerDetails": {
-      "qualification": "MA",
-      "yearsExperience": "1",
-      "specializations": [
-        "Anxiety"
-      ],
-      "mode": "online",
-      "languages": [],
-      "clientType": [],
-      "budgetRange": "500",
-      "licenses": "-",
-      "therapeuticFocus": "",
-      "therapyStyle": "Eclectic",
-      "resumeLink": ""
-    },
-    "createdAt": "2025-12-08T16:07:52.230Z",
-    "aiSummary": "Muskan Garg is a provider. A professional bio is not available in local mode."
-  },
-  {
     "id": "f3ad167d-c62c-4f10-8f34-53c5a32efe0e",
     "status": "approved",
     "role": "client",
@@ -98,18 +56,32 @@
     },
     "createdAt": "2025-12-11T12:29:41.437Z",
     "aiSummary": "",
-    "updatedAt": "2025-12-13T15:29:45.407Z",
-    "payment": {
-      "planId": "connect",
-      "planName": "Connect",
-      "amount": 199,
-      "currency": "INR",
-      "status": "success",
-      "razorpayOrderId": "order_Rr950Y2229lzDa",
-      "razorpayPaymentId": "pay_Rr95Yunsy7osWe",
-      "razorpaySignature": "6ce5d4832d00d3c19cccb5be696bcfb3fb6c3d79480357f5ee9c1889f2100583",
-      "paidAt": "2025-12-13T15:29:45.090Z",
-      "createdAt": "2025-12-13T15:29:45.090Z"
-    }
+    "updatedAt": "2025-12-13T15:54:51.629Z",
+    "payments": [
+      {
+        "planId": "connect",
+        "planName": "Connect",
+        "amount": 199,
+        "currency": "INR",
+        "status": "success",
+        "razorpayOrderId": "order_Rr950Y2229lzDa",
+        "razorpayPaymentId": "pay_Rr95Yunsy7osWe",
+        "razorpaySignature": "6ce5d4832d00d3c19cccb5be696bcfb3fb6c3d79480357f5ee9c1889f2100583",
+        "paidAt": "2025-12-13T15:29:45.090Z",
+        "createdAt": "2025-12-13T15:29:45.090Z"
+      },
+      {
+        "planId": "connect",
+        "planName": "Connect",
+        "amount": 199,
+        "currency": "INR",
+        "status": "success",
+        "razorpayOrderId": "order_Rr9VcIRYaOd76m",
+        "razorpayPaymentId": "pay_Rr9W4wCVUt58dV",
+        "razorpaySignature": "97093e804408303d1557008cf9ca9d627f8698baf563e37429547b460acac796",
+        "paidAt": "2025-12-13T15:54:51.306Z",
+        "createdAt": "2025-12-13T15:54:51.306Z"
+      }
+    ]
   }
 ]

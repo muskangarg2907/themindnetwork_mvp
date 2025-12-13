@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
+import { sanitizeForStorage, secureLog } from '../services/security';
 
 interface Plan {
   id: string;
@@ -172,8 +173,9 @@ export const Payment: React.FC = () => {
 
       const savedProfile = await response.json();
       
-      // Update localStorage
-      localStorage.setItem('userProfile', JSON.stringify(savedProfile));
+      // Update localStorage with sanitized data
+      secureLog('[PAYMENT] Profile updated with payment');
+      localStorage.setItem('userProfile', JSON.stringify(sanitizeForStorage(savedProfile)));
 
       // Navigate to profile with success message
       navigate('/profile', {

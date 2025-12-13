@@ -1,6 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const { randomUUID } = require('crypto');
 const { Pool } = require('pg');
 const { MongoClient } = require('mongodb');
@@ -77,8 +79,97 @@ function normalizePhone(s) {
 }
 
 const app = express();
-app.use(cors());
-app.use(express.json());
+
+// Security Headers
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://checkout.razorpay.com"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", "https://api.razorpay.com"],
+      frameSrc: ["'self'", "https://api.razorpay.com"],
+    },
+  },
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true
+  }
+}));
+
+// CORS - Restrict to specific origins in production
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:4000',
+  process.env.FRONTEND_URL || 'https://themindnetwork.vercel.app'
+].filter(Boolean);
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.warn('[SECURITY] Blocked CORS request from origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
+
+// Rate limiting to prevent abuse
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.'
+});
+app.use('/api/', limiter);
+
+// Stricter rate limit for authentication endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: 'Too many authentication attempts, please try again later.'
+});
+app.use('/api/profiles?action=lookup', authLimiter);
+
+app.use(express.json({ limit: '10mb' }));
+
+// Sanitize sensitive data from responses
+function sanitizeProfile(profile, includeHealthData = false) {
+  if (!profile) return null;
+  
+  const sanitized = { ...profile };
+  
+  // Always remove internal fields
+  delete sanitized._id;
+  
+  // Remove sensitive health data unless explicitly requested (e.g., for authenticated admin/owner)
+  if (!includeHealthData && sanitized.clinical) {
+    sanitized.clinical = {
+      hasPriorTherapy: sanitized.clinical.hasPriorTherapy || false,
+      // Remove: presentingProblem, currentMood, medications, riskFactors, priorExperience
+    };
+  }
+  
+  // Sanitize payment info - only show necessary fields
+  if (sanitized.payments) {
+    sanitized.payments = sanitized.payments.map(p => ({
+      planId: p.planId,
+      planName: p.planName,
+      amount: p.amount,
+      status: p.status,
+      paidAt: p.paidAt,
+      // Remove: razorpayOrderId, razorpayPaymentId, razorpaySignature
+    }));
+  }
+  
+  return sanitized;
+}
 
 app.get('/api/health', async (req, res) => {
   try {
@@ -178,7 +269,7 @@ app.all('/api/profiles', async (req, res) => {
   const action = Array.isArray(req.query.action) ? req.query.action[0] : req.query.action;
   const phone = Array.isArray(req.query.phone) ? req.query.phone[0] : req.query.phone;
   
-  console.log('[PROFILES] Request:', req.method, 'action:', action, 'phone:', phone ? 'provided' : 'none', 'query:', JSON.stringify(req.query));
+  console.log('[PROFILES] Request:', req.method, 'action:', action, 'phone:', phone ? '****' + phone.slice(-4) : 'none');
 
   try {
     // LOOKUP by phone
@@ -189,7 +280,7 @@ app.all('/api/profiles', async (req, res) => {
       }
       const norm = normalizePhone(phoneNumber);
       
-      console.log('[LOOKUP] Searching for phone:', phoneNumber, 'normalized:', norm);
+      console.log('[LOOKUP] Searching for phone: ****' + norm.slice(-4)); // Sanitized for security
       
       let profiles = [];
       if (usePostgres) {
@@ -213,8 +304,10 @@ app.all('/api/profiles', async (req, res) => {
       
       const profileId = found._id || found.id;
       const result = { ...found, _id: profileId };
-      console.log('[LOOKUP] FOUND:', profileId);
+      console.log('[LOOKUP] FOUND: ****' + profileId.slice(-4)); // Partial ID for security
       console.log('[LOOKUP] Returning object (not array):', Array.isArray(result) ? 'ERROR: IS ARRAY!' : 'OK: is object');
+      
+      // Return full profile with health data (user is authenticated via phone OTP)
       return res.json(result);
     }
 

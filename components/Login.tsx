@@ -238,8 +238,8 @@ export const Login: React.FC = () => {
         }
         
         // Override button flow - if user already has a profile, use existing profile regardless of which button they clicked
-        console.log('[LOGIN] User already has a profile - ignoring button flow, loading existing profile');
-        localStorage.setItem('userProfile', JSON.stringify(profile));
+        secureLog('[LOGIN] User already has a profile - ignoring button flow, loading existing profile');
+        localStorage.setItem('userProfile', JSON.stringify(sanitizeForStorage(profile)));
         setIsLoading(false);
         navigate('/profile');
         return;
