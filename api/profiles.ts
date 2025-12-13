@@ -35,13 +35,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const norm = normalizePhone(phoneNumber);
       console.log('[LOOKUP] Searching for phone:', phoneNumber, 'normalized:', norm);
       
+      // Allow any status except rejected (enable payments without verification)
       const found = await profiles.findOne({
         'basicInfo.phone': norm,
-        status: 'approved'
+        status: { $ne: 'rejected' }
       });
 
       if (!found) {
-        console.log('[LOOKUP] NO MATCH FOUND (or not approved)');
+        console.log('[LOOKUP] NO MATCH FOUND (or rejected)');
         return res.status(404).json({ error: 'Not found', searched: norm });
       }
       

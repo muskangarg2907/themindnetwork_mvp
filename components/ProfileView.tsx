@@ -287,8 +287,8 @@ export const ProfileView: React.FC = () => {
             </div>
         )}
 
-        {/* Plan Selection CTA for Clients */}
-        {isClient && profile.status === 'approved' && (
+        {/* Plan Selection CTA for Clients - Available regardless of verification status */}
+        {isClient && (
             <div className="bg-gradient-to-br from-teal-50 to-blue-50 border-2 border-teal-200 p-6 rounded-2xl shadow-lg animate-slide-up">
                 <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                     <div className="flex items-start gap-4">

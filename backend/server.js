@@ -290,15 +290,15 @@ app.all('/api/profiles', async (req, res) => {
         profiles = await readProfilesFile();
       }
       
-      // Only return approved profiles (matches Vercel endpoint)
+      // Return profile for any status except rejected (allow payments without verification)
       const found = profiles.find(p => {
         const phoneMatch = normalizePhone(p.basicInfo?.phone || '') === norm;
-        const isApproved = p.status === 'approved';
-        return phoneMatch && isApproved;
+        const notRejected = p.status !== 'rejected';
+        return phoneMatch && notRejected;
       });
       
       if (!found) {
-        console.log('[LOOKUP] NO MATCH FOUND (or not approved)');
+        console.log('[LOOKUP] NO MATCH FOUND (or rejected)');
         return res.status(404).json({ error: 'Not found', searched: norm });
       }
       
