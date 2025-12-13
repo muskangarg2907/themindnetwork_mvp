@@ -237,6 +237,10 @@ export const Login: React.FC = () => {
         console.log('[LOGIN] EXISTING USER - Found profile:', profile._id, profile.basicInfo?.fullName);
         console.log('[LOGIN] Profile type check:', Array.isArray(profile) ? 'ARRAY (ERROR!)' : 'OBJECT (CORRECT)');
         console.log('[LOGIN] Profile role:', profile.role, '| Button flow role:', preselectedRole);
+        console.log('[LOGIN] Profile has payments?', !!profile.payments, '| Payment count:', profile.payments?.length || 0);
+        if (profile.payments && profile.payments.length > 0) {
+          console.log('[LOGIN] Payment sample:', profile.payments[0]);
+        }
         
         if (Array.isArray(profile)) {
           console.error('[LOGIN] ERROR: Lookup returned array instead of single profile!');

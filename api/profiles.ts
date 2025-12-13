@@ -46,7 +46,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(404).json({ error: 'Not found', searched: norm });
       }
       
-      console.log('[LOOKUP] FOUND:', found._id);
+      console.log('[LOOKUP] FOUND:', found._id, '| Role:', found.role, '| Has payments?', !!found.payments, '| Payment count:', found.payments?.length || 0);
+      if (found.payments && found.payments.length > 0) {
+        console.log('[LOOKUP] Payment sample:', JSON.stringify(found.payments[0]));
+      }
       return res.status(200).json(found);
     }
 
@@ -54,6 +57,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method === 'GET') {
       const allProfiles = await profiles.find({}).toArray();
       console.log('[PROFILES] GET: Found', allProfiles.length, 'profiles');
+      
+      // Log payment statistics
+      const profilesWithPayments = allProfiles.filter(p => p.payments && p.payments.length > 0);
+      console.log('[PROFILES] GET: Profiles with payments:', profilesWithPayments.length);
+      if (profilesWithPayments.length > 0) {
+        console.log('[PROFILES] GET: Sample profile with payments:', {
+          id: profilesWithPayments[0]._id,
+          name: profilesWithPayments[0].basicInfo?.fullName,
+          paymentCount: profilesWithPayments[0].payments?.length
+        });
+      }
+      
       return res.status(200).json(allProfiles);
     }
 
@@ -113,6 +128,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const { _id, ...updates } = payload;
       
       console.log('[PROFILES] PUT: Updating profile', _id);
+      console.log('[PROFILES] PUT: Has payments?', !!updates.payments, '| Count:', updates.payments?.length || 0);
+      if (updates.payments && updates.payments.length > 0) {
+        console.log('[PROFILES] PUT: Latest payment:', JSON.stringify(updates.payments[updates.payments.length - 1]));
+      }
 
       try {
         let query;
@@ -138,6 +157,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         console.log('[PROFILES] PUT: Profile updated successfully');
+        console.log('[PROFILES] PUT: Result has payments?', !!result.payments, '| Count:', result.payments?.length || 0);
         return res.status(200).json(result);
       } catch (err) {
         console.error('[PROFILES] PUT: Update failed:', err);

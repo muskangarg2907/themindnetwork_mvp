@@ -164,6 +164,10 @@ export const Payment: React.FC = () => {
         payments: [...existingPayments, paymentDetails],
       };
 
+      console.log('[PAYMENT] Updating profile with _id:', userProfile._id || userProfile.id);
+      console.log('[PAYMENT] Payment details:', paymentDetails);
+      console.log('[PAYMENT] Updated profile has', updatedProfile.payments.length, 'payment(s)');
+
       // Save to backend
       const response = await fetch('/api/profiles', {
         method: 'PUT',
@@ -171,8 +175,12 @@ export const Payment: React.FC = () => {
         body: JSON.stringify(updatedProfile),
       });
 
+      console.log('[PAYMENT] Backend response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error('Failed to update profile with payment');
+        const errorText = await response.text();
+        console.error('[PAYMENT] Backend save failed:', response.status, errorText);
+        throw new Error('Failed to update profile with payment: ' + errorText);
       }
 
       const savedProfile = await response.json();

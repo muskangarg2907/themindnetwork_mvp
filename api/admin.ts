@@ -26,6 +26,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (req.method === 'GET') {
         const allProfiles = await profiles.find({}).toArray();
+        
+        // Log payment statistics for debugging
+        const profilesWithPayments = allProfiles.filter(p => p.payments && p.payments.length > 0);
+        console.log('[ADMIN] GET: Total profiles:', allProfiles.length);
+        console.log('[ADMIN] GET: Profiles with payments:', profilesWithPayments.length);
+        if (profilesWithPayments.length > 0) {
+          console.log('[ADMIN] GET: Sample profile with payments:', {
+            id: profilesWithPayments[0]._id,
+            name: profilesWithPayments[0].basicInfo?.fullName,
+            phone: profilesWithPayments[0].basicInfo?.phone,
+            role: profilesWithPayments[0].role,
+            paymentCount: profilesWithPayments[0].payments?.length,
+            firstPayment: profilesWithPayments[0].payments?.[0]
+          });
+        }
+        
         return res.status(200).json({ profiles: allProfiles, total: allProfiles.length });
       }
 
