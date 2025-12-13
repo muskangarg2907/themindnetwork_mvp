@@ -22,6 +22,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    // Check if Razorpay credentials are configured
+    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+      console.error('[RAZORPAY] Missing credentials:', {
+        hasKeyId: !!process.env.RAZORPAY_KEY_ID,
+        hasKeySecret: !!process.env.RAZORPAY_KEY_SECRET
+      });
+      return res.status(500).json({ 
+        error: 'Razorpay not configured. Please contact support.',
+        details: 'Missing RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET environment variables'
+      });
+    }
+
     const Razorpay = require('razorpay');
     
     const razorpay = new Razorpay({
@@ -50,9 +62,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   } catch (err: any) {
     console.error('[RAZORPAY] Order creation failed:', err);
+    console.error('[RAZORPAY] Error details:', {
+      message: err?.message,
+      code: err?.code,
+      description: err?.description,
+      stack: err?.stack
+    });
     return res.status(500).json({ 
       error: 'Failed to create payment order', 
-      details: err?.message 
+      details: err?.message || 'Unknown error',
+      errorCode: err?.code || 'UNKNOWN'
     });
   }
 }
