@@ -11,7 +11,8 @@ export function sanitizeForStorage(profile: any) {
   if (!profile) return null;
 
   const sanitized = {
-    id: profile.id || profile._id,
+    _id: profile._id || profile.id, // Keep _id for MongoDB compatibility
+    id: profile.id || profile._id,   // Keep id for backward compatibility
     status: profile.status,
     role: profile.role,
     basicInfo: {

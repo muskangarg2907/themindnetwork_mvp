@@ -141,6 +141,18 @@ export const Payment: React.FC = () => {
       }
 
       const userProfile = JSON.parse(storedProfile);
+      
+      // CRITICAL: Ensure we have _id for backend update
+      if (!userProfile._id && !userProfile.id) {
+        console.error('[PAYMENT] Profile missing _id:', userProfile);
+        throw new Error('Profile ID missing - cannot save payment');
+      }
+      
+      // Ensure _id field exists (might be stored as 'id' in sanitized version)
+      if (!userProfile._id && userProfile.id) {
+        userProfile._id = userProfile.id;
+      }
+      
       const amount = parseInt(plan.price.replace(/[^\d]/g, ''));
 
       // Create payment details object
