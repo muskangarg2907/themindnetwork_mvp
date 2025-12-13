@@ -43,8 +43,8 @@ export interface UserProfile {
     budget?: string;
     bio?: string;
   };
-  // Payment information (for clients)
-  payment?: PaymentDetails;
+  // Payment history (for clients) - stores all payments made
+  payments?: PaymentDetails[];
   // Provider specific data
   providerDetails?: {
     qualification: string;

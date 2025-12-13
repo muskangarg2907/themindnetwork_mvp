@@ -308,52 +308,67 @@ export const AdminDashboard: React.FC = () => {
                 </div>
 
                 {/* Payment Information for Clients */}
-                {selectedProfile.role === 'client' && selectedProfile.payment && (
+                {selectedProfile.role === 'client' && selectedProfile.payments && selectedProfile.payments.length > 0 && (
                   <div className="pt-4 border-t border-slate-200">
-                    <h3 className="text-lg font-bold mb-3 text-slate-900">Payment Details</h3>
-                    <div className="space-y-3">
-                      <div>
-                        <label className="text-sm text-slate-500 font-bold">Plan</label>
-                        <p className="text-slate-800 font-medium">{selectedProfile.payment.planName}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm text-slate-500 font-bold">Amount</label>
-                        <p className="text-slate-800 font-medium">₹{selectedProfile.payment.amount}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm text-slate-500 font-bold">Status</label>
-                        <span className={`inline-block px-2 py-1 rounded text-xs font-bold uppercase ${
-                          selectedProfile.payment.status === 'success'
-                            ? 'bg-green-100 text-green-700'
-                            : selectedProfile.payment.status === 'failed'
-                            ? 'bg-red-100 text-red-700'
-                            : 'bg-yellow-100 text-yellow-700'
-                        }`}>
-                          {selectedProfile.payment.status}
+                    <h3 className="text-lg font-bold mb-3 text-slate-900">
+                      Payment History ({selectedProfile.payments.length})
+                    </h3>
+                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                      {selectedProfile.payments.map((payment, index) => (
+                        <div 
+                          key={payment.razorpayPaymentId || index}
+                          className={`p-3 rounded-lg border ${
+                            payment.status === 'success'
+                              ? 'bg-green-50 border-green-200'
+                              : payment.status === 'failed'
+                              ? 'bg-red-50 border-red-200'
+                              : 'bg-yellow-50 border-yellow-200'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-bold text-sm text-slate-900">{payment.planName}</span>
+                            <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase ${
+                              payment.status === 'success'
+                                ? 'bg-green-500 text-white'
+                                : payment.status === 'failed'
+                                ? 'bg-red-500 text-white'
+                                : 'bg-yellow-500 text-white'
+                            }`}>
+                              {payment.status}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                              <span className="text-slate-500">Amount:</span>
+                              <span className="ml-1 font-bold text-slate-900">₹{payment.amount}</span>
+                            </div>
+                            {payment.paymentMethod && (
+                              <div>
+                                <span className="text-slate-500">Method:</span>
+                                <span className="ml-1 font-medium text-slate-900 uppercase">{payment.paymentMethod}</span>
+                              </div>
+                            )}
+                          </div>
+                          {payment.paidAt && (
+                            <p className="text-xs text-slate-500 mt-1">
+                              {new Date(payment.paidAt).toLocaleString()}
+                            </p>
+                          )}
+                          {payment.razorpayPaymentId && (
+                            <p className="text-xs text-slate-500 font-mono mt-1 truncate" title={payment.razorpayPaymentId}>
+                              ID: {payment.razorpayPaymentId}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-slate-200">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-bold text-slate-700">Total Paid:</span>
+                        <span className="text-lg font-bold text-teal-600">
+                          ₹{selectedProfile.payments.reduce((sum, p) => p.status === 'success' ? sum + p.amount : sum, 0)}
                         </span>
                       </div>
-                      {selectedProfile.payment.paymentMethod && (
-                        <div>
-                          <label className="text-sm text-slate-500 font-bold">Payment Method</label>
-                          <p className="text-slate-800 font-medium uppercase">{selectedProfile.payment.paymentMethod}</p>
-                        </div>
-                      )}
-                      {selectedProfile.payment.paidAt && (
-                        <div>
-                          <label className="text-sm text-slate-500 font-bold">Payment Date</label>
-                          <p className="text-slate-800 font-medium text-xs">
-                            {new Date(selectedProfile.payment.paidAt).toLocaleString()}
-                          </p>
-                        </div>
-                      )}
-                      {selectedProfile.payment.razorpayPaymentId && (
-                        <div>
-                          <label className="text-sm text-slate-500 font-bold">Payment ID</label>
-                          <p className="text-slate-800 font-mono text-xs break-all">
-                            {selectedProfile.payment.razorpayPaymentId}
-                          </p>
-                        </div>
-                      )}
                     </div>
                   </div>
                 )}

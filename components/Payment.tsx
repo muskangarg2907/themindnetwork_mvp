@@ -152,10 +152,11 @@ export const Payment: React.FC = () => {
         createdAt: new Date().toISOString(),
       };
 
-      // Update profile with payment info
+      // Add to payments array (maintain history)
+      const existingPayments = userProfile.payments || [];
       const updatedProfile = {
         ...userProfile,
-        payment: paymentDetails,
+        payments: [...existingPayments, paymentDetails],
       };
 
       // Save to backend

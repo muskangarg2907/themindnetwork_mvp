@@ -98,6 +98,18 @@
     },
     "createdAt": "2025-12-11T12:29:41.437Z",
     "aiSummary": "",
-    "updatedAt": "2025-12-11T13:11:23.547Z"
+    "updatedAt": "2025-12-13T15:29:45.407Z",
+    "payment": {
+      "planId": "connect",
+      "planName": "Connect",
+      "amount": 199,
+      "currency": "INR",
+      "status": "success",
+      "razorpayOrderId": "order_Rr950Y2229lzDa",
+      "razorpayPaymentId": "pay_Rr95Yunsy7osWe",
+      "razorpaySignature": "6ce5d4832d00d3c19cccb5be696bcfb3fb6c3d79480357f5ee9c1889f2100583",
+      "paidAt": "2025-12-13T15:29:45.090Z",
+      "createdAt": "2025-12-13T15:29:45.090Z"
+    }
   }
 ]
