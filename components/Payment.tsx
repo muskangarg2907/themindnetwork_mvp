@@ -178,8 +178,10 @@ export const Payment: React.FC = () => {
       const savedProfile = await response.json();
       
       // Update localStorage with sanitized data
+      const sanitized = sanitizeForStorage(savedProfile);
       secureLog('[PAYMENT] Profile updated with payment successfully');
-      localStorage.setItem('userProfile', JSON.stringify(sanitizeForStorage(savedProfile)));
+      secureLog('[PAYMENT] Sanitized profile payments count:', sanitized?.payments?.length || 0);
+      localStorage.setItem('userProfile', JSON.stringify(sanitized));
 
       // Navigate to profile with success message - this will show the banner immediately
       setIsProcessing(false);

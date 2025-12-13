@@ -38,8 +38,9 @@ export function sanitizeForStorage(profile: any) {
       amount: p.amount,
       status: p.status,
       paidAt: p.paidAt,
-      // Removed: razorpayOrderId, razorpayPaymentId, razorpaySignature
-    })),
+      paymentMethod: p.paymentMethod, // Keep for display
+      // Removed: razorpayOrderId, razorpayPaymentId, razorpaySignature (sensitive)
+    })) || [], // Ensure we always return an array, never undefined
     createdAt: profile.createdAt,
     updatedAt: profile.updatedAt,
   };

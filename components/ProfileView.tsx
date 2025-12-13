@@ -24,6 +24,16 @@ export const ProfileView: React.FC = () => {
       setSelectedPlanName((location.state as any)?.plan || '');
       setPaymentWarning((location.state as any)?.warning || '');
       
+      // CRITICAL: Reload profile from localStorage after payment
+      // The profile was updated by Payment.tsx before navigation
+      const stored = localStorage.getItem('userProfile');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setProfile(parsed);
+        setEditData(parsed);
+        secureLog('[PROFILE] Reloaded profile after payment. Payments count:', parsed?.payments?.length || 0);
+      }
+      
       // Scroll to top to show the banner
       window.scrollTo({ top: 0, behavior: 'smooth' });
       
@@ -50,6 +60,7 @@ export const ProfileView: React.FC = () => {
       
       setProfile(parsed);
       setEditData(parsed);
+      secureLog('[PROFILE] Loaded profile from localStorage. Payments count:', parsed?.payments?.length || 0);
     } else {
       navigate('/login');
     }
