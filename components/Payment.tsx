@@ -108,6 +108,7 @@ export const Payment: React.FC = () => {
         handler: function (response: any) {
           console.log('[RAZORPAY] Payment successful:', response);
           
+          // Keep processing state active while updating profile
           // Update user profile with payment details
           updateProfileWithPayment(response);
         },
@@ -131,6 +132,9 @@ export const Payment: React.FC = () => {
 
   const updateProfileWithPayment = async (razorpayResponse: any) => {
     try {
+      // Show processing state
+      console.log('[PAYMENT] Processing payment and updating profile...');
+      
       const storedProfile = localStorage.getItem('userProfile');
       if (!storedProfile) {
         throw new Error('No user profile found');
@@ -174,18 +178,21 @@ export const Payment: React.FC = () => {
       const savedProfile = await response.json();
       
       // Update localStorage with sanitized data
-      secureLog('[PAYMENT] Profile updated with payment');
+      secureLog('[PAYMENT] Profile updated with payment successfully');
       localStorage.setItem('userProfile', JSON.stringify(sanitizeForStorage(savedProfile)));
 
-      // Navigate to profile with success message
+      // Navigate to profile with success message - this will show the banner immediately
+      setIsProcessing(false);
       navigate('/profile', {
         state: {
           paymentSuccess: true,
           plan: plan.name,
         },
+        replace: true, // Replace history entry so back button doesn't come back here
       });
     } catch (err) {
       console.error('[PAYMENT] Failed to update profile:', err);
+      setIsProcessing(false);
       // Still navigate but show a warning
       navigate('/profile', {
         state: {
@@ -193,6 +200,7 @@ export const Payment: React.FC = () => {
           plan: plan.name,
           warning: 'Payment successful but profile update failed. Please contact support.',
         },
+        replace: true,
       });
     }
   };

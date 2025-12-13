@@ -15,17 +15,22 @@ export const ProfileView: React.FC = () => {
   const [pollingEnabled, setPollingEnabled] = useState(!(location.state as any)?.isNewlyCreated);
   const [showPaymentSuccess, setShowPaymentSuccess] = useState(false);
   const [selectedPlanName, setSelectedPlanName] = useState<string>('');
+  const [paymentWarning, setPaymentWarning] = useState<string>('');
 
   useEffect(() => {
     // Check for payment success message
     if ((location.state as any)?.paymentSuccess) {
       setShowPaymentSuccess(true);
       setSelectedPlanName((location.state as any)?.plan || '');
+      setPaymentWarning((location.state as any)?.warning || '');
       
-      // Auto-hide success message after 5 seconds
+      // Scroll to top to show the banner
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      
+      // Auto-hide success message after 10 seconds
       const timer = setTimeout(() => {
         setShowPaymentSuccess(false);
-      }, 5000);
+      }, 10000);
       
       return () => clearTimeout(timer);
     }
@@ -214,21 +219,39 @@ export const ProfileView: React.FC = () => {
             </div>
         </div>
 
-        {/* Verification/Status Banners */}
+        {/* Payment Success Banner - Shown immediately after payment */}
         {showPaymentSuccess && (
-            <div className="bg-green-50 border border-green-200 p-6 rounded-xl flex items-start gap-4 animate-slide-up shadow-lg">
-                <div className="text-green-600 text-xl mt-1">
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 p-6 rounded-2xl flex items-start gap-4 animate-slide-up shadow-2xl mb-6 relative overflow-hidden">
+                {/* Celebration background effect */}
+                <div className="absolute inset-0 bg-gradient-to-br from-green-100/50 to-transparent pointer-events-none"></div>
+                
+                <div className="text-green-600 text-3xl mt-1 z-10 animate-bounce">
                     <i className="fas fa-check-circle"></i>
                 </div>
-                <div className="flex-1">
-                    <h3 className="font-bold text-green-800 text-lg">Payment Successful!</h3>
-                    <p className="text-green-700 mt-1">
-                        You've successfully subscribed to the <strong>{selectedPlanName}</strong> plan. Our team will reach out to you shortly to schedule your first session.
+                <div className="flex-1 z-10">
+                    <h3 className="font-bold text-green-900 text-xl flex items-center gap-2">
+                        <i className="fas fa-party-horn text-green-600"></i>
+                        Payment Successful!
+                    </h3>
+                    <p className="text-green-800 mt-2 text-base">
+                        You've successfully subscribed to the <strong className="text-green-900">{selectedPlanName}</strong> plan. 🎉
                     </p>
+                    <p className="text-green-700 mt-2 text-sm">
+                        Our team will reach out to you shortly to schedule your first session. Check your payment history below for details.
+                    </p>
+                    {paymentWarning && (
+                        <div className="mt-3 p-3 bg-yellow-50 border border-yellow-300 rounded-lg">
+                            <p className="text-yellow-800 text-sm flex items-start gap-2">
+                                <i className="fas fa-exclamation-triangle mt-0.5"></i>
+                                <span>{paymentWarning}</span>
+                            </p>
+                        </div>
+                    )}
                 </div>
                 <button 
                     onClick={() => setShowPaymentSuccess(false)}
-                    className="text-green-600 hover:text-green-800"
+                    className="text-green-700 hover:text-green-900 text-xl z-10 transition-colors"
+                    title="Dismiss"
                 >
                     <i className="fas fa-times"></i>
                 </button>
