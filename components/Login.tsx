@@ -203,6 +203,12 @@ export const Login: React.FC = () => {
         return;
     }
     
+    // Prevent double-execution (race condition guard)
+    if (isLoading) {
+        console.log('[LOGIN] Already processing OTP verification, ignoring duplicate call');
+        return;
+    }
+    
     setError('');
     setIsLoading(true);
 

@@ -72,12 +72,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
       };
 
+      // DUPLICATE CHECK: Prevent creating duplicate profiles for same phone
+      const normalizedPhone = normalizedPayload.basicInfo?.phone;
+      if (normalizedPhone) {
+        const existing = await profiles.findOne({ 'basicInfo.phone': normalizedPhone });
+        if (existing) {
+          console.log('[PROFILES] POST: DUPLICATE DETECTED - Phone', normalizedPhone, 'already exists with _id:', existing._id);
+          return res.status(409).json({ 
+            error: 'Profile already exists for this phone number',
+            _id: existing._id,
+            profile: existing
+          });
+        }
+      }
+
       const record = {
         ...normalizedPayload,
         createdAt: new Date().toISOString()
       };
 
-      console.log('[PROFILES] POST: Saving profile with phone:', record.basicInfo?.phone);
+      console.log('[PROFILES] POST: Saving NEW profile with phone:', record.basicInfo?.phone);
 
       try {
         const result = await profiles.insertOne(record);

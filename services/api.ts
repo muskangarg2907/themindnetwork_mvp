@@ -31,6 +31,20 @@ export async function saveProfile(profile: UserProfile) {
 
   if (!res.ok) {
     const body = await parseErrorResponse(res);
+    
+    // If duplicate (409), return the existing profile instead of throwing
+    if (res.status === 409) {
+      try {
+        const errorData = JSON.parse(body);
+        if (errorData.profile) {
+          console.log('[API] Duplicate profile detected, returning existing profile');
+          return errorData.profile;
+        }
+      } catch (e) {
+        // If we can't parse, fall through to throw
+      }
+    }
+    
     throw new Error(`Failed to save profile: ${res.status} ${body}`);
   }
 
