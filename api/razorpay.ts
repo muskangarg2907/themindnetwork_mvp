@@ -1,4 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
+import Razorpay from 'razorpay';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Content-Type', 'application/json');
@@ -33,8 +34,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         details: 'Missing RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET environment variables'
       });
     }
-
-    const Razorpay = require('razorpay');
     
     const razorpay = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID,
