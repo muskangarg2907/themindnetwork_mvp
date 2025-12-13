@@ -1,6 +1,21 @@
 
 export type UserRole = 'client' | 'provider';
 
+export interface PaymentDetails {
+  planId: string;
+  planName: string;
+  amount: number; // Amount in rupees
+  currency: string;
+  status: 'pending' | 'processing' | 'success' | 'failed';
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  razorpaySignature?: string;
+  paymentMethod?: string; // upi, card, netbanking, wallet
+  paidAt?: string;
+  createdAt: string;
+  errorMessage?: string;
+}
+
 export interface UserProfile {
   _id?: string;
   role: UserRole; 
@@ -28,6 +43,8 @@ export interface UserProfile {
     budget?: string;
     bio?: string;
   };
+  // Payment information (for clients)
+  payment?: PaymentDetails;
   // Provider specific data
   providerDetails?: {
     qualification: string;

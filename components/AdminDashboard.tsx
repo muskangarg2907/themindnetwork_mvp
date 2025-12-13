@@ -307,6 +307,57 @@ export const AdminDashboard: React.FC = () => {
                   </p>
                 </div>
 
+                {/* Payment Information for Clients */}
+                {selectedProfile.role === 'client' && selectedProfile.payment && (
+                  <div className="pt-4 border-t border-slate-200">
+                    <h3 className="text-lg font-bold mb-3 text-slate-900">Payment Details</h3>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-sm text-slate-500 font-bold">Plan</label>
+                        <p className="text-slate-800 font-medium">{selectedProfile.payment.planName}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm text-slate-500 font-bold">Amount</label>
+                        <p className="text-slate-800 font-medium">₹{selectedProfile.payment.amount}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm text-slate-500 font-bold">Status</label>
+                        <span className={`inline-block px-2 py-1 rounded text-xs font-bold uppercase ${
+                          selectedProfile.payment.status === 'success'
+                            ? 'bg-green-100 text-green-700'
+                            : selectedProfile.payment.status === 'failed'
+                            ? 'bg-red-100 text-red-700'
+                            : 'bg-yellow-100 text-yellow-700'
+                        }`}>
+                          {selectedProfile.payment.status}
+                        </span>
+                      </div>
+                      {selectedProfile.payment.paymentMethod && (
+                        <div>
+                          <label className="text-sm text-slate-500 font-bold">Payment Method</label>
+                          <p className="text-slate-800 font-medium uppercase">{selectedProfile.payment.paymentMethod}</p>
+                        </div>
+                      )}
+                      {selectedProfile.payment.paidAt && (
+                        <div>
+                          <label className="text-sm text-slate-500 font-bold">Payment Date</label>
+                          <p className="text-slate-800 font-medium text-xs">
+                            {new Date(selectedProfile.payment.paidAt).toLocaleString()}
+                          </p>
+                        </div>
+                      )}
+                      {selectedProfile.payment.razorpayPaymentId && (
+                        <div>
+                          <label className="text-sm text-slate-500 font-bold">Payment ID</label>
+                          <p className="text-slate-800 font-mono text-xs break-all">
+                            {selectedProfile.payment.razorpayPaymentId}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <div className="pt-4 space-y-2">
                   <Button
                     onClick={() => handleApprove(selectedProfile._id)}

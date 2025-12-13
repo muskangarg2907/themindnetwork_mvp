@@ -15,7 +15,6 @@ export const Payment: React.FC = () => {
   const location = useLocation();
   const plan = (location.state as any)?.plan as Plan | null;
 
-  const [paymentMethod, setPaymentMethod] = useState<'upi' | 'card' | 'netbanking'>('upi');
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
@@ -29,17 +28,170 @@ export const Payment: React.FC = () => {
   const handlePayment = async () => {
     setIsProcessing(true);
 
-    // Simulate payment processing
-    setTimeout(() => {
-      setIsProcessing(false);
-      // Navigate to success page or back to profile with success message
-      navigate('/profile', { 
-        state: { 
-          paymentSuccess: true, 
-          plan: plan.name 
-        } 
+    try {
+      // Get user profile for customer details
+      const storedProfile = localStorage.getItem('userProfile');
+      const userProfile = storedProfile ? JSON.parse(storedProfile) : null;
+
+      // Extract amount from plan price (remove ₹ and commas)
+      const amount = parseInt(plan.price.replace(/[^\d]/g, ''));
+
+      // Create Razorpay order
+      const orderResponse = await fetch('/api/razorpay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount,
+          planId: plan.id,
+          planName: plan.name,
+        }),
       });
-    }, 2000);
+
+      if (!orderResponse.ok) {
+        throw new Error('Failed to create payment order');
+      }
+
+      const orderData = await orderResponse.json();
+
+      // Razorpay checkout options
+      const options = {
+        key: orderData.keyId,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: 'TheMindNetwork',
+        description: `${plan.name} Plan`,
+        order_id: orderData.orderId,
+        prefill: {
+          name: userProfile?.basicInfo?.fullName || '',
+          email: userProfile?.basicInfo?.email || '',
+          contact: userProfile?.basicInfo?.phone || '',
+        },
+        theme: {
+          color: '#14b8a6',
+        },
+        method: {
+          upi: true,
+          card: true,
+          netbanking: true,
+          wallet: true,
+        },
+        config: {
+          display: {
+            blocks: {
+              upi: {
+                name: 'Pay using UPI',
+                instruments: [
+                  {
+                    method: 'upi',
+                  },
+                ],
+              },
+              other: {
+                name: 'Other Payment Methods',
+                instruments: [
+                  {
+                    method: 'card',
+                  },
+                  {
+                    method: 'netbanking',
+                  },
+                ],
+              },
+            },
+            sequence: ['block.upi', 'block.other'],
+            preferences: {
+              show_default_blocks: true,
+            },
+          },
+        },
+        handler: function (response: any) {
+          console.log('[RAZORPAY] Payment successful:', response);
+          
+          // Update user profile with payment details
+          updateProfileWithPayment(response);
+        },
+        modal: {
+          ondismiss: function () {
+            console.log('[RAZORPAY] Payment cancelled');
+            setIsProcessing(false);
+          },
+        },
+      };
+
+      // Open Razorpay checkout
+      const razorpay = new (window as any).Razorpay(options);
+      razorpay.open();
+    } catch (err) {
+      console.error('[PAYMENT] Error:', err);
+      alert('Failed to initiate payment. Please try again.');
+      setIsProcessing(false);
+    }
+  };
+
+  const updateProfileWithPayment = async (razorpayResponse: any) => {
+    try {
+      const storedProfile = localStorage.getItem('userProfile');
+      if (!storedProfile) {
+        throw new Error('No user profile found');
+      }
+
+      const userProfile = JSON.parse(storedProfile);
+      const amount = parseInt(plan.price.replace(/[^\d]/g, ''));
+
+      // Create payment details object
+      const paymentDetails = {
+        planId: plan.id,
+        planName: plan.name,
+        amount: amount,
+        currency: 'INR',
+        status: 'success' as const,
+        razorpayOrderId: razorpayResponse.razorpay_order_id,
+        razorpayPaymentId: razorpayResponse.razorpay_payment_id,
+        razorpaySignature: razorpayResponse.razorpay_signature,
+        paidAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+      };
+
+      // Update profile with payment info
+      const updatedProfile = {
+        ...userProfile,
+        payment: paymentDetails,
+      };
+
+      // Save to backend
+      const response = await fetch('/api/profiles', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedProfile),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update profile with payment');
+      }
+
+      const savedProfile = await response.json();
+      
+      // Update localStorage
+      localStorage.setItem('userProfile', JSON.stringify(savedProfile));
+
+      // Navigate to profile with success message
+      navigate('/profile', {
+        state: {
+          paymentSuccess: true,
+          plan: plan.name,
+        },
+      });
+    } catch (err) {
+      console.error('[PAYMENT] Failed to update profile:', err);
+      // Still navigate but show a warning
+      navigate('/profile', {
+        state: {
+          paymentSuccess: true,
+          plan: plan.name,
+          warning: 'Payment successful but profile update failed. Please contact support.',
+        },
+      });
+    }
   };
 
   return (
@@ -69,19 +221,14 @@ export const Payment: React.FC = () => {
                 
                 <div className="border-t border-slate-200 pt-4">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-slate-600">Subtotal</span>
+                    <span className="text-slate-600">Plan Price (GST Inclusive)</span>
                     <span className="text-slate-900">{plan.price}</span>
                   </div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-slate-600">GST (18%)</span>
-                    <span className="text-slate-900">₹{(parseInt(plan.price.replace(/[^\d]/g, '')) * 0.18).toFixed(0)}</span>
-                  </div>
                   <div className="border-t border-slate-200 mt-3 pt-3 flex justify-between items-center">
-                    <span className="text-lg font-bold text-slate-900">Total</span>
-                    <span className="text-2xl font-bold text-teal-600">
-                      ₹{(parseInt(plan.price.replace(/[^\d]/g, '')) * 1.18).toFixed(0)}
-                    </span>
+                    <span className="text-lg font-bold text-slate-900">Total Amount</span>
+                    <span className="text-2xl font-bold text-teal-600">{plan.price}</span>
                   </div>
+                  <p className="text-xs text-slate-500 mt-2">* All prices include 18% GST</p>
                 </div>
               </div>
 
@@ -98,128 +245,52 @@ export const Payment: React.FC = () => {
           {/* Payment Form */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 border-2 border-slate-200">
-              <h2 className="text-xl font-bold text-slate-900 mb-6">Payment Method</h2>
+              <h2 className="text-xl font-bold text-slate-900 mb-6">Secure Payment via Razorpay</h2>
 
-              {/* Payment Method Tabs */}
-              <div className="grid grid-cols-3 gap-3 mb-6">
-                <button
-                  onClick={() => setPaymentMethod('upi')}
-                  className={`p-4 rounded-xl border-2 transition-all ${
-                    paymentMethod === 'upi'
-                      ? 'border-teal-500 bg-teal-50'
-                      : 'border-slate-200 hover:border-teal-300'
-                  }`}
-                >
-                  <i className="fas fa-mobile-alt text-2xl mb-2 text-slate-700"></i>
-                  <p className="text-sm font-medium text-slate-900">UPI</p>
-                </button>
-
-                <button
-                  onClick={() => setPaymentMethod('card')}
-                  className={`p-4 rounded-xl border-2 transition-all ${
-                    paymentMethod === 'card'
-                      ? 'border-teal-500 bg-teal-50'
-                      : 'border-slate-200 hover:border-teal-300'
-                  }`}
-                >
-                  <i className="fas fa-credit-card text-2xl mb-2 text-slate-700"></i>
-                  <p className="text-sm font-medium text-slate-900">Card</p>
-                </button>
-
-                <button
-                  onClick={() => setPaymentMethod('netbanking')}
-                  className={`p-4 rounded-xl border-2 transition-all ${
-                    paymentMethod === 'netbanking'
-                      ? 'border-teal-500 bg-teal-50'
-                      : 'border-slate-200 hover:border-teal-300'
-                  }`}
-                >
-                  <i className="fas fa-building-columns text-2xl mb-2 text-slate-700"></i>
-                  <p className="text-sm font-medium text-slate-900">Net Banking</p>
-                </button>
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-6">
+                <div className="flex items-start gap-3">
+                  <i className="fas fa-info-circle text-blue-600 text-xl mt-1"></i>
+                  <div>
+                    <h3 className="font-semibold text-blue-900 mb-2">How it works</h3>
+                    <ul className="text-sm text-blue-800 space-y-2">
+                      <li className="flex items-start gap-2">
+                        <i className="fas fa-check-circle text-blue-600 mt-0.5"></i>
+                        <span>Click the pay button below to open Razorpay's secure checkout</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <i className="fas fa-check-circle text-blue-600 mt-0.5"></i>
+                        <span>Choose from UPI, Cards, Net Banking, or Wallets</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <i className="fas fa-check-circle text-blue-600 mt-0.5"></i>
+                        <span>Complete your payment securely on Razorpay's platform</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
               </div>
 
-              {/* Payment Form Based on Method */}
-              <div className="space-y-4">
-                {paymentMethod === 'upi' && (
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      UPI ID
-                    </label>
-                    <Input
-                      type="text"
-                      placeholder="yourname@upi"
-                      className="w-full"
-                    />
-                    <p className="text-xs text-slate-500 mt-1">
-                      Enter your UPI ID (e.g., yourname@paytm, yourname@phonepe)
-                    </p>
+              {/* Accepted Payment Methods */}
+              <div className="mb-6">
+                <p className="text-sm font-medium text-slate-700 mb-3">Accepted Payment Methods:</p>
+                <div className="flex flex-wrap gap-3">
+                  <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-lg border border-slate-200">
+                    <i className="fas fa-mobile-alt text-slate-600"></i>
+                    <span className="text-sm text-slate-700">UPI</span>
                   </div>
-                )}
-
-                {paymentMethod === 'card' && (
-                  <>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
-                        Card Number
-                      </label>
-                      <Input
-                        type="text"
-                        placeholder="1234 5678 9012 3456"
-                        className="w-full"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">
-                          Expiry Date
-                        </label>
-                        <Input
-                          type="text"
-                          placeholder="MM/YY"
-                          className="w-full"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">
-                          CVV
-                        </label>
-                        <Input
-                          type="text"
-                          placeholder="123"
-                          className="w-full"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
-                        Cardholder Name
-                      </label>
-                      <Input
-                        type="text"
-                        placeholder="Name on card"
-                        className="w-full"
-                      />
-                    </div>
-                  </>
-                )}
-
-                {paymentMethod === 'netbanking' && (
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Select Your Bank
-                    </label>
-                    <select className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:border-teal-500 focus:ring-2 focus:ring-teal-200 transition-all">
-                      <option value="">Choose your bank</option>
-                      <option value="sbi">State Bank of India</option>
-                      <option value="hdfc">HDFC Bank</option>
-                      <option value="icici">ICICI Bank</option>
-                      <option value="axis">Axis Bank</option>
-                      <option value="kotak">Kotak Mahindra Bank</option>
-                      <option value="other">Other Banks</option>
-                    </select>
+                  <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-lg border border-slate-200">
+                    <i className="fas fa-credit-card text-slate-600"></i>
+                    <span className="text-sm text-slate-700">Cards</span>
                   </div>
-                )}
+                  <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-lg border border-slate-200">
+                    <i className="fas fa-building-columns text-slate-600"></i>
+                    <span className="text-sm text-slate-700">Net Banking</span>
+                  </div>
+                  <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-lg border border-slate-200">
+                    <i className="fas fa-wallet text-slate-600"></i>
+                    <span className="text-sm text-slate-700">Wallets</span>
+                  </div>
+                </div>
               </div>
 
               {/* Pay Button */}
@@ -232,12 +303,12 @@ export const Payment: React.FC = () => {
                   {isProcessing ? (
                     <>
                       <i className="fas fa-spinner fa-spin mr-2"></i>
-                      Processing Payment...
+                      Opening Razorpay...
                     </>
                   ) : (
                     <>
                       <i className="fas fa-lock mr-2"></i>
-                      Pay ₹{(parseInt(plan.price.replace(/[^\d]/g, '')) * 1.18).toFixed(0)}
+                      Pay {plan.price}
                     </>
                   )}
                 </Button>
@@ -247,11 +318,11 @@ export const Payment: React.FC = () => {
               <div className="mt-6 flex items-center justify-center gap-4 text-xs text-slate-500">
                 <div className="flex items-center gap-1">
                   <i className="fas fa-shield-check text-green-600"></i>
-                  <span>SSL Encrypted</span>
+                  <span>Powered by Razorpay</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <i className="fas fa-lock text-green-600"></i>
-                  <span>PCI Compliant</span>
+                  <span>256-bit SSL Encryption</span>
                 </div>
               </div>
             </div>

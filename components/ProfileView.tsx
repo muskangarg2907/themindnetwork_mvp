@@ -287,7 +287,7 @@ export const ProfileView: React.FC = () => {
         )}
 
         {/* Plan Selection CTA for Clients */}
-        {isClient && profile.status === 'approved' && (
+        {isClient && profile.status === 'approved' && !profile.payment && (
             <div className="bg-gradient-to-br from-teal-50 to-blue-50 border-2 border-teal-200 p-6 rounded-2xl shadow-lg animate-slide-up">
                 <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                     <div className="flex items-start gap-4">
@@ -310,6 +310,97 @@ export const ProfileView: React.FC = () => {
                         <i className="fas fa-rocket mr-2"></i>
                         Select Your Plan
                     </Button>
+                </div>
+            </div>
+        )}
+
+        {/* Payment Details for Clients */}
+        {isClient && profile.payment && (
+            <div className={`border-2 p-6 rounded-2xl shadow-lg animate-slide-up ${
+              profile.payment.status === 'success' 
+                ? 'bg-green-50 border-green-200' 
+                : profile.payment.status === 'failed'
+                ? 'bg-red-50 border-red-200'
+                : 'bg-yellow-50 border-yellow-200'
+            }`}>
+                <div className="flex items-start gap-4">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                      profile.payment.status === 'success'
+                        ? 'bg-green-500'
+                        : profile.payment.status === 'failed'
+                        ? 'bg-red-500'
+                        : 'bg-yellow-500'
+                    }`}>
+                        <i className={`text-white text-xl ${
+                          profile.payment.status === 'success'
+                            ? 'fas fa-check-circle'
+                            : profile.payment.status === 'failed'
+                            ? 'fas fa-times-circle'
+                            : 'fas fa-clock'
+                        }`}></i>
+                    </div>
+                    <div className="flex-1">
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-xl font-bold text-slate-900">
+                                {profile.payment.planName} Plan
+                            </h3>
+                            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
+                              profile.payment.status === 'success'
+                                ? 'bg-green-500 text-white'
+                                : profile.payment.status === 'failed'
+                                ? 'bg-red-500 text-white'
+                                : 'bg-yellow-500 text-white'
+                            }`}>
+                                {profile.payment.status}
+                            </span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
+                            <div>
+                                <p className="text-xs text-slate-500">Amount Paid</p>
+                                <p className="text-lg font-bold text-slate-900">₹{profile.payment.amount}</p>
+                            </div>
+                            {profile.payment.paymentMethod && (
+                                <div>
+                                    <p className="text-xs text-slate-500">Payment Method</p>
+                                    <p className="text-sm font-medium text-slate-900 uppercase">{profile.payment.paymentMethod}</p>
+                                </div>
+                            )}
+                            {profile.payment.paidAt && (
+                                <div>
+                                    <p className="text-xs text-slate-500">Payment Date</p>
+                                    <p className="text-sm font-medium text-slate-900">
+                                        {new Date(profile.payment.paidAt).toLocaleDateString()}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                        {profile.payment.razorpayPaymentId && (
+                            <p className="text-xs text-slate-500">
+                                Payment ID: {profile.payment.razorpayPaymentId}
+                            </p>
+                        )}
+                        {profile.payment.status === 'failed' && (
+                            <div className="mt-4">
+                                <p className="text-sm text-red-700 mb-2">
+                                    {profile.payment.errorMessage || 'Payment failed. Please try again.'}
+                                </p>
+                                <Button 
+                                    onClick={() => navigate('/plans')}
+                                    variant="outline"
+                                    className="text-sm"
+                                >
+                                    <i className="fas fa-redo mr-2"></i>
+                                    Retry Payment
+                                </Button>
+                            </div>
+                        )}
+                        {profile.payment.status === 'success' && (
+                            <p className="text-sm text-green-700 mt-2">
+                                <i className="fas fa-info-circle mr-1"></i>
+                                Our team will reach out to you shortly to schedule your sessions.
+                            </p>
+                        )}
+                    </div>
                 </div>
             </div>
         )}

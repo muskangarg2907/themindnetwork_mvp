@@ -72,7 +72,8 @@ async function writeProfilesFile(profiles) {
 
 function normalizePhone(s) {
   if (!s) return '';
-  return String(s).replace(/\D/g, '');
+  const digits = String(s).replace(/\D/g, '');
+  return digits.length >= 10 ? digits.slice(-10) : digits;
 }
 
 const app = express();
@@ -91,20 +92,7 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
-app.get('/api/profiles', async (req, res) => {
-  try {
-    if (usePostgres) {
-      const q = await pool.query('SELECT id, data, created_at, updated_at FROM profiles ORDER BY created_at DESC');
-      const rows = q.rows.map(r => ({ id: r.id, ...r.data, createdAt: r.created_at, updatedAt: r.updated_at }));
-      return res.json(rows);
-    }
-    const profiles = await readProfilesFile();
-    return res.json(profiles);
-  } catch (err) {
-    console.error('GET /api/profiles error:', err);
-    res.status(500).json({ error: 'Failed to fetch profiles', details: err.message });
-  }
-});
+// Removed duplicate GET /api/profiles - now handled by consolidated endpoint below
 
 // Consolidated ADMIN endpoint (matches /api/admin.ts)
 app.all('/api/admin', async (req, res) => {
@@ -223,8 +211,11 @@ app.all('/api/profiles', async (req, res) => {
         return res.status(404).json({ error: 'Not found', searched: norm });
       }
       
-      console.log('[LOOKUP] FOUND:', found.id || found._id);
-      return res.json({ ...found, _id: found._id || found.id });
+      const profileId = found._id || found.id;
+      const result = { ...found, _id: profileId };
+      console.log('[LOOKUP] FOUND:', profileId);
+      console.log('[LOOKUP] Returning object (not array):', Array.isArray(result) ? 'ERROR: IS ARRAY!' : 'OK: is object');
+      return res.json(result);
     }
 
     // GET all profiles
@@ -392,6 +383,61 @@ app.all('/api/utils', async (req, res) => {
   }
 
   return res.status(400).json({ error: 'Invalid action parameter' });
+});
+
+// Razorpay payment endpoint
+app.post('/api/razorpay', async (req, res) => {
+  const { amount, planId, planName } = req.body;
+
+  if (!amount || !planId || !planName) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  try {
+    // For local testing without Razorpay credentials
+    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+      console.log('[RAZORPAY] Using test mode - no actual order created');
+      return res.json({
+        orderId: `test_order_${Date.now()}`,
+        amount: amount * 100,
+        currency: 'INR',
+        keyId: 'rzp_test_placeholder',
+      });
+    }
+
+    const Razorpay = require('razorpay');
+    
+    const razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET,
+    });
+
+    const order = await razorpay.orders.create({
+      amount: amount * 100, // Convert to paise
+      currency: 'INR',
+      receipt: `order_${planId}_${Date.now()}`,
+      notes: {
+        plan_id: planId,
+        plan_name: planName,
+      },
+      payment_capture: 1, // Auto-capture payment
+    });
+
+    console.log('[RAZORPAY] Order created:', order.id);
+
+    return res.json({
+      orderId: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      keyId: process.env.RAZORPAY_KEY_ID,
+    });
+  } catch (err) {
+    console.error('[RAZORPAY] Order creation failed:', err);
+    return res.status(500).json({ 
+      error: 'Failed to create payment order', 
+      details: err?.message 
+    });
+  }
 });
 
 // Generic error handler for unexpected errors
