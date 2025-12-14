@@ -143,21 +143,22 @@ export const ProfileWizard: React.FC = () => {
 
   const handleSubmit = async () => {
     setIsGenerating(true);
-    
+
     const finalProfile: UserProfile = {
-        ...profileData,
-        status: 'pending_verification',
-        aiSummary: '' // Bio will be added later via profile editing
+      ...profileData,
+      status: 'pending_verification',
+      aiSummary: '' // Bio will be added later via profile editing
     };
 
-        try {
-                        const saved = await saveProfile(finalProfile);
-                        // Sanitize before storing to protect health data
-                        localStorage.setItem('userProfile', JSON.stringify(sanitizeForStorage(saved)));
-                        // Ensure phone is available for lookup flows
-                        try {
-                            const phoneToStore = saved?.basicInfo?.phone;
-                            if (phoneToStore) localStorage.setItem('userPhone', phoneToStore);
+
+    try {
+      const saved = await saveProfile(finalProfile);
+      // Sanitize before storing to protect health data
+      localStorage.setItem('userProfile', JSON.stringify(sanitizeForStorage(saved)));
+      // Ensure phone is available for lookup flows
+      try {
+        const phoneToStore = saved?.basicInfo?.phone;
+        if (phoneToStore) localStorage.setItem('userPhone', phoneToStore);
                         } catch (e) {
                             console.warn('Failed to persist userPhone locally', e);
                         }

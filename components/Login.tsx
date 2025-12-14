@@ -315,11 +315,11 @@ export const Login: React.FC = () => {
                             <label className="text-sm font-semibold text-slate-700 ml-1">
                                 Phone Number
                             </label>
-                            <div className="flex gap-3">
+                            <div className="flex gap-2 min-w-0">
                                 <select
                                     value={countryCode}
                                     onChange={(e) => setCountryCode(e.target.value)}
-                                    className="bg-white border border-slate-300 text-slate-700 font-medium rounded-lg px-2 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm w-24 cursor-pointer"
+                                    className="bg-white border border-slate-300 text-slate-700 font-medium rounded-lg px-2 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm w-20 flex-shrink-0 cursor-pointer text-sm"
                                 >
                                     {COUNTRY_CODES.map((c) => (
                                         <option key={c.code} value={c.code}>
@@ -329,7 +329,7 @@ export const Login: React.FC = () => {
                                 </select>
                                 <input
                                     type="tel"
-                                    className={`flex-1 bg-white border ${error ? 'border-red-500' : 'border-slate-300'} text-slate-900 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all shadow-sm font-medium tracking-wide`}
+                                    className={`flex-1 min-w-0 bg-white border ${error ? 'border-red-500' : 'border-slate-300'} text-slate-900 rounded-lg px-3 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all shadow-sm font-medium tracking-wide`}
                                     placeholder="98765 43210"
                                     value={phoneNumber}
                                     onChange={handlePhoneChange}

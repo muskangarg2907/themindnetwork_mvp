@@ -41,7 +41,7 @@ export interface UserProfile {
     providerGenderPreference: string;
     mode?: string; // online, offline, both
     budget?: string;
-    bio?: string;
+    bio?: string; // User's self-description
   };
   // Payment history (for clients) - stores all payments made
   payments?: PaymentDetails[];

@@ -72,7 +72,7 @@ export const StepBasicInfo: React.FC<StepProps> = ({ data, updateData }) => {
       <Input 
         label="Full Name *" 
         name="fullName" 
-        placeholder="e.g. Dr. Rajesh Kumar" 
+        placeholder="e.g. John Doe" 
         value={data.basicInfo.fullName} 
         onChange={handleChange}
         autoFocus
@@ -115,10 +115,10 @@ export const StepBasicInfo: React.FC<StepProps> = ({ data, updateData }) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Input 
-          label="Professional Email Address *" 
+          label="Email ID *" 
           name="email" 
           type="email"
-          placeholder="doctor@themindnetwork.in" 
+          placeholder="example@gmail.com" 
           value={data.basicInfo.email} 
           onChange={handleChange}
           error={errors.email}

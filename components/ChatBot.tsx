@@ -128,19 +128,19 @@ export const ChatBot: React.FC<ChatBotProps> = ({ profile }) => {
 
           {/* Input */}
           <div className="p-3 bg-white border-t border-slate-200">
-            <div className="relative flex items-center">
+            <div className="relative flex items-center min-w-0">
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Type your question..."
-                className="w-full bg-slate-50 text-slate-800 rounded-xl py-3 pl-4 pr-12 focus:outline-none focus:ring-1 focus:ring-teal-500 text-sm border border-slate-200"
+                className="w-full min-w-0 bg-slate-50 text-slate-800 rounded-xl py-3 pl-4 pr-11 focus:outline-none focus:ring-1 focus:ring-teal-500 text-sm border border-slate-200"
               />
               <button
                 onClick={handleSend}
                 disabled={!input.trim()}
-                className="absolute right-2 p-2 text-teal-600 hover:text-teal-700 disabled:opacity-50"
+                className="absolute right-1 p-2 text-teal-600 hover:text-teal-700 disabled:opacity-50 flex-shrink-0"
               >
                 <i className="fas fa-paper-plane"></i>
               </button>
