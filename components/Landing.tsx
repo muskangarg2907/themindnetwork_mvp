@@ -94,9 +94,9 @@ export const Landing: React.FC = () => {
           </div>
           
           {/* Desktop Menu */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-6 justify-end w-full">
             <Button 
-              onClick={() => navigate('/login', { state: { role: 'provider' } })}
+              onClick={() => navigate('/provider')}
               variant="secondary"
               className="px-4 py-1.5 text-sm"
             >
@@ -104,10 +104,10 @@ export const Landing: React.FC = () => {
             </Button>
             <Button 
               onClick={() => navigate('/login')}
-              variant="secondary"
-              className="px-6 py-2"
+              variant="primary"
+              className="px-6 py-2 text-base font-semibold shadow-md"
             >
-              Login <i className="fas fa-sign-in-alt ml-2"></i>
+              <i className="fas fa-sign-in-alt mr-2"></i>Login
             </Button>
           </div>
 
@@ -260,7 +260,7 @@ export const Landing: React.FC = () => {
       <div className="py-24 px-6 bg-gradient-to-br from-teal-50 to-blue-50">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
-            Ready to Begin Your Journey?
+            What our customers say
           </h2>
           <p className="text-xl text-slate-600 mb-10">
             Join thousands who found their perfect therapist match through TheMindNetwork
@@ -270,11 +270,9 @@ export const Landing: React.FC = () => {
           <div className="grid md:grid-cols-3 gap-6 mb-12">
             <div className="bg-white rounded-2xl p-6 shadow-md">
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center">
-                  <span className="text-teal-600 font-semibold">PS</span>
-                </div>
+                <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="avatar" className="w-10 h-10 rounded-full" />
+                <span className="text-xs text-gray-500">j*** s****</span>
                 <div className="text-left">
-                  <p className="font-semibold text-slate-900">Priya Sharma</p>
                   <div className="flex text-yellow-500 text-sm">
                     <i className="fas fa-star"></i>
                     <i className="fas fa-star"></i>
@@ -285,17 +283,15 @@ export const Landing: React.FC = () => {
                 </div>
               </div>
               <p className="text-slate-600 text-sm text-left">
-                "Finally found someone who gets me. The matching was spot on and my therapist genuinely cares. Feeling so much lighter now!"
+                "I was nervous to start, but my therapist made it so easy to talk. I actually look forward to our sessions now!"
               </p>
             </div>
 
             <div className="bg-white rounded-2xl p-6 shadow-md">
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                  <span className="text-blue-600 font-semibold">RK</span>
-                </div>
+                <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="avatar" className="w-10 h-10 rounded-full" />
+                <span className="text-xs text-gray-500">a*** k****</span>
                 <div className="text-left">
-                  <p className="font-semibold text-slate-900">Rohan Kapoor</p>
                   <div className="flex text-yellow-500 text-sm">
                     <i className="fas fa-star"></i>
                     <i className="fas fa-star"></i>
@@ -306,17 +302,15 @@ export const Landing: React.FC = () => {
                 </div>
               </div>
               <p className="text-slate-600 text-sm text-left">
-                "Was skeptical at first but this changed everything. My therapist helped me work through anxiety I'd been ignoring for years."
+                "Honestly, I didn't expect much, but this has been a game changer. My anxiety is way more manageable now."
               </p>
             </div>
 
             <div className="bg-white rounded-2xl p-6 shadow-md">
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
-                  <span className="text-purple-600 font-semibold">AM</span>
-                </div>
+                <img src="https://randomuser.me/api/portraits/men/65.jpg" alt="avatar" className="w-10 h-10 rounded-full" />
+                <span className="text-xs text-gray-500">r*** p****</span>
                 <div className="text-left">
-                  <p className="font-semibold text-slate-900">Ananya Mehta</p>
                   <div className="flex text-yellow-500 text-sm">
                     <i className="fas fa-star"></i>
                     <i className="fas fa-star"></i>
@@ -327,19 +321,12 @@ export const Landing: React.FC = () => {
                 </div>
               </div>
               <p className="text-slate-600 text-sm text-left">
-                "Best decision I made this year. The whole process was smooth and I connected with an amazing therapist on my first try."
+                "Super friendly team, and my therapist really listens. Feels like chatting with a friend who actually helps!"
               </p>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button 
-              onClick={() => navigate('/login')}
-              className="text-lg px-12 py-5 rounded-2xl shadow-lg shadow-teal-500/30 hover:shadow-xl transition-all w-full sm:w-auto"
-            >
-              Get Started <i className="fas fa-arrow-right ml-2"></i>
-            </Button>
-          </div>
+          {/* CTA removed as requested */}
           <p className="text-sm text-slate-500 mt-6">🔒 Your privacy and data are 100% secure</p>
         </div>
       </div>
@@ -359,17 +346,10 @@ export const Landing: React.FC = () => {
           </p>
           <div className="flex flex-row gap-3 sm:gap-4 justify-center">
             <Button 
-              onClick={() => navigate('/login', { state: { role: 'provider' } })}
-              className="text-sm sm:text-base md:text-lg px-4 sm:px-8 md:px-12 py-3 sm:py-3 md:py-5 rounded-xl sm:rounded-xl md:rounded-2xl bg-teal-500 hover:bg-teal-600 text-white shadow-lg shadow-teal-500/30"
+              onClick={() => navigate('/provider')}
+              className="text-lg px-12 py-5 rounded-2xl shadow-lg shadow-teal-500/30 hover:shadow-xl transition-all w-full sm:w-auto bg-teal-500 hover:bg-teal-600 text-white font-semibold"
             >
-              Register Now <i className="fas fa-user-doctor ml-1 sm:ml-2"></i>
-            </Button>
-            <Button 
-              onClick={() => window.open('https://calendar.app.google/a9nJB8iRiUyDRcNi6', '_blank')}
-              variant="outline"
-              className="text-sm sm:text-base md:text-lg px-4 sm:px-8 md:px-12 py-3 sm:py-3 md:py-5 rounded-xl sm:rounded-xl md:rounded-2xl bg-transparent border-2 border-teal-400 text-teal-300 hover:bg-teal-500/10 shadow-lg"
-            >
-              Book Consult <i className="fas fa-calendar ml-1 sm:ml-2"></i>
+              Start Now <i className="fas fa-arrow-right ml-2"></i>
             </Button>
           </div>
           <p className="text-sm text-slate-400 mt-6">✨ Expand your reach and help more people</p>

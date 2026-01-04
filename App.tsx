@@ -9,6 +9,7 @@ import { Payment } from './components/Payment';
 import { AdminDashboard } from './components/AdminDashboard';
 import { AdminLogin } from './components/AdminLogin';
 import { FirebaseDiagnostic } from './components/FirebaseDiagnostic';
+import ProviderPage from './components/ProviderPage';
 
 const App: React.FC = () => {
   return (
@@ -23,6 +24,7 @@ const App: React.FC = () => {
         <Route path="/admin-login" element={<AdminLogin />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/firebase-test" element={<FirebaseDiagnostic />} />
+        <Route path="/provider" element={<ProviderPage />} />
       </Routes>
     </HashRouter>
   );

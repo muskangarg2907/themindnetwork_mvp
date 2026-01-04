@@ -1,19 +1,37 @@
 import React from 'react';
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'google';
-  isLoading?: boolean;
-}
 
-export const Button: React.FC<ButtonProps> = ({ 
-  children, 
-  variant = 'primary', 
-  isLoading, 
-  className = '', 
-  ...props 
-}) => {
+type ButtonProps = (
+  {
+    as?: 'a';
+    href?: string;
+    target?: string;
+    rel?: string;
+    variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'google';
+    isLoading?: boolean;
+    className?: string;
+    children: React.ReactNode;
+  } & React.AnchorHTMLAttributes<HTMLAnchorElement>
+) | (
+  {
+    as?: undefined;
+    variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'google';
+    isLoading?: boolean;
+    className?: string;
+    children: React.ReactNode;
+  } & React.ButtonHTMLAttributes<HTMLButtonElement>
+);
+
+export const Button: React.FC<ButtonProps> = (props) => {
+  const {
+    as,
+    children,
+    variant = 'primary',
+    isLoading,
+    className = '',
+    ...rest
+  } = props as any;
   const baseStyles = "px-6 py-2.5 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white";
-  
   const variants = {
     primary: "bg-primary hover:bg-primaryHover text-white shadow-lg shadow-teal-500/20 focus:ring-teal-500",
     secondary: "bg-slate-200 hover:bg-slate-300 text-slate-800 focus:ring-slate-400",
@@ -22,11 +40,21 @@ export const Button: React.FC<ButtonProps> = ({
     google: "bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 shadow-sm"
   };
 
+  if (as === 'a') {
+    return (
+      <a
+        className={`${baseStyles} ${variants[variant]} ${isLoading ? 'opacity-70 cursor-not-allowed' : ''} ${className}`}
+        {...rest}
+      >
+        {children}
+      </a>
+    );
+  }
   return (
-    <button 
+    <button
       className={`${baseStyles} ${variants[variant]} ${isLoading ? 'opacity-70 cursor-not-allowed' : ''} ${className}`}
-      disabled={isLoading || props.disabled}
-      {...props}
+      disabled={isLoading || rest.disabled}
+      {...rest}
     >
       {isLoading && (
         <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
