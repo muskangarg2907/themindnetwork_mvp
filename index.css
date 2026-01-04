@@ -19,6 +19,11 @@
   }
 }
 
+/* Smooth scroll behavior for internal links */
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background-color: #f8fafc; /* Slate-50 (Light Theme) */
   color: #1e293b;

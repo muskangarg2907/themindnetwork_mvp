@@ -1,12 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
+import { auth } from '../services/firebase';
 
 export const Landing: React.FC = () => {
   const navigate = useNavigate();
   const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
   const [contactStatus, setContactStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setIsLoggedIn(!!user);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -153,29 +162,29 @@ export const Landing: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             <div className="flex items-start gap-3 text-left">
-              <div className="w-8 h-8 rounded-lg bg-teal-100 flex items-center justify-center flex-shrink-0 mt-1">
+              <div className="w-8 h-8 rounded-lg bg-teal-100 flex items-center justify-center flex-shrink-0 mt-1" aria-hidden="true">
                 <i className="fas fa-user-doctor text-teal-600"></i>
               </div>
               <div className="flex-1">
-                <p className="font-semibold text-slate-800">Verified Professionals</p>
+                <h3 className="font-semibold text-slate-800 text-base">Verified Professionals</h3>
                 <p className="text-sm text-slate-600">High-quality certified therapists</p>
               </div>
             </div>
             <div className="flex items-start gap-3 text-left">
-              <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0 mt-1">
+              <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0 mt-1" aria-hidden="true">
                 <i className="fas fa-comments text-blue-600"></i>
               </div>
               <div className="flex-1">
-                <p className="font-semibold text-slate-800">Unlimited Consultations</p>
+                <h3 className="font-semibold text-slate-800 text-base">Unlimited Consultations</h3>
                 <p className="text-sm text-slate-600">Free guidance to find your match</p>
               </div>
             </div>
             <div className="flex items-start gap-3 text-left">
-              <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0 mt-1">
+              <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0 mt-1" aria-hidden="true">
                 <i className="fas fa-heart text-purple-600"></i>
               </div>
               <div className="flex-1">
-                <p className="font-semibold text-slate-800">Flexible Options</p>
+                <h3 className="font-semibold text-slate-800 text-base">Flexible Options</h3>
                 <p className="text-sm text-slate-600">Try different therapists risk-free</p>
               </div>
             </div>
@@ -184,7 +193,7 @@ export const Landing: React.FC = () => {
       </div>
 
       {/* Plans Section */}
-      <div className="py-24 px-6 bg-white">
+      <section id="plans" className="py-24 px-6 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
             <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
@@ -244,7 +253,15 @@ export const Landing: React.FC = () => {
                 </ul>
 
                 <Button
-                  onClick={() => navigate('/login', { state: { role: 'client' } })}
+                  onClick={() => {
+                    if (!isLoggedIn) {
+                      alert('Please login first to select a plan');
+                      navigate('/login', { state: { role: 'client' } });
+                    } else {
+                      // User is logged in, proceed to payment
+                      navigate('/payment');
+                    }
+                  }}
                   variant={plan.highlight ? 'primary' : 'secondary'}
                   className="w-full py-4 rounded-xl text-lg font-semibold"
                 >
@@ -254,10 +271,10 @@ export const Landing: React.FC = () => {
             ))}
           </div>
         </div>
-      </div>
+      </section>
 
       {/* CTA Section */}
-      <div className="py-24 px-6 bg-gradient-to-br from-teal-50 to-blue-50">
+      <section id="testimonials" className="py-24 px-6 bg-gradient-to-br from-teal-50 to-blue-50">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
             What our customers say
@@ -270,7 +287,7 @@ export const Landing: React.FC = () => {
           <div className="grid md:grid-cols-3 gap-6 mb-12">
             <div className="bg-white rounded-2xl p-6 shadow-md">
               <div className="flex items-center gap-2 mb-3">
-                <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="avatar" className="w-10 h-10 rounded-full" />
+                <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Client testimonial avatar" className="w-10 h-10 rounded-full" loading="lazy" />
                 <span className="text-xs text-gray-500">j*** s****</span>
                 <div className="text-left">
                   <div className="flex text-yellow-500 text-sm">
@@ -289,7 +306,7 @@ export const Landing: React.FC = () => {
 
             <div className="bg-white rounded-2xl p-6 shadow-md">
               <div className="flex items-center gap-2 mb-3">
-                <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="avatar" className="w-10 h-10 rounded-full" />
+                <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Client testimonial avatar" className="w-10 h-10 rounded-full" loading="lazy" />
                 <span className="text-xs text-gray-500">a*** k****</span>
                 <div className="text-left">
                   <div className="flex text-yellow-500 text-sm">
@@ -308,7 +325,7 @@ export const Landing: React.FC = () => {
 
             <div className="bg-white rounded-2xl p-6 shadow-md">
               <div className="flex items-center gap-2 mb-3">
-                <img src="https://randomuser.me/api/portraits/men/65.jpg" alt="avatar" className="w-10 h-10 rounded-full" />
+                <img src="https://randomuser.me/api/portraits/men/65.jpg" alt="Client testimonial avatar" className="w-10 h-10 rounded-full" loading="lazy" />
                 <span className="text-xs text-gray-500">r*** p****</span>
                 <div className="text-left">
                   <div className="flex text-yellow-500 text-sm">
@@ -329,7 +346,7 @@ export const Landing: React.FC = () => {
           {/* CTA removed as requested */}
           <p className="text-sm text-slate-500 mt-6">🔒 Your privacy and data are 100% secure</p>
         </div>
-      </div>
+      </section>
 
       {/* Provider CTA Section */}
       <div className="py-24 px-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -357,7 +374,7 @@ export const Landing: React.FC = () => {
       </div>
 
       {/* Contact Form Section */}
-      <div className="py-24 px-6 bg-white">
+      <section id="contact" className="py-24 px-6 bg-white">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
@@ -448,7 +465,120 @@ export const Landing: React.FC = () => {
             </div>
           </form>
         </div>
-      </div>
+      </section>
+
+      {/* Footer with Internal Links */}
+      <footer className="bg-slate-900 text-slate-300 py-12 px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+            {/* Company Info */}
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500 to-blue-600 flex items-center justify-center">
+                  <i className="fas fa-brain text-white text-sm"></i>
+                </div>
+                <span className="text-lg font-bold text-white">TheMindNetwork</span>
+              </div>
+              <p className="text-sm text-slate-400">
+                Connecting you with verified mental health professionals for your wellness journey.
+              </p>
+            </div>
+
+            {/* Quick Links */}
+            <nav aria-label="Quick links">
+              <h3 className="text-white font-semibold mb-4">Quick Links</h3>
+              <ul className="space-y-2">
+                <li>
+                  <a
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="text-sm hover:text-teal-400 transition-colors"
+                  >
+                    Find a Therapist
+                  </a>
+                </li>
+                <li>
+                  <a 
+                    href="/#/provider"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm hover:text-teal-400 transition-colors"
+                  >
+                    For Providers
+                  </a>
+                </li>
+                <li>
+                  <a 
+                    href="/#/login"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm hover:text-teal-400 transition-colors"
+                  >
+                    Login
+                  </a>
+                </li>
+                <li>
+                  <a 
+                    href="#plans" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      document.getElementById('plans')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }}
+                    className="text-sm hover:text-teal-400 transition-colors"
+                  >
+                    Pricing Plans
+                  </a>
+                </li>
+              </ul>
+            </nav>
+
+            {/* Resources */}
+            <nav aria-label="Resources">
+              <h3 className="text-white font-semibold mb-4">Resources</h3>
+              <ul className="space-y-2">
+                <li>
+                  <a 
+                    href="#testimonials" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      document.getElementById('testimonials')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }}
+                    className="text-sm hover:text-teal-400 transition-colors"
+                  >
+                    Testimonials
+                  </a>
+                </li>
+                <li>
+                  <a 
+                    href="#contact" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }}
+                    className="text-sm hover:text-teal-400 transition-colors"
+                  >
+                    Contact Us
+                  </a>
+                </li>
+                <li className="flex items-center gap-2 mt-4">
+                  <i className="fas fa-shield-alt text-teal-400" aria-hidden="true"></i>
+                  <span className="text-sm">100% Confidential</span>
+                </li>
+              </ul>
+            </nav>
+          </div>
+
+          {/* Bottom Bar */}
+          <div className="border-t border-slate-800 pt-8 text-center">
+            <p className="text-sm text-slate-400">
+              © {new Date().getFullYear()} TheMindNetwork. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

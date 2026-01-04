@@ -73,7 +73,7 @@ const ProviderPage: React.FC = () => {
         <div className="max-w-5xl mx-auto flex flex-col items-center">
           {/* First fold: Title and Benefits */}
           <div className="w-full flex flex-col items-center mb-16">
-            <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-teal-500 to-blue-600 flex items-center justify-center mb-6">
+            <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-teal-500 to-blue-600 flex items-center justify-center mb-6" aria-hidden="true">
               <i className="fas fa-user-md text-white text-4xl"></i>
             </div>
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 mb-4 text-center">
@@ -82,15 +82,15 @@ const ProviderPage: React.FC = () => {
             <p className="text-slate-600 mb-10 text-center text-lg md:text-xl">Grow your practice, connect with clients, and build your professional network.</p>
             <div className="w-full max-w-3xl grid grid-cols-1 sm:grid-cols-2 gap-8 md:gap-12">
               {benefits.map((b, idx) => (
-                <div key={idx} className="bg-white rounded-3xl shadow-xl p-8 border-2 border-teal-100 flex flex-col items-center justify-center min-h-[180px]">
-                  <h3 className="font-semibold text-slate-900 text-2xl mb-3 text-center">{b.title}</h3>
+                <article key={idx} className="bg-white rounded-3xl shadow-xl p-8 border-2 border-teal-100 flex flex-col items-center justify-center min-h-[180px]">
+                  <h2 className="font-semibold text-slate-900 text-2xl mb-3 text-center">{b.title}</h2>
                   <p className="text-slate-600 text-base text-center">{b.desc}</p>
-                </div>
+                </article>
               ))}
             </div>
           </div>
           {/* Second fold: Ready to get started - improved design */}
-          <div className="w-full max-w-2xl mt-2 flex flex-col items-center">
+          <section className="w-full max-w-2xl mt-2 flex flex-col items-center">
             <div className="text-center py-10 px-4 md:px-8">
               <h2 className="text-2xl sm:text-3xl font-bold text-teal-700 mb-4">Ready to get started?</h2>
               <p className="text-slate-600 mb-8 text-lg">Join a growing network of professionals and make a difference. Start your journey now!</p>
@@ -107,9 +107,134 @@ const ProviderPage: React.FC = () => {
                 </Button>
               </div>
             </div>
-          </div>
+          </section>
         </div>
       </main>
+
+      {/* Footer with Internal Links */}
+      <footer className="bg-slate-900 text-slate-300 py-12 px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+            {/* Company Info */}
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500 to-blue-600 flex items-center justify-center">
+                  <i className="fas fa-brain text-white text-sm"></i>
+                </div>
+                <span className="text-lg font-bold text-white">TheMindNetwork</span>
+              </div>
+              <p className="text-sm text-slate-400">
+                Connecting you with verified mental health professionals for your wellness journey.
+              </p>
+            </div>
+
+            {/* Quick Links */}
+            <nav aria-label="Quick links">
+              <h3 className="text-white font-semibold mb-4">Quick Links</h3>
+              <ul className="space-y-2">
+                <li>
+                  <a
+                    href="/#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate('/');
+                      setTimeout(() => {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }, 100);
+                    }}
+                    className="text-sm hover:text-teal-400 transition-colors"
+                  >
+                    Find a Therapist
+                  </a>
+                </li>
+                <li>
+                  <a 
+                    href="/#/provider"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm hover:text-teal-400 transition-colors"
+                  >
+                    For Providers
+                  </a>
+                </li>
+                <li>
+                  <a 
+                    href="/#/login"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm hover:text-teal-400 transition-colors"
+                  >
+                    Login
+                  </a>
+                </li>
+                <li>
+                  <a 
+                    href="/#plans" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate('/');
+                      setTimeout(() => {
+                        document.getElementById('plans')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }, 100);
+                    }}
+                    className="text-sm hover:text-teal-400 transition-colors"
+                  >
+                    Pricing Plans
+                  </a>
+                </li>
+              </ul>
+            </nav>
+
+            {/* Resources */}
+            <nav aria-label="Resources">
+              <h3 className="text-white font-semibold mb-4">Resources</h3>
+              <ul className="space-y-2">
+                <li>
+                  <a 
+                    href="/#testimonials" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate('/');
+                      setTimeout(() => {
+                        document.getElementById('testimonials')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }, 100);
+                    }}
+                    className="text-sm hover:text-teal-400 transition-colors"
+                  >
+                    Testimonials
+                  </a>
+                </li>
+                <li>
+                  <a 
+                    href="/#contact" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate('/');
+                      setTimeout(() => {
+                        document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }, 100);
+                    }}
+                    className="text-sm hover:text-teal-400 transition-colors"
+                  >
+                    Contact Us
+                  </a>
+                </li>
+                <li className="flex items-center gap-2 mt-4">
+                  <i className="fas fa-shield-alt text-teal-400" aria-hidden="true"></i>
+                  <span className="text-sm">100% Confidential</span>
+                </li>
+              </ul>
+            </nav>
+          </div>
+
+          {/* Bottom Bar */}
+          <div className="border-t border-slate-800 pt-8 text-center">
+            <p className="text-sm text-slate-400">
+              © {new Date().getFullYear()} TheMindNetwork. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
