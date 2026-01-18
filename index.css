@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+/* TheMindNetwork Brand Colors - Earthy Palette */
+:root {
+  --color-primary: #2E3A2F;        /* Forest Green - Main brand color */
+  --color-primary-hover: #3d4d3e;  /* Forest Green Hover */
+  --color-secondary: #D6CFC7;      /* Warm Stone - Secondary/borders */
+  --color-background: #FAF9F7;     /* Background - Soft cream */
+  --color-surface: #FFFFFF;        /* Surface - White */
+  --color-text-primary: #2B2B2B;   /* Text Primary - Dark gray */
+  --color-text-muted: #7A7A7A;     /* Text Muted - Medium gray */
+  --color-accent: #A3B18A;         /* Olive Sage - Accents/highlights */
+  --color-accent-hover: #8fa075;   /* Olive Sage Hover */
+}
+
 @layer utilities {
   .animate-slide-in {
     animation: slideIn 0.3s ease-out;
@@ -25,8 +38,8 @@ html {
 }
 
 body {
-  background-color: #f8fafc; /* Slate-50 (Light Theme) */
-  color: #1e293b;
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
 }
 
 /* Custom scrollbar */

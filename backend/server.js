@@ -7,13 +7,20 @@ const { randomUUID } = require('crypto');
 const { Pool } = require('pg');
 const { MongoClient } = require('mongodb');
 const fs = require('fs').promises;
+const { readFileSync } = require('fs');
 const path = require('path');
+const Anthropic = require('@anthropic-ai/sdk');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const DATA_DIR = path.join(__dirname, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'profiles.json');
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const MONGODB_URI = process.env.MONGODB_URI;
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
 const usePostgres = Boolean(DATABASE_URL);
 const useMongo = Boolean(MONGODB_URI);
 
@@ -24,6 +31,22 @@ if (!DATABASE_URL) {
 if (!MONGODB_URI) {
   console.warn('Warning: MONGODB_URI not set. Contact form submissions will be logged to console only.');
 }
+
+if (!GROQ_API_KEY) {
+  console.warn('Warning: GROQ_API_KEY not set. AI features will not work.');
+}
+
+if (!ANTHROPIC_API_KEY) {
+  console.warn('Warning: ANTHROPIC_API_KEY not set. Fallback AI provider not available.');
+}
+
+if (!GEMINI_API_KEY) {
+  console.warn('Warning: GEMINI_API_KEY not set. Second fallback AI provider not available.');
+}
+
+// Initialize AI clients
+const anthropic = ANTHROPIC_API_KEY ? new Anthropic({ apiKey: ANTHROPIC_API_KEY }) : null;
+const gemini = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 
 const pool = usePostgres ? new Pool({ connectionString: DATABASE_URL }) : null;
 let mongoClient = null;
@@ -538,6 +561,628 @@ app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
   res.status(500).json({ error: 'Internal Server Error', details: err?.message });
 });
+
+// In-memory storage for snapshots (development only)
+const snapshots = new Map();
+
+// Snapshot chat endpoint
+app.post('/api/snapshot/chat', async (req, res) => {
+  const { userId, phoneNumber, message, conversationHistory } = req.body;
+
+  if (!userId || !message) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  // Mock mode for testing when APIs are unavailable
+  const USE_MOCK_MODE = process.env.USE_MOCK_MODE === 'true' || (!GROQ_API_KEY && !ANTHROPIC_API_KEY);
+  
+  if (USE_MOCK_MODE) {
+    console.log('🎭 MOCK MODE: Using simulated responses');
+    
+    const messageCount = (conversationHistory || []).length;
+    const mockResponses = [
+      "That sounds like a lot to carry. I'm here to listen. What's been weighing on you most recently?",
+      "Thank you for sharing that. When you're feeling this way, what do you notice happening in your body or thoughts?",
+      "When faced with something new or unfamiliar, do you usually feel excited and curious, or do you prefer sticking with what you know?",
+      "How do you approach tasks and deadlines - are you someone who plans ahead and stays organized, or more spontaneous and flexible?",
+      "After spending time with a group of people, do you feel energized or do you need time alone to recharge?",
+      "In disagreements, are you more likely to prioritize harmony and others' feelings, or stand firm on your own perspective?",
+      "When something unexpected or stressful happens, how quickly do your emotions settle?",
+      "In close relationships, do you feel comfortable depending on others and having them depend on you?",
+      "Do you often worry about whether people really care about you, or do you feel pretty secure?",
+      "When you're going through something difficult, do you tend to reach out or handle it on your own?",
+      "Thank you for sharing all of this with me. I have enough to create your psychological snapshot. SNAPSHOT_COMPLETE"
+    ];
+    
+    const responseIndex = Math.min(messageCount, mockResponses.length - 1);
+    const mockResponse = mockResponses[responseIndex];
+    const isComplete = mockResponse.includes('SNAPSHOT_COMPLETE');
+    
+    let snapshotUrl = '';
+    let snapshotData = null;
+    
+    if (isComplete) {
+      snapshotUrl = 'mock-snapshot-' + Date.now();
+      snapshotData = {
+        userId,
+        phoneNumber,
+        snapshot: {
+          emotionalPatterns: {
+            currentState: 'Generally balanced with occasional stress',
+            stressTriggers: ['Work pressure', 'Uncertainty', 'Conflict'],
+            stressResponse: 'Initially withdraws, then seeks support',
+            regulation: ['Deep breathing', 'Exercise', 'Talking to friends']
+          },
+          relationshipPatterns: {
+            connectionStyle: 'Prefers deep, meaningful connections',
+            uncertaintyResponse: 'Sometimes worries about being valued',
+            conflictStyle: 'Avoids initially, discusses when calm',
+            attachmentNotes: 'Secure with occasional anxiety'
+          },
+          whatHelps: ['Exercise', 'Creative activities', 'Time with close friends', 'Nature'],
+          whatHurts: ['Feeling dismissed', 'Lack of structure', 'Prolonged isolation'],
+          personalityTendencies: {
+            bigFive: {
+              openness: 'High - curious about new experiences',
+              conscientiousness: 'Moderate - organized but flexible',
+              extraversion: 'Moderate - enjoys people and solitude',
+              agreeableness: 'High - values harmony and empathy',
+              emotionalStability: 'Moderate - generally stable with occasional stress'
+            },
+            cognitiveStyle: 'Balanced analytical and intuitive thinking',
+            naturalRhythm: 'Morning productive, evening creative'
+          },
+          meaningfulExperiences: 'Finds meaning in helping others and personal growth',
+          summary: 'This snapshot reflects someone with strong self-awareness and healthy coping strategies. They show balanced personality traits with a tendency toward empathy and growth. While they experience normal stress and occasional relationship concerns, they have developed effective ways to manage challenges.'
+        },
+        createdAt: Date.now()
+      };
+      
+      snapshots.set(snapshotUrl, snapshotData);
+      
+      // Save to MongoDB if available
+      if (mongoDb) {
+        try {
+          await mongoDb.collection('snapshots').insertOne({
+            snapshotId: snapshotUrl,
+            ...snapshotData,
+            createdAt: new Date()
+          });
+          console.log('🎭 MOCK: Saved snapshot to MongoDB:', snapshotUrl);
+        } catch (dbErr) {
+          console.error('🎭 MOCK: Failed to save to MongoDB:', dbErr.message);
+        }
+      }
+      
+      console.log('🎭 MOCK: Created test snapshot:', snapshotUrl);
+    }
+    
+    return res.json({
+      response: mockResponse.replace('SNAPSHOT_COMPLETE', '').trim(),
+      isComplete,
+      snapshotUrl,
+      snapshot: snapshotData
+    });
+  }
+
+  try {
+    const GROQ_API_KEY = process.env.GROQ_API_KEY;
+    if (!GROQ_API_KEY) {
+      throw new Error('Groq API key not configured');
+    }
+
+    // Build conversation context - keeping for variable reference
+    const messages = (conversationHistory || [])
+      .filter((msg) => msg.id !== 'sending')
+      .map((msg) => ({
+        role: msg.role === 'user' ? 'user' : 'model',
+        parts: [{ text: msg.text }]
+      }));
+
+    // Load system prompt from file
+    const SYSTEM_PROMPT = readFileSync(
+      path.join(__dirname, '..', 'prompts', 'snapshot-system-prompt-optimized.md'),
+      'utf-8'
+    ).replace(/^# /, ''); // Remove markdown heading
+
+    // Build OpenAI messages format
+    const openaiMessages = [
+      {
+        role: 'system',
+        content: SYSTEM_PROMPT
+      }
+    ];
+
+    // Smart conversation history management
+    const allHistory = (conversationHistory || []).filter((msg) => msg.id !== 'sending');
+    
+    let historyToSend = [];
+    if (allHistory.length <= 10) {
+      // If conversation is short, send everything
+      historyToSend = allHistory;
+    } else {
+      // If conversation is long, send:
+      // - First 2 messages (context)
+      // - Last 8 messages (recent context)
+      historyToSend = [
+        ...allHistory.slice(0, 2),
+        ...allHistory.slice(-8)
+      ];
+    }
+    
+    historyToSend.forEach((msg) => {
+      openaiMessages.push({
+        role: msg.role === 'user' ? 'user' : 'assistant',
+        content: msg.text
+      });
+    });
+
+    // Add current user message
+    openaiMessages.push({
+      role: 'user',
+      content: message
+    });
+
+    // Try Groq first, fallback to Anthropic if it fails
+    let aiResponse;
+    let usedProvider = 'groq';
+    
+    try {
+      // Call Groq API (OpenAI-compatible)
+      const response = await fetch(
+        'https://api.groq.com/openai/v1/chat/completions',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${GROQ_API_KEY}`
+          },
+          body: JSON.stringify({
+            model: 'llama-3.3-70b-versatile',
+            messages: openaiMessages,
+            temperature: 0.7,
+            max_tokens: 150
+          })
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Groq API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      aiResponse = data.choices?.[0]?.message?.content;
+      
+    } catch (groqError) {
+      console.warn('Groq failed, trying Anthropic fallback:', groqError.message);
+      
+      if (!anthropic) {
+        throw new Error('Both Groq and Anthropic (fallback) are unavailable');
+      }
+      
+      // Fallback to Anthropic Claude with prompt caching
+      try {
+        usedProvider = 'anthropic';
+        
+        // Convert messages format for Anthropic
+        const anthropicMessages = historyToSend.map(msg => ({
+          role: msg.role === 'user' ? 'user' : 'assistant',
+          content: msg.text
+        }));
+        
+        // Add current message
+        anthropicMessages.push({
+          role: 'user',
+          content: message
+        });
+        
+        const anthropicResponse = await anthropic.messages.create({
+          model: 'claude-3-5-sonnet-20241022',
+          max_tokens: 150,
+          system: [
+            {
+              type: 'text',
+              text: SYSTEM_PROMPT,
+              cache_control: { type: 'ephemeral' } // Cache the prompt!
+            }
+          ],
+          messages: anthropicMessages
+        });
+        
+        aiResponse = anthropicResponse.content[0].text;
+        console.log('✓ Using Anthropic fallback successfully');
+        
+      } catch (anthropicError) {
+        console.error('Anthropic fallback also failed:', anthropicError);
+        console.log('Trying Gemini as second fallback...');
+        
+        // Try Gemini as third option
+        try {
+          if (!gemini) {
+            throw new Error('Gemini not configured');
+          }
+          
+          const model = gemini.getGenerativeModel({ model: 'gemini-1.5-flash' });
+          
+          // Optimize context: only send first 2 and last 6 messages (reduced from 8)
+          const recentMessages = messages.length <= 8 
+            ? messages 
+            : [...messages.slice(0, 2), ...messages.slice(-6)];
+          
+          // Build conversation history in Gemini format
+          const geminiHistory = recentMessages.slice(0, -1).map(msg => ({
+            role: msg.role === 'user' ? 'user' : 'model',
+            parts: [{ text: msg.text }]
+          }));
+          
+          const chat = model.startChat({
+            history: geminiHistory,
+            generationConfig: {
+              maxOutputTokens: 150,
+              temperature: 0.7,
+            },
+            systemInstruction: SYSTEM_PROMPT
+          });
+          
+          const result = await chat.sendMessage(userMessage);
+          aiResponse = result.response.text();
+          console.log('✓ Using Gemini fallback successfully');
+          
+        } catch (geminiError) {
+          console.error('Gemini fallback also failed:', geminiError);
+          console.log('Falling back to mock mode...');
+          
+          // Fall back to mock mode when all APIs fail
+          const mockResponses = [
+            "I'm here to help you explore your thoughts and feelings. How have you been feeling lately?",
+            "Thank you for sharing that. Can you tell me more about what's been on your mind?",
+            "I appreciate your openness. Let's explore this together - on a scale of 1-10, how would you rate your current stress level?",
+            "Understanding your personality can help. How much do you agree with this: 'I tend to be organized and responsible'? (Very much, Somewhat, Neutral, Not much, Not at all)",
+            "Thank you. And how about this: 'I enjoy meeting new people and being social'?",
+            "How much do you agree: 'I'm often curious and enjoy learning new things'?",
+            "And this one: 'I tend to be calm and emotionally stable'?",
+            "Last personality question: 'I'm generally cooperative and compassionate with others'?",
+            "Now let's explore relationships. In close relationships, do you: a) Feel comfortable depending on others, or b) Prefer to be self-reliant?",
+            "And when conflicts arise, do you tend to: a) Address them directly, or b) Need time to process alone first?",
+            "SNAPSHOT_COMPLETE"
+          ];
+          
+          const messageCount = messages.length;
+          if (messageCount < mockResponses.length) {
+            aiResponse = mockResponses[messageCount];
+          } else {
+            aiResponse = mockResponses[mockResponses.length - 1];
+          }
+        }
+      }
+    }
+
+    if (!aiResponse) {
+      aiResponse = 'I apologize, but I encountered an error. Could you please rephrase that?';
+    }
+
+    // Check if snapshot is complete
+    const isComplete = aiResponse.includes('SNAPSHOT_COMPLETE');
+    let snapshotUrl = '';
+
+    if (isComplete) {
+      // Generate snapshot analysis
+      const ANALYSIS_PROMPT = `Based on the conversation, create a structured psychological snapshot using the information gathered.
+
+Extract and organize into these sections:
+
+1. EMOTIONAL & STRESS PATTERNS
+2. RELATIONSHIP & CONNECTION PATTERNS
+3. WHAT HELPS & WHAT HURTS
+4. PERSONALITY TENDENCIES
+5. MEANINGFUL EXPERIENCES
+6. INTEGRATED SUMMARY
+
+Format your response as JSON:
+{
+  "emotionalPatterns": {
+    "currentState": "",
+    "stressTriggers": [],
+    "stressResponse": "",
+    "regulation": []
+  },
+  "relationshipPatterns": {
+    "connectionStyle": "",
+    "uncertaintyResponse": "",
+    "conflictStyle": "",
+    "attachmentNotes": ""
+  },
+  "whatHelps": [],
+  "whatHurts": [],
+  "personalityTendencies": {
+    "bigFive": {},
+    "cognitiveStyle": "",
+    "naturalRhythm": ""
+  },
+  "meaningfulExperiences": "",
+  "summary": ""
+}`;
+
+      // Build analysis messages with full conversation context
+      const analysisMessages = [
+        { role: 'system', content: 'You are a helpful assistant that creates structured psychological snapshots based on conversations.' }
+      ];
+
+      // Add all conversation history for context
+      (conversationHistory || [])
+        .filter((msg) => msg.id !== 'sending')
+        .forEach((msg) => {
+          analysisMessages.push({
+            role: msg.role === 'user' ? 'user' : 'assistant',
+            content: msg.text
+          });
+        });
+
+      // Add the current message
+      analysisMessages.push({
+        role: 'user',
+        content: message
+      });
+
+      // Add analysis instruction
+      analysisMessages.push({
+        role: 'user',
+        content: ANALYSIS_PROMPT
+      });
+
+      const analysisResponse = await fetch(
+        'https://api.groq.com/openai/v1/chat/completions',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${GROQ_API_KEY}`
+          },
+          body: JSON.stringify({
+            model: 'llama-3.3-70b-versatile',
+            messages: analysisMessages,
+            temperature: 0.3,
+            max_tokens: 2048
+          })
+        }
+      );
+
+      const analysisData = await analysisResponse.json();
+      const analysisText = analysisData.choices?.[0]?.message?.content || '{}';
+      
+      // Extract JSON
+      const jsonMatch = analysisText.match(/```json\n?([\s\S]*?)\n?```/) || analysisText.match(/{[\s\S]*}/);
+      const snapshotAnalysis = JSON.parse(jsonMatch ? jsonMatch[1] || jsonMatch[0] : '{}');
+
+      // Generate unique ID
+      snapshotUrl = generateSnapshotId();
+
+      // Store snapshot
+      const snapshotData = {
+        userId,
+        phoneNumber,
+        messages: [...(conversationHistory || []), { id: Date.now().toString(), role: 'assistant', text: aiResponse, timestamp: Date.now() }],
+        snapshot: snapshotAnalysis,
+        snapshotUrl,
+        createdAt: Date.now()
+      };
+
+      snapshots.set(snapshotUrl, snapshotData);
+      
+      // Save to MongoDB if available
+      if (mongoDb) {
+        try {
+          await mongoDb.collection('snapshots').insertOne({
+            snapshotId: snapshotUrl,
+            ...snapshotData,
+            createdAt: new Date()
+          });
+          console.log('Saved snapshot to MongoDB:', snapshotUrl);
+        } catch (dbErr) {
+          console.error('MongoDB save error:', dbErr.message);
+        }
+      }
+    }
+
+    res.json({
+      response: aiResponse.replace('SNAPSHOT_COMPLETE', '').trim(),
+      isComplete,
+      snapshotUrl,
+      snapshot: isComplete ? snapshots.get(snapshotUrl) : undefined
+    });
+  } catch (error) {
+    console.error('Snapshot chat error:', error);
+    res.status(500).json({
+      error: 'Failed to process message',
+      response: 'I apologize, but I encountered a technical issue. Please try again.'
+    });
+  }
+});
+
+// Get snapshot by ID
+// Test endpoint to create a dummy snapshot for testing
+app.post('/api/snapshot/test-create', (req, res) => {
+  const snapshotId = 'test-snapshot-123';
+  const testSnapshot = {
+    userId: 'test-user',
+    phoneNumber: '+919876543210',
+    snapshot: {
+      emotionalPatterns: {
+        currentState: 'Generally feeling balanced with occasional stress',
+        stressTriggers: ['Work deadlines', 'Social situations', 'Uncertainty'],
+        stressResponse: 'Tends to withdraw initially, then seeks support',
+        regulation: ['Deep breathing', 'Journaling', 'Talking to friends']
+      },
+      relationshipPatterns: {
+        connectionStyle: 'Prefers deep, meaningful connections over many casual ones',
+        uncertaintyResponse: 'Sometimes worries about being valued by others',
+        conflictStyle: 'Avoids conflict initially, but willing to discuss when calm',
+        attachmentNotes: 'Secure with moments of anxiety in relationships'
+      },
+      whatHelps: ['Exercise', 'Creative hobbies', 'Quality time with close friends', 'Nature walks'],
+      whatHurts: ['Feeling dismissed', 'Lack of structure', 'Isolation for too long'],
+      personalityTendencies: {
+        bigFive: {
+          openness: 'High - Curious and enjoys new experiences',
+          conscientiousness: 'Moderate - Organized but flexible',
+          extraversion: 'Moderate - Enjoys socializing but needs alone time',
+          agreeableness: 'High - Values harmony and empathy',
+          emotionalStability: 'Moderate - Generally stable with occasional stress'
+        },
+        cognitiveStyle: 'Balanced between analytical thinking and intuitive feeling',
+        naturalRhythm: 'Morning person with creative energy in evenings'
+      },
+      meaningfulExperiences: 'Finds meaning in helping others, creating things, and deep conversations',
+      summary: 'This person shows a balanced psychological profile with healthy coping mechanisms and strong relationship values. They demonstrate self-awareness and actively work on emotional regulation. While they experience normal stress and occasional relationship anxiety, they have developed effective strategies for managing these challenges. Their personality suggests someone who is introspective, empathetic, and growth-oriented.'
+    },
+    createdAt: Date.now()
+  };
+  
+  snapshots.set(snapshotId, testSnapshot);
+  console.log('[TEST] Created test snapshot:', snapshotId);
+  res.json({ snapshotId, url: `/snapshot/${snapshotId}` });
+});
+
+// Get user's snapshots by phone number
+app.get('/api/user/snapshots', async (req, res) => {
+  try {
+    const { phone } = req.query;
+    
+    if (!phone) {
+      return res.status(400).json({ error: 'Phone number required' });
+    }
+    
+    console.log('[USER SNAPSHOTS] Fetching snapshots for:', phone);
+    
+    let userSnapshots = [];
+    
+    // Try MongoDB first
+    if (mongoDb) {
+      try {
+        userSnapshots = await mongoDb.collection('snapshots')
+          .find({ phoneNumber: phone })
+          .sort({ createdAt: -1 })
+          .toArray();
+        console.log('[USER SNAPSHOTS] Found', userSnapshots.length, 'snapshots in MongoDB');
+      } catch (dbErr) {
+        console.error('[USER SNAPSHOTS] MongoDB error:', dbErr.message);
+      }
+    }
+    
+    // Fallback to in-memory
+    if (userSnapshots.length === 0) {
+      userSnapshots = Array.from(snapshots.values())
+        .filter(snap => snap.phoneNumber === phone)
+        .sort((a, b) => b.createdAt - a.createdAt);
+      console.log('[USER SNAPSHOTS] Found', userSnapshots.length, 'snapshots in memory');
+    }
+    
+    res.json({ snapshots: userSnapshots });
+  } catch (error) {
+    console.error('[USER SNAPSHOTS] Error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Link snapshot to user after login
+app.post('/api/snapshot/link', async (req, res) => {
+  try {
+    const { snapshotId, phoneNumber } = req.body;
+    
+    if (!snapshotId || !phoneNumber) {
+      return res.status(400).json({ error: 'snapshotId and phoneNumber are required' });
+    }
+    
+    console.log('[LINK SNAPSHOT] Linking', snapshotId, 'to', phoneNumber);
+    
+    let updated = false;
+    
+    // Update in MongoDB
+    if (mongoDb) {
+      try {
+        const result = await mongoDb.collection('snapshots').updateOne(
+          { snapshotId },
+          { 
+            $set: { 
+              phoneNumber,
+              linkedAt: new Date()
+            } 
+          }
+        );
+        
+        if (result.modifiedCount > 0) {
+          console.log('[LINK SNAPSHOT] Updated in MongoDB');
+          updated = true;
+        }
+      } catch (dbErr) {
+        console.error('[LINK SNAPSHOT] MongoDB error:', dbErr.message);
+      }
+    }
+    
+    // Update in memory
+    const snapshot = snapshots.get(snapshotId);
+    if (snapshot) {
+      snapshot.phoneNumber = phoneNumber;
+      snapshot.linkedAt = Date.now();
+      snapshots.set(snapshotId, snapshot);
+      console.log('[LINK SNAPSHOT] Updated in memory');
+      updated = true;
+    }
+    
+    if (updated) {
+      res.json({ success: true, message: 'Snapshot linked to user' });
+    } else {
+      res.status(404).json({ error: 'Snapshot not found' });
+    }
+  } catch (error) {
+    console.error('[LINK SNAPSHOT] Error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/api/snapshot/:snapshotId', async (req, res) => {
+  try {
+    const { snapshotId } = req.params;
+    console.log('[SNAPSHOT GET] Fetching snapshot:', snapshotId);
+    
+    // Try MongoDB first
+    if (mongoDb) {
+      try {
+        const snapshot = await mongoDb.collection('snapshots').findOne({ snapshotId });
+        if (snapshot) {
+          console.log('[SNAPSHOT GET] Found in MongoDB:', snapshotId);
+          return res.json(snapshot);
+        }
+      } catch (dbErr) {
+        console.error('[SNAPSHOT GET] MongoDB error:', dbErr.message);
+      }
+    }
+    
+    // Fallback to in-memory
+    console.log('[SNAPSHOT GET] Available in-memory snapshots:', Array.from(snapshots.keys()));
+    const snapshot = snapshots.get(snapshotId);
+
+    if (!snapshot) {
+      console.log('[SNAPSHOT GET] Snapshot not found:', snapshotId);
+      return res.status(404).json({ error: 'Snapshot not found' });
+    }
+
+    console.log('[SNAPSHOT GET] Returning from memory:', snapshotId);
+    res.json(snapshot);
+  } catch (error) {
+    console.error('[SNAPSHOT GET] Error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+function generateSnapshotId() {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let id = '';
+  for (let i = 0; i < 12; i++) {
+    id += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return id;
+}
 
 async function start() {
   await ensureSchema();

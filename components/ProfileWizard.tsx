@@ -12,6 +12,8 @@ import { sanitizeForStorage, secureLog } from '../services/security';
 import { Button } from './ui/Button';
 import { generateProfileSummary, generateProviderBio } from '../services/geminiService';
 import { saveProfile } from '../services/api';
+import { auth } from '../services/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 const INITIAL_PROFILE: UserProfile = {
   status: 'draft',
@@ -56,6 +58,29 @@ export const ProfileWizard: React.FC = () => {
   const [profileData, setProfileData] = useState<UserProfile>(getInitialProfile());
   const [isGenerating, setIsGenerating] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [existingProfile, setExistingProfile] = useState<any>(null);
+  const [checkingProfile, setCheckingProfile] = useState(true);
+
+  // Check if user already has a profile
+  React.useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user && user.phoneNumber) {
+        try {
+          const response = await fetch(`/api/profiles?action=lookup&phone=${encodeURIComponent(user.phoneNumber)}`);
+          if (response.ok) {
+            const profile = await response.json();
+            console.log('[ProfileWizard] User already has profile:', profile);
+            setExistingProfile(profile);
+          }
+        } catch (err) {
+          console.error('[ProfileWizard] Error checking profile:', err);
+        }
+      }
+      setCheckingProfile(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   // Add keyboard listener for Enter key
   React.useEffect(() => {
@@ -79,6 +104,71 @@ export const ProfileWizard: React.FC = () => {
     }));
     setErrorMsg(''); // Clear error on change
   };
+
+  // Show loading while checking for existing profile
+  if (checkingProfile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-background)' }}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: 'var(--color-primary)' }}></div>
+          <p style={{ color: 'var(--color-text-muted)' }}>Checking your profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If user already has a profile, show message and redirect
+  if (existingProfile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: 'var(--color-background)' }}>
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center" style={{ borderWidth: '1px', borderColor: 'var(--color-secondary)' }}>
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--color-accent)' }}>
+            <i className="fas fa-user-check text-white text-2xl"></i>
+          </div>
+          <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>Profile Already Exists</h2>
+          <p className="mb-2" style={{ color: 'var(--color-text-muted)' }}>You already have a profile with us.</p>
+          {existingProfile.status && (
+            <div className="mb-4">
+              <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                existingProfile.status === 'approved' ? 'bg-green-100 text-green-700' :
+                existingProfile.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                'bg-red-100 text-red-700'
+              }`}>
+                Status: {existingProfile.status}
+              </span>
+            </div>
+          )}
+          <p className="text-sm mb-6" style={{ color: 'var(--color-text-muted)' }}>
+            {existingProfile.status === 'approved' && 'Your profile has been approved and is active.'}
+            {existingProfile.status === 'pending' && 'Your profile is pending approval from our team.'}
+            {existingProfile.status === 'rejected' && 'Your profile was not approved. Please contact support for details.'}
+          </p>
+          <div className="space-y-3">
+            <button
+              onClick={() => navigate('/profile')}
+              className="w-full px-6 py-3 rounded-lg font-semibold text-white transition-all shadow-md"
+              style={{ backgroundColor: 'var(--color-primary)' }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary-hover)'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary)'}
+            >
+              <i className="fas fa-eye mr-2"></i>
+              View My Profile
+            </button>
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="w-full px-6 py-3 rounded-lg font-semibold text-white transition-all shadow-md"
+              style={{ backgroundColor: 'var(--color-accent)' }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-accent-hover)'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-accent)'}
+            >
+              <i className="fas fa-home mr-2"></i>
+              Go to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleRoleSelect = (role: UserRole) => {
       setProfileData(prev => ({ ...prev, role }));
@@ -242,22 +332,22 @@ export const ProfileWizard: React.FC = () => {
   const isFinalStep = currentStep === WizardStep.CLIENT_PREFERENCES || currentStep === WizardStep.PROVIDER_PRACTICE;
   const isChatbotStep = currentStep === WizardStep.CHATBOT_INTAKE;
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50">
-      <div className="w-full max-w-2xl bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden flex flex-col h-[800px]">
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: 'var(--color-background)' }}>
+      <div className="w-full max-w-2xl bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col h-[800px]" style={{ borderWidth: '1px', borderColor: 'var(--color-secondary)' }}>
         
         {/* Header */}
         {currentStep !== WizardStep.ROLE_SELECTION && (
-            <div className="bg-white p-6 border-b border-slate-100">
+            <div className="bg-white p-6" style={{ borderBottomWidth: '1px', borderBottomColor: 'var(--color-secondary)' }}>
                 <div className="flex justify-between items-center mb-4">
-                    <span className="text-xs font-bold tracking-wider text-teal-600 uppercase">Step {currentStepIndex} of {totalSteps}</span>
-                    <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">
+                    <span className="text-xs font-bold tracking-wider uppercase" style={{ color: 'var(--color-primary)' }}>Step {currentStepIndex} of {totalSteps}</span>
+                    <span className="text-xs font-bold tracking-wider uppercase" style={{ color: 'var(--color-text-muted)' }}>
                         {isClient ? 'Client Intake' : 'Provider Onboarding'}
                     </span>
                 </div>
-                <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ backgroundColor: 'var(--color-secondary)' }}>
                     <div 
-                        className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 transition-all duration-500 ease-out"
-                        style={{ width: `${progress}%` }}
+                        className="h-full transition-all duration-500 ease-out"
+                        style={{ width: `${progress}%`, backgroundColor: 'var(--color-primary)' }}
                     ></div>
                 </div>
             </div>
@@ -265,10 +355,13 @@ export const ProfileWizard: React.FC = () => {
 
         {/* Role Selection Header with Back Button */}
         {currentStep === WizardStep.ROLE_SELECTION && (
-            <div className="bg-white p-6 border-b border-slate-100">
+            <div className="bg-white p-6" style={{ borderBottomWidth: '1px', borderBottomColor: 'var(--color-secondary)' }}>
                 <button 
                     onClick={() => navigate('/login')}
-                    className="text-sm text-teal-600 hover:text-teal-700 font-medium flex items-center gap-2"
+                    className="text-sm font-medium flex items-center gap-2 transition-colors"
+                    style={{ color: 'var(--color-primary)' }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-accent)'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-primary)'}
                 >
                     <i className="fas fa-arrow-left"></i> Back to Login
                 </button>

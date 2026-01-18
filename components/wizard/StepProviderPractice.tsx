@@ -180,7 +180,10 @@ export const StepProviderPractice: React.FC<StepProps> = ({ data, updateData }) 
           />
           <label
             htmlFor="resume-upload"
-            className="flex items-center justify-center gap-2 bg-white border-2 border-dashed border-slate-300 text-slate-600 rounded-lg px-4 py-6 cursor-pointer hover:border-teal-400 hover:bg-teal-50 transition-all"
+            className="flex items-center justify-center gap-2 bg-white border-2 border-dashed rounded-lg px-4 py-6 cursor-pointer transition-all"
+            style={{ borderColor: 'var(--color-secondary)', color: 'var(--color-text-muted)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--color-accent)'; e.currentTarget.style.backgroundColor = 'var(--color-background)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--color-secondary)'; e.currentTarget.style.backgroundColor = '#fff'; }}
           >
             <i className="fas fa-cloud-upload-alt text-xl"></i>
             <span className="font-medium">

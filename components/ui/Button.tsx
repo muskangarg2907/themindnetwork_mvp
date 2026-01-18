@@ -33,9 +33,9 @@ export const Button: React.FC<ButtonProps> = (props) => {
   } = props as any;
   const baseStyles = "px-6 py-2.5 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white";
   const variants = {
-    primary: "bg-primary hover:bg-primaryHover text-white shadow-lg shadow-teal-500/20 focus:ring-teal-500",
+    primary: "bg-primary hover:bg-primaryHover text-white shadow-lg shadow-primary/20 focus:ring-primary",
     secondary: "bg-slate-200 hover:bg-slate-300 text-slate-800 focus:ring-slate-400",
-    outline: "border border-slate-300 hover:border-teal-500 text-slate-600 hover:text-teal-600 hover:bg-teal-50 focus:ring-teal-500",
+    outline: "border border-slate-300 hover:border-primary text-slate-600 hover:text-primary hover:bg-accent/10 focus:ring-primary",
     danger: "bg-red-600 hover:bg-red-500 text-white focus:ring-red-500",
     google: "bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 shadow-sm"
   };

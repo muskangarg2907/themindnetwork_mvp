@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getAuth, setPersistence, browserLocalPersistence, onAuthStateChanged, User } from 'firebase/auth';
 import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 
 // Firebase configuration
@@ -17,6 +17,30 @@ const app = initializeApp(firebaseConfig);
 
 // Initialize Firebase Authentication
 export const auth = getAuth(app);
+
+// Set persistence to LOCAL so auth state persists across browser tabs and sessions
+setPersistence(auth, browserLocalPersistence)
+  .then(() => {
+    console.log('[Firebase] Auth persistence set to LOCAL - login will persist across tabs');
+  })
+  .catch((error) => {
+    console.error('[Firebase] Failed to set auth persistence:', error);
+  });
+
+// Helper function to get current user with promise
+export const getCurrentUser = (): Promise<User | null> => {
+  return new Promise((resolve) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      unsubscribe();
+      resolve(user);
+    });
+  });
+};
+
+// Helper to check if user is authenticated
+export const isAuthenticated = (): Promise<boolean> => {
+  return getCurrentUser().then(user => !!user);
+};
 
 // Initialize App Check ONLY in production (not localhost) and ONLY if reCAPTCHA v3 key is configured
 if (typeof window !== 'undefined' && !import.meta.env.DEV) {

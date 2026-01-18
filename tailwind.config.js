@@ -9,12 +9,12 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: '#0d9488', // Teal-600
-        primaryHover: '#0f766e', // Teal-700
-        secondary: '#f1f5f9', // Slate-100
-        accent: '#f0f9ff', // Sky-50
-        textMain: '#1e293b', // Slate-800
-        textMuted: '#64748b', // Slate-500
+        primary: 'var(--color-primary)', // Forest Green
+        primaryHover: 'var(--color-primary-hover)', // Forest Green Hover
+        secondary: 'var(--color-secondary)', // Warm Stone
+        accent: 'var(--color-accent)', // Olive Sage
+        textMain: 'var(--color-text-primary)', // Dark Gray
+        textMuted: 'var(--color-text-muted)', // Medium Gray
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-out',
