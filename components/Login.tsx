@@ -251,27 +251,27 @@ export const Login: React.FC = () => {
           return;
         }
         
-        // Override button flow - if user already has a profile, use existing profile regardless of which button they clicked
-        secureLog('[LOGIN] User already has a profile - ignoring button flow, loading existing profile');
+        // Override button flow - if user already has a profile, use existing profile regardless of which button clicked
+        secureLog('[LOGIN] User already has a profile - going to dashboard');
         localStorage.setItem('userProfile', JSON.stringify(sanitizeForStorage(profile)));
         setIsLoading(false);
-        navigate('/profile');
+        navigate('/dashboard');
         return;
       }
 
-      // NEW USER - Profile not found, start signup flow
+      // NEW USER - Profile not found, go to dashboard (they can create profile from there)
       if (resp.status === 404) {
-        console.log('[LOGIN] NEW USER - No profile found, starting signup');
+        console.log('[LOGIN] NEW USER - No profile found, going to dashboard');
         setIsLoading(false);
-        navigate('/create', { state: { phone: fullPhone, preselectedRole } });
+        navigate('/dashboard');
         return;
       }
 
-      // Server error - still allow them to create profile
+      // Server error - still allow them to access dashboard
       const errBody = await resp.json().catch(() => ({}));
-      console.warn('[LOGIN] Lookup error:', errBody, '- allowing profile creation');
+      console.warn('[LOGIN] Lookup error:', errBody, '- going to dashboard');
       setIsLoading(false);
-      navigate('/create', { state: { phone: fullPhone, preselectedRole } });
+      navigate('/dashboard');
     } catch (err: any) {
       console.error('[LOGIN] OTP verification error:', err);
       console.error('[LOGIN] Error code:', err.code);
@@ -300,14 +300,14 @@ export const Login: React.FC = () => {
       }
     }
   };  return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-100 p-8 animate-slide-up">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4" style={{ backgroundColor: 'var(--color-background)' }}>
+      <div className="w-full max-w-md rounded-2xl shadow-xl p-8 animate-slide-up" style={{ backgroundColor: 'var(--color-surface)', borderWidth: '1px', borderColor: 'var(--color-secondary)' }}>
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-teal-100 text-teal-600 rounded-full flex items-center justify-center text-2xl mx-auto mb-4">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center text-2xl mx-auto mb-4" style={{ backgroundColor: 'var(--color-accent)', color: 'var(--color-surface)' }}>
             <i className="fas fa-brain"></i>
           </div>
-          <h1 className="text-2xl font-bold text-slate-800 mb-2">TheMindNetwork</h1>
-          <p className="text-slate-500">Welcome to India's premier mental health platform.</p>
+          <h1 className="text-2xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>TheMindNetwork</h1>
+          <p style={{ color: 'var(--color-text-muted)' }}>Welcome to India's premier mental health platform.</p>
         </div>
 
         <div className="space-y-6">
@@ -316,14 +316,17 @@ export const Login: React.FC = () => {
             step === 'phone' ? (
             <div className="space-y-4 animate-fade-in">
               <div className="flex flex-col gap-1.5 w-full">
-                <label className="text-sm font-semibold text-slate-700 ml-1">
+                <label className="text-sm font-semibold ml-1" style={{ color: 'var(--color-text-primary)' }}>
                   Phone Number
                 </label>
                 <div className="flex gap-2 min-w-0">
                   <select
                     value={countryCode}
                     onChange={(e) => setCountryCode(e.target.value)}
-                    className="bg-white border border-slate-300 text-slate-700 font-medium rounded-lg px-2 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm w-20 flex-shrink-0 cursor-pointer text-sm"
+                    className="font-medium rounded-lg px-2 py-3 focus:outline-none focus:ring-2 shadow-sm w-20 flex-shrink-0 cursor-pointer text-sm"
+                    style={{ backgroundColor: 'var(--color-surface)', borderWidth: '1px', borderColor: 'var(--color-secondary)', color: 'var(--color-text-primary)' }}
+                    onFocus={(e) => e.currentTarget.style.borderColor = 'var(--color-primary)'}
+                    onBlur={(e) => e.currentTarget.style.borderColor = 'var(--color-secondary)'}
                   >
                     {COUNTRY_CODES.map((c) => (
                       <option key={c.code} value={c.code}>
@@ -333,7 +336,7 @@ export const Login: React.FC = () => {
                   </select>
                   <input
                     type="tel"
-                    className={`flex-1 min-w-0 bg-white border ${error ? 'border-red-500' : 'border-slate-300'} text-slate-900 rounded-lg px-3 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all shadow-sm font-medium tracking-wide`}
+                    className={`flex-1 min-w-0 bg-white border ${error ? 'border-red-500' : 'border-slate-300'} text-slate-900 rounded-lg px-3 py-3 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all shadow-sm font-medium tracking-wide`}
                     placeholder="98765 43210"
                     value={phoneNumber}
                     onChange={handlePhoneChange}
@@ -359,7 +362,7 @@ export const Login: React.FC = () => {
                    setStep('phone');
                    setOtp('');
                    setError('');
-                 }} className="text-xs text-teal-600 hover:underline mt-1 font-medium">
+                 }} className="text-xs text-primary hover:underline mt-1 font-medium">
                    Change Number
                  </button>
                </div>
@@ -370,7 +373,7 @@ export const Login: React.FC = () => {
                   type="text"
                   inputMode="numeric"
                   maxLength={6}
-                  className={`w-full bg-white border ${error ? 'border-red-500' : 'border-slate-300'} text-slate-900 rounded-lg px-4 py-3 text-center text-2xl font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all shadow-sm`}
+                  className={`w-full bg-white border ${error ? 'border-red-500' : 'border-slate-300'} text-slate-900 rounded-lg px-4 py-3 text-center text-2xl font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all shadow-sm`}
                   placeholder="••••••"
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
@@ -397,7 +400,7 @@ export const Login: React.FC = () => {
                 <i className="fas fa-arrow-left mr-2"></i> Back to Phone Number
               </Button>
               <p className="text-center text-xs text-slate-400 mt-4">
-                Didn't receive code? <span className="text-teal-600 cursor-pointer hover:underline font-medium">Resend</span>
+                Didn't receive code? <span className="text-primary cursor-pointer hover:underline font-medium">Resend</span>
               </p>
             </div>
             )
@@ -406,14 +409,17 @@ export const Login: React.FC = () => {
             step === 'phone' ? (
             <div className="space-y-4 animate-fade-in">
               <div className="flex flex-col gap-1.5 w-full">
-                <label className="text-sm font-semibold text-slate-700 ml-1">
+                <label className="text-sm font-semibold ml-1" style={{ color: 'var(--color-text-primary)' }}>
                   Phone Number
                 </label>
                 <div className="flex gap-2 min-w-0">
                   <select
                     value={countryCode}
                     onChange={(e) => setCountryCode(e.target.value)}
-                    className="bg-white border border-slate-300 text-slate-700 font-medium rounded-lg px-2 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm w-20 flex-shrink-0 cursor-pointer text-sm"
+                    className="font-medium rounded-lg px-2 py-3 focus:outline-none focus:ring-2 shadow-sm w-20 flex-shrink-0 cursor-pointer text-sm"
+                    style={{ backgroundColor: 'var(--color-surface)', borderWidth: '1px', borderColor: 'var(--color-secondary)', color: 'var(--color-text-primary)' }}
+                    onFocus={(e) => e.currentTarget.style.borderColor = 'var(--color-primary)'}
+                    onBlur={(e) => e.currentTarget.style.borderColor = 'var(--color-secondary)'}
                   >
                     {COUNTRY_CODES.map((c) => (
                       <option key={c.code} value={c.code}>
@@ -423,7 +429,7 @@ export const Login: React.FC = () => {
                   </select>
                   <input
                     type="tel"
-                    className={`flex-1 min-w-0 bg-white border ${error ? 'border-red-500' : 'border-slate-300'} text-slate-900 rounded-lg px-3 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all shadow-sm font-medium tracking-wide`}
+                    className={`flex-1 min-w-0 bg-white border ${error ? 'border-red-500' : 'border-slate-300'} text-slate-900 rounded-lg px-3 py-3 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all shadow-sm font-medium tracking-wide`}
                     placeholder="98765 43210"
                     value={phoneNumber}
                     onChange={handlePhoneChange}
@@ -449,7 +455,7 @@ export const Login: React.FC = () => {
                    setStep('phone');
                    setOtp('');
                    setError('');
-                 }} className="text-xs text-teal-600 hover:underline mt-1 font-medium">
+                 }} className="text-xs text-primary hover:underline mt-1 font-medium">
                    Change Number
                  </button>
                </div>
@@ -460,7 +466,7 @@ export const Login: React.FC = () => {
                   type="text"
                   inputMode="numeric"
                   maxLength={6}
-                  className={`w-full bg-white border ${error ? 'border-red-500' : 'border-slate-300'} text-slate-900 rounded-lg px-4 py-3 text-center text-2xl font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all shadow-sm`}
+                  className={`w-full bg-white border ${error ? 'border-red-500' : 'border-slate-300'} text-slate-900 rounded-lg px-4 py-3 text-center text-2xl font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all shadow-sm`}
                   placeholder="••••••"
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
@@ -486,8 +492,8 @@ export const Login: React.FC = () => {
               >
                 <i className="fas fa-arrow-left mr-2"></i> Back to Phone Number
               </Button>
-              <p className="text-center text-xs text-slate-400 mt-4">
-                Didn't receive code? <span className="text-teal-600 cursor-pointer hover:underline font-medium">Resend</span>
+              <p className="text-center text-xs mt-4" style={{ color: 'var(--color-text-muted)' }}>
+                Didn't receive code? <span className="cursor-pointer hover:underline font-medium" style={{ color: 'var(--color-primary)' }}>Resend</span>
               </p>
             </div>
             )
@@ -495,14 +501,14 @@ export const Login: React.FC = () => {
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-200"></div>
+              <div className="w-full border-t" style={{ borderColor: 'var(--color-secondary)' }}></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-slate-400">Secure & Confidential</span>
+              <span className="px-2" style={{ backgroundColor: 'var(--color-surface)', color: 'var(--color-text-muted)' }}>Secure & Confidential</span>
             </div>
           </div>
 
-          <div className="text-center text-xs text-slate-400">
+          <div className="text-center text-xs" style={{ color: 'var(--color-text-muted)' }}>
             By continuing, you agree to TheMindNetwork's Terms of Service and Privacy Policy.
           </div>
         </div>

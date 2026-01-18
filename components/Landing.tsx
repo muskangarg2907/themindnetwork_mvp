@@ -46,44 +46,26 @@ export const Landing: React.FC = () => {
     {
       name: 'Explore',
       icon: 'fa-compass',
-      price: '₹1,549',
-      oldPrice: '₹1,999',
+      price: '₹1,799',
+      oldPrice: '₹2,997',
       description: 'Try different therapists and find your perfect match',
       features: [
         'Unlimited consultations with our team',
         'Try different therapists',
-        'First 3 therapy sessions included',
-        'Personalized recommendations'
+        'Get 3 therapy sessions'
       ],
       cta: 'Start Exploring',
-      highlight: false
-    },
-    {
-      name: 'Align',
-      icon: 'fa-wand-magic-sparkles',
-      price: '₹1,249',
-      description: 'AI-powered matching for the best fit',
-      features: [
-        'AI-powered therapist matching',
-        'Best match guarantee',
-        'First 3 sessions included',
-        'Smart preference analysis'
-      ],
-      cta: 'Get Matched',
       highlight: true
     },
     {
       name: 'Connect',
       icon: 'fa-handshake',
-      price: '₹199',
-      oldPrice: '₹499',
-      noSessionText: true,
-      description: 'Quick connection with the right therapist',
+      price: '₹1,299',
+      description: 'AI-powered matching for the best fit',
       features: [
-        'Free consultation',
-        'Direct therapist connection',
-        'Expert guidance',
-        'Fast onboarding'
+        'AI-powered therapist matching',
+        'First 3 sessions included',
+        'Cancel anytime'
       ],
       cta: 'Connect Now',
       highlight: false
@@ -91,44 +73,50 @@ export const Landing: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-teal-50">
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--color-background)' }}>
       {/* Navigation Bar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-200">
+      <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl border-b shadow-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', borderBottomColor: 'var(--color-secondary)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-blue-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg" style={{ backgroundColor: 'var(--color-primary)' }}>
               <i className="fas fa-brain text-white text-xl"></i>
             </div>
-            <span className="text-lg sm:text-xl md:text-2xl font-bold text-slate-800">TheMindNetwork</span>
+            <span className="text-lg sm:text-xl md:text-2xl font-bold" style={{ color: 'var(--color-primary)' }}>TheMindNetwork</span>
           </div>
           
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-6 justify-end w-full">
-            <Button 
+            <button
               onClick={() => navigate('/provider')}
-              variant="secondary"
-              className="px-4 py-1.5 text-sm"
+              className="px-4 py-1.5 text-sm font-medium rounded-lg transition-all"
+              style={{ backgroundColor: 'transparent', color: 'var(--color-text-primary)', borderWidth: '1px', borderColor: 'var(--color-secondary)' }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--color-secondary)'; e.currentTarget.style.borderColor = 'var(--color-accent)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.borderColor = 'var(--color-secondary)'; }}
             >
               For Providers
-            </Button>
-            <Button 
+            </button>
+            <button
               onClick={() => navigate('/login')}
-              variant="primary"
-              className="px-6 py-2 text-base font-semibold shadow-md"
+              className="px-6 py-2 text-base font-semibold shadow-md rounded-lg transition-all text-white"
+              style={{ backgroundColor: 'var(--color-primary)' }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary-hover)'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary)'}
             >
               <i className="fas fa-sign-in-alt mr-2"></i>Login
-            </Button>
+            </button>
           </div>
 
           {/* Mobile Login Button */}
           <div className="md:hidden">
-            <Button 
+            <button
               onClick={() => navigate('/login')}
-              variant="secondary"
-              className="px-4 py-2 text-sm"
+              className="px-4 py-2 text-sm font-medium rounded-lg transition-all text-white"
+              style={{ backgroundColor: 'var(--color-primary)' }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary-hover)'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary)'}
             >
               Login <i className="fas fa-sign-in-alt ml-1"></i>
-            </Button>
+            </button>
           </div>
         </div>
       </nav>
@@ -136,56 +124,59 @@ export const Landing: React.FC = () => {
       {/* Hero Section */}
       <div className="pt-32 pb-20 px-6">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-teal-50 border border-teal-200 text-teal-700 text-sm mb-8">
-            <i className="fas fa-shield-heart"></i>
-            <span className="font-medium">Trusted by thousands across India</span>
+          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm mb-8 shadow-sm" style={{ backgroundColor: 'var(--color-secondary)', borderWidth: '1px', borderColor: 'var(--color-accent)', color: 'var(--color-primary)' }}>
+            <i className="fas fa-shield-heart" style={{ color: 'var(--color-primary)' }}></i>
+            <span className="font-semibold">Trusted by thousands across India</span>
           </div>
           
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-slate-900 mb-6 leading-tight">
-            Your Journey to<br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-blue-600">Mental Wellness</span>
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight" style={{ color: 'var(--color-text-primary)' }}>
+            <span style={{ color: 'var(--color-primary)' }}>Find the therapist</span><br/>
+            <span style={{ color: 'var(--color-text-primary)' }}>meant for you</span>
           </h1>
           
-          <p className="text-xl md:text-2xl text-slate-600 mb-12 max-w-3xl mx-auto leading-relaxed">
-            Find your perfect therapist match with personalized care and unlimited consultations.
+          <p className="text-xl md:text-2xl mb-12 max-w-3xl mx-auto leading-relaxed font-light" style={{ color: 'var(--color-text-muted)' }}>
+            Personalized matching with licensed professionals who understand your unique needs.
           </p>
 
           <div className="flex flex-col items-center gap-6 mb-12">
-            <Button 
+            <button 
               onClick={() => navigate('/login', { state: { role: 'client' } })}
-              className="text-lg px-12 py-6 rounded-2xl shadow-lg shadow-teal-500/30 hover:shadow-xl hover:shadow-teal-500/40 transition-all"
+              className="text-lg px-14 py-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 text-white font-semibold"
+              style={{ backgroundColor: 'var(--color-primary)' }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary-hover)'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary)'}
             >
-              Find Therapist <i className="fas fa-arrow-right ml-3"></i>
-            </Button>
-            <p className="text-sm text-slate-500">No credit card required • Start in 2 minutes</p>
+              Begin Your Journey <i className="fas fa-arrow-right ml-3"></i>
+            </button>
+            <p className="text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>Premium care • Confidential • Personalized</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             <div className="flex items-start gap-3 text-left">
-              <div className="w-8 h-8 rounded-lg bg-teal-100 flex items-center justify-center flex-shrink-0 mt-1" aria-hidden="true">
-                <i className="fas fa-user-doctor text-teal-600"></i>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-1 shadow-lg" style={{ backgroundColor: 'var(--color-primary)' }} aria-hidden="true">
+                <i className="fas fa-user-doctor text-white"></i>
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-slate-800 text-base">Verified Professionals</h3>
-                <p className="text-sm text-slate-600">High-quality certified therapists</p>
+                <h3 className="font-semibold text-base" style={{ color: 'var(--color-text-primary)' }}>Verified Professionals</h3>
+                <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Licensed & experienced therapists</p>
               </div>
             </div>
             <div className="flex items-start gap-3 text-left">
-              <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0 mt-1" aria-hidden="true">
-                <i className="fas fa-comments text-blue-600"></i>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-1 shadow-lg" style={{ backgroundColor: 'var(--color-accent)' }} aria-hidden="true">
+                <i className="fas fa-comments text-white"></i>
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-slate-800 text-base">Unlimited Consultations</h3>
-                <p className="text-sm text-slate-600">Free guidance to find your match</p>
+                <h3 className="font-semibold text-base" style={{ color: 'var(--color-text-primary)' }}>Personalized Matching</h3>
+                <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>AI-powered compatibility analysis</p>
               </div>
             </div>
             <div className="flex items-start gap-3 text-left">
-              <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0 mt-1" aria-hidden="true">
-                <i className="fas fa-heart text-purple-600"></i>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-1 shadow-lg" style={{ backgroundColor: 'var(--color-primary)' }} aria-hidden="true">
+                <i className="fas fa-shield-halved text-white"></i>
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-slate-800 text-base">Flexible Options</h3>
-                <p className="text-sm text-slate-600">Try different therapists risk-free</p>
+                <h3 className="font-semibold text-base" style={{ color: 'var(--color-text-primary)' }}>Complete Privacy</h3>
+                <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>100% confidential sessions</p>
               </div>
             </div>
           </div>
@@ -196,77 +187,74 @@ export const Landing: React.FC = () => {
       <section id="plans" className="py-24 px-6 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
-              Choose Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-blue-600">Care Plan</span>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>
+              Choose Your <span style={{ color: 'var(--color-primary)' }}>Care Plan</span>
             </h2>
-            <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+            <p className="text-xl max-w-2xl mx-auto" style={{ color: 'var(--color-text-muted)' }}>
               Flexible options designed for your mental health journey
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             {plans.map((plan, index) => (
               <div 
                 key={index}
-                className={`relative bg-white border-2 rounded-3xl p-8 hover:scale-105 transition-all duration-300 ${
-                  plan.highlight 
-                    ? 'border-teal-500 shadow-2xl shadow-teal-500/20' 
-                    : 'border-slate-200 hover:border-slate-300 shadow-lg'
-                }`}
+                className="relative bg-white border-2 rounded-3xl p-8 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl flex flex-col"
+                style={{ 
+                  borderColor: plan.highlight ? 'var(--color-primary)' : 'var(--color-secondary)',
+                  boxShadow: plan.highlight ? '0 20px 25px -5px rgba(46, 58, 47, 0.1), 0 10px 10px -5px rgba(46, 58, 47, 0.04)' : undefined
+                }}
               >
                 {plan.highlight && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-6 py-2 bg-gradient-to-r from-teal-600 to-blue-600 rounded-full text-white text-xs font-bold shadow-lg">
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-6 py-2 rounded-full text-white text-xs font-bold shadow-lg" style={{ backgroundColor: 'var(--color-primary)' }}>
                     MOST POPULAR
                   </div>
                 )}
 
-                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 ${
-                  plan.highlight ? 'bg-gradient-to-br from-teal-500 to-blue-600' : 'bg-slate-100'
-                }`}>
-                  <i className={`fas ${plan.icon} text-2xl ${
-                    plan.highlight ? 'text-white' : 'text-slate-600'
-                  }`}></i>
+                <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-lg" style={{ backgroundColor: plan.highlight ? 'var(--color-primary)' : 'var(--color-secondary)' }}>
+                  <i className={`fas ${plan.icon} text-2xl ${plan.highlight ? 'text-white' : ''}`} style={{ color: plan.highlight ? '#fff' : 'var(--color-primary)' }}></i>
                 </div>
 
-                <h3 className="text-2xl font-bold text-slate-900 mb-3">{plan.name}</h3>
-                <p className="text-slate-600 mb-6">{plan.description}</p>
+                <h3 className="text-2xl font-bold mb-3" style={{ color: 'var(--color-text-primary)' }}>{plan.name}</h3>
+                <p className="mb-6 leading-relaxed" style={{ color: 'var(--color-text-muted)' }}>{plan.description}</p>
 
                 <div className="mb-8">
                   {plan.oldPrice && (
                     <div className="mb-2">
-                      <span className="text-2xl text-slate-400 line-through">{plan.oldPrice}</span>
+                      <span className="text-2xl line-through" style={{ color: 'var(--color-secondary)' }}>{plan.oldPrice}</span>
                     </div>
                   )}
-                  <span className="text-5xl font-bold text-slate-900">{plan.price}</span>
+                  <span className="text-5xl font-bold" style={{ color: 'var(--color-primary)' }}>{plan.price}</span>
                   {!plan.noSessionText && (
-                    <p className="text-sm text-slate-500 mt-2">for your first 3 sessions</p>
+                    <p className="text-sm mt-2 font-medium" style={{ color: 'var(--color-text-muted)' }}>for your first 3 sessions</p>
                   )}
                 </div>
 
-                <ul className="space-y-4 mb-8">
+                <ul className="space-y-4 mb-8 flex-grow">
                   {plan.features.map((feature, i) => (
-                    <li key={i} className="flex items-start gap-3 text-slate-700">
-                      <i className="fas fa-check-circle text-teal-600 mt-1 flex-shrink-0"></i>
-                      <span>{feature}</span>
+                    <li key={i} className="flex items-start gap-3" style={{ color: 'var(--color-text-primary)' }}>
+                      <i className="fas fa-check-circle mt-1 flex-shrink-0" style={{ color: 'var(--color-accent)' }}></i>
+                      <span className="text-sm">{feature}</span>
                     </li>
                   ))}
                 </ul>
 
-                <Button
+                <button
                   onClick={() => {
                     if (!isLoggedIn) {
                       alert('Please login first to select a plan');
                       navigate('/login', { state: { role: 'client' } });
                     } else {
-                      // User is logged in, proceed to payment
                       navigate('/payment');
                     }
                   }}
-                  variant={plan.highlight ? 'primary' : 'secondary'}
-                  className="w-full py-4 rounded-xl text-lg font-semibold"
+                  className="w-full py-4 rounded-xl text-lg font-semibold shadow-lg transition-all hover:shadow-xl text-white"
+                  style={{ backgroundColor: plan.highlight ? 'var(--color-primary)' : 'var(--color-accent)' }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = plan.highlight ? 'var(--color-primary-hover)' : 'var(--color-accent-hover)'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = plan.highlight ? 'var(--color-primary)' : 'var(--color-accent)'}
                 >
                   {plan.cta} <i className="fas fa-arrow-right ml-2"></i>
-                </Button>
+                </button>
               </div>
             ))}
           </div>
@@ -274,12 +262,12 @@ export const Landing: React.FC = () => {
       </section>
 
       {/* CTA Section */}
-      <section id="testimonials" className="py-24 px-6 bg-gradient-to-br from-teal-50 to-blue-50">
+      <section id="testimonials" className="py-24 px-6" style={{ backgroundColor: 'var(--color-secondary)' }}>
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6" style={{ color: 'var(--color-text-primary)' }}>
             What our customers say
           </h2>
-          <p className="text-xl text-slate-600 mb-10">
+          <p className="text-xl mb-10" style={{ color: 'var(--color-text-muted)' }}>
             Join thousands who found their perfect therapist match through TheMindNetwork
           </p>
 
@@ -349,47 +337,51 @@ export const Landing: React.FC = () => {
       </section>
 
       {/* Provider CTA Section */}
-      <div className="py-24 px-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-teal-500/20 border border-teal-400/30 text-teal-300 text-sm mb-6">
+      <div className="py-24 px-6 relative overflow-hidden" style={{ backgroundColor: 'var(--color-primary)' }}>
+        <div className="absolute inset-0" style={{ backgroundColor: 'rgba(163, 177, 138, 0.05)' }}></div>
+        <div className="max-w-4xl mx-auto text-center relative z-10">
+          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm mb-6 shadow-lg" style={{ backgroundColor: 'rgba(163, 177, 138, 0.2)', borderWidth: '1px', borderColor: 'var(--color-accent)', color: 'var(--color-secondary)' }}>
             <i className="fas fa-star"></i>
-            <span>Join Our Professional Network</span>
+            <span className="font-semibold">Join Our Professional Network</span>
           </div>
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
             Are you a provider who wants to join us?
           </h2>
-          <p className="text-xl text-slate-300 mb-10">
+          <p className="text-xl mb-10 font-light" style={{ color: 'var(--color-secondary)' }}>
             Connect with clients who need your expertise. Grow your practice with TheMindNetwork.
           </p>
           <div className="flex flex-row gap-3 sm:gap-4 justify-center">
-            <Button 
+            <button 
               onClick={() => navigate('/provider')}
-              className="text-lg px-12 py-5 rounded-2xl shadow-lg shadow-teal-500/30 hover:shadow-xl transition-all w-full sm:w-auto bg-teal-500 hover:bg-teal-600 text-white font-semibold"
+              className="text-lg px-14 py-5 rounded-2xl shadow-xl hover:shadow-2xl transition-all w-full sm:w-auto text-white font-semibold transform hover:scale-105"
+              style={{ backgroundColor: 'var(--color-accent)' }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-accent-hover)'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-accent)'}
             >
               Start Now <i className="fas fa-arrow-right ml-2"></i>
-            </Button>
+            </button>
           </div>
-          <p className="text-sm text-slate-400 mt-6">✨ Expand your reach and help more people</p>
+          <p className="text-sm mt-6 font-medium" style={{ color: 'var(--color-accent)' }}>✨ Expand your reach and help more people</p>
         </div>
       </div>
 
       {/* Contact Form Section */}
-      <section id="contact" className="py-24 px-6 bg-white">
+      <section id="contact" className="py-24 px-6" style={{ backgroundColor: 'var(--color-background)' }}>
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
-              Get in <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-blue-600">Touch</span>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>
+              Get in <span style={{ color: 'var(--color-primary)' }}>Touch</span>
             </h2>
-            <p className="text-xl text-slate-600">
+            <p className="text-xl font-light" style={{ color: 'var(--color-text-muted)' }}>
               Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
             </p>
           </div>
 
-          <form onSubmit={handleContactSubmit} className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-3xl p-8 shadow-xl border-2 border-slate-100">
+          <form onSubmit={handleContactSubmit} className="bg-white rounded-3xl p-8 shadow-xl" style={{ borderWidth: '1px', borderColor: 'var(--color-secondary)' }}>
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Name <span className="text-red-500">*</span>
+                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--color-text-primary)' }}>
+                  Name <span style={{ color: 'var(--color-accent)' }}>*</span>
                 </label>
                 <Input
                   type="text"
@@ -403,8 +395,8 @@ export const Landing: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Email <span className="text-red-500">*</span>
+                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--color-text-primary)' }}>
+                  Email <span style={{ color: 'var(--color-accent)' }}>*</span>
                 </label>
                 <Input
                   type="email"
@@ -418,8 +410,8 @@ export const Landing: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Message <span className="text-red-500">*</span>
+                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--color-text-primary)' }}>
+                  Message <span style={{ color: 'var(--color-accent)' }}>*</span>
                 </label>
                 <textarea
                   required
@@ -427,7 +419,10 @@ export const Landing: React.FC = () => {
                   onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
                   placeholder="Tell us how we can help..."
                   rows={5}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-teal-500 focus:outline-none transition-colors resize-none"
+                  className="w-full px-4 py-3 rounded-xl border-2 focus:outline-none transition-colors resize-none"
+                  style={{ borderColor: 'var(--color-secondary)' }}
+                  onFocus={(e) => e.target.style.borderColor = 'var(--color-accent)'}
+                  onBlur={(e) => e.target.style.borderColor = 'var(--color-secondary)'}
                   disabled={contactStatus === 'sending'}
                 />
               </div>
@@ -446,9 +441,12 @@ export const Landing: React.FC = () => {
                 </div>
               )}
 
-              <Button
+              <button
                 type="submit"
-                className="w-full py-4 text-lg rounded-xl"
+                className="w-full py-4 text-lg rounded-xl shadow-lg hover:shadow-xl transition-all text-white font-semibold"
+                style={{ backgroundColor: 'var(--color-primary)' }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary-hover)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary)'}
                 disabled={contactStatus === 'sending'}
               >
                 {contactStatus === 'sending' ? (
@@ -461,25 +459,25 @@ export const Landing: React.FC = () => {
                     Send Message <i className="fas fa-paper-plane ml-2"></i>
                   </>
                 )}
-              </Button>
+              </button>
             </div>
           </form>
         </div>
       </section>
 
       {/* Footer with Internal Links */}
-      <footer className="bg-slate-900 text-slate-300 py-12 px-6">
+      <footer className="py-12 px-6" style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-secondary)' }}>
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
             {/* Company Info */}
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500 to-blue-600 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-lg" style={{ backgroundColor: 'var(--color-accent)' }}>
                   <i className="fas fa-brain text-white text-sm"></i>
                 </div>
                 <span className="text-lg font-bold text-white">TheMindNetwork</span>
               </div>
-              <p className="text-sm text-slate-400">
+              <p className="text-sm leading-relaxed" style={{ color: 'var(--color-secondary)' }}>
                 Connecting you with verified mental health professionals for your wellness journey.
               </p>
             </div>
@@ -495,7 +493,10 @@ export const Landing: React.FC = () => {
                       e.preventDefault();
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
-                    className="text-sm hover:text-teal-400 transition-colors"
+                    className="text-sm transition-colors"
+                    style={{ color: 'var(--color-secondary)' }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-accent)'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-secondary)'}
                   >
                     Find a Therapist
                   </a>
@@ -505,7 +506,10 @@ export const Landing: React.FC = () => {
                     href="/#/provider"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm hover:text-teal-400 transition-colors"
+                    className="text-sm transition-colors"
+                    style={{ color: 'var(--color-secondary)' }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-accent)'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-secondary)'}
                   >
                     For Providers
                   </a>
@@ -515,7 +519,10 @@ export const Landing: React.FC = () => {
                     href="/#/login"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm hover:text-teal-400 transition-colors"
+                    className="text-sm transition-colors"
+                    style={{ color: 'var(--color-secondary)' }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-accent)'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-secondary)'}
                   >
                     Login
                   </a>
@@ -527,7 +534,10 @@ export const Landing: React.FC = () => {
                       e.preventDefault();
                       document.getElementById('plans')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }}
-                    className="text-sm hover:text-teal-400 transition-colors"
+                    className="text-sm transition-colors"
+                    style={{ color: 'var(--color-secondary)' }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-accent)'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-secondary)'}
                   >
                     Pricing Plans
                   </a>
@@ -546,7 +556,10 @@ export const Landing: React.FC = () => {
                       e.preventDefault();
                       document.getElementById('testimonials')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }}
-                    className="text-sm hover:text-teal-400 transition-colors"
+                    className="text-sm transition-colors"
+                    style={{ color: 'var(--color-secondary)' }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-accent)'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-secondary)'}
                   >
                     Testimonials
                   </a>
@@ -558,13 +571,16 @@ export const Landing: React.FC = () => {
                       e.preventDefault();
                       document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }}
-                    className="text-sm hover:text-teal-400 transition-colors"
+                    className="text-sm transition-colors"
+                    style={{ color: 'var(--color-secondary)' }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-accent)'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-secondary)'}
                   >
                     Contact Us
                   </a>
                 </li>
                 <li className="flex items-center gap-2 mt-4">
-                  <i className="fas fa-shield-alt text-teal-400" aria-hidden="true"></i>
+                  <i className="fas fa-shield-alt" style={{ color: 'var(--color-accent)' }} aria-hidden="true"></i>
                   <span className="text-sm">100% Confidential</span>
                 </li>
               </ul>
@@ -572,8 +588,8 @@ export const Landing: React.FC = () => {
           </div>
 
           {/* Bottom Bar */}
-          <div className="border-t border-slate-800 pt-8 text-center">
-            <p className="text-sm text-slate-400">
+          <div className="pt-8 text-center" style={{ borderTopWidth: '1px', borderTopColor: 'rgba(163, 177, 138, 0.3)' }}>
+            <p className="text-sm" style={{ color: 'var(--color-secondary)' }}>
               © {new Date().getFullYear()} TheMindNetwork. All rights reserved.
             </p>
           </div>

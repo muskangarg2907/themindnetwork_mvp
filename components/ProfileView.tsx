@@ -202,14 +202,17 @@ export const ProfileView: React.FC = () => {
         {/* Header Actions */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center animate-fade-in gap-4">
             <div className="flex items-center gap-3">
-                 <div className={`w-12 h-12 rounded-lg ${isProvider ? 'bg-blue-600' : 'bg-teal-600'} flex items-center justify-center text-white font-bold text-2xl shadow-lg`}>
+                 <div className="w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold text-2xl shadow-lg" style={{ backgroundColor: isProvider ? 'var(--color-accent)' : 'var(--color-primary)' }}>
                     {profile.basicInfo.fullName.charAt(0)}
                  </div>
                  <div>
-                    <h1 className="text-2xl font-bold text-slate-800">{profile.basicInfo.fullName}</h1>
+                    <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{profile.basicInfo.fullName}</h1>
                     <div className="flex items-center gap-2">
-                         <span className="text-xs text-slate-500">TheMindNetwork ID: {profile._id?.slice(0,8)}</span>
-                         <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wide ${isProvider ? 'bg-blue-100 text-blue-700' : 'bg-teal-100 text-teal-700'}`}>
+                         <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>TheMindNetwork ID: {profile._id?.slice(0,8)}</span>
+                         <span className="text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wide" style={{ 
+                            backgroundColor: isProvider ? 'var(--color-accent)' : 'var(--color-primary)', 
+                            color: '#fff'
+                         }}>
                              {isProvider ? 'Provider' : 'Client'}
                          </span>
                     </div>
@@ -236,22 +239,22 @@ export const ProfileView: React.FC = () => {
 
         {/* Payment Success Banner - Shown immediately after payment */}
         {showPaymentSuccess && (
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 p-6 rounded-2xl flex items-start gap-4 animate-slide-up shadow-2xl mb-6 relative overflow-hidden">
+            <div className="border-2 p-6 rounded-2xl flex items-start gap-4 animate-slide-up shadow-2xl mb-6 relative overflow-hidden" style={{ backgroundColor: 'var(--color-accent)', borderColor: 'var(--color-primary)' }}>
                 {/* Celebration background effect */}
-                <div className="absolute inset-0 bg-gradient-to-br from-green-100/50 to-transparent pointer-events-none"></div>
+                <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(to bottom right, rgba(163, 177, 138, 0.5), transparent)' }}></div>
                 
-                <div className="text-green-600 text-3xl mt-1 z-10 animate-bounce">
+                <div className="text-3xl mt-1 z-10 animate-bounce" style={{ color: 'var(--color-primary)' }}>
                     <i className="fas fa-check-circle"></i>
                 </div>
                 <div className="flex-1 z-10">
-                    <h3 className="font-bold text-green-900 text-xl flex items-center gap-2">
-                        <i className="fas fa-party-horn text-green-600"></i>
+                    <h3 className="font-bold text-xl flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+                        <i className="fas fa-party-horn" style={{ color: 'var(--color-primary)' }}></i>
                         Payment Successful!
                     </h3>
-                    <p className="text-green-800 mt-2 text-base">
-                        You've successfully subscribed to the <strong className="text-green-900">{selectedPlanName}</strong> plan. 🎉
+                    <p className="mt-2 text-base" style={{ color: 'var(--color-text-primary)' }}>
+                        You've successfully subscribed to the <strong>{selectedPlanName}</strong> plan. 🎉
                     </p>
-                    <p className="text-green-700 mt-2 text-sm">
+                    <p className="mt-2 text-sm" style={{ color: 'var(--color-text-primary)' }}>
                         Our team will reach out to you shortly to schedule your first session. Check your payment history below for details.
                     </p>
                     {paymentWarning && (
@@ -317,9 +320,11 @@ export const ProfileView: React.FC = () => {
 
         {/* Edit Mode Save Bar */}
         {isEditing && (
-            <div className="bg-teal-600 text-white p-4 rounded-xl flex justify-between items-center shadow-lg animate-slide-up">
+            <div className="text-white p-4 rounded-xl flex justify-between items-center shadow-lg animate-slide-up" style={{ backgroundColor: 'var(--color-primary)' }}>
                 <span className="font-medium"><i className="fas fa-info-circle mr-2"></i> You are in edit mode. Some fields are locked.</span>
-                <button onClick={handleSave} className="bg-white text-teal-600 px-6 py-2 rounded-lg font-bold hover:bg-teal-50 transition-colors">
+                <button onClick={handleSave} className="px-6 py-2 rounded-lg font-bold transition-colors" style={{ backgroundColor: '#fff', color: 'var(--color-primary)' }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-secondary)'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fff'}>
                     Save Changes
                 </button>
             </div>
@@ -327,17 +332,17 @@ export const ProfileView: React.FC = () => {
 
         {/* Plan Selection CTA for Clients - Available regardless of verification status */}
         {isClient && (
-            <div className="bg-gradient-to-br from-teal-50 to-blue-50 border-2 border-teal-200 p-6 rounded-2xl shadow-lg animate-slide-up">
+            <div className="border-2 p-6 rounded-2xl shadow-lg animate-slide-up" style={{ backgroundColor: 'var(--color-background)', borderColor: 'var(--color-secondary)' }}>
                 <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                     <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-blue-600 flex items-center justify-center flex-shrink-0">
+                        <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg" style={{ backgroundColor: 'var(--color-primary)' }}>
                             <i className="fas fa-sparkles text-white text-xl"></i>
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold text-slate-900 mb-1">
+                            <h3 className="text-xl font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>
                                 {profile.payments && profile.payments.length > 0 ? 'Get Another Plan' : 'Ready to Start Your Journey?'}
                             </h3>
-                            <p className="text-slate-600">
+                            <p style={{ color: 'var(--color-text-muted)' }}>
                                 {profile.payments && profile.payments.length > 0 
                                     ? 'Purchase additional sessions or upgrade your plan'
                                     : 'Choose a plan and get matched with the perfect therapist for your needs'
@@ -347,7 +352,7 @@ export const ProfileView: React.FC = () => {
                     </div>
                     <Button 
                         onClick={() => navigate('/plans')}
-                        className="whitespace-nowrap shadow-lg shadow-teal-500/30"
+                        className="whitespace-nowrap shadow-lg"
                     >
                         <i className="fas fa-rocket mr-2"></i>
                         {profile.payments && profile.payments.length > 0 ? 'Buy Plan' : 'Select Your Plan'}
