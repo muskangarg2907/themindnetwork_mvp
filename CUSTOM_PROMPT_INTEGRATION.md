@@ -150,8 +150,9 @@ If user shows signs of crisis (suicidal ideation, self-harm, acute distress):
 
 **Gemini API Key**: Configured in `.env` file
 ```
-GEMINI_API_KEY=AIzaSyA2_zF3FLMe9MvwiRFu9EcYc_DWW-Equn4
+GEMINI_API_KEY=your_gemini_api_key_here
 ```
+⚠️ **Security Note**: Never commit actual API keys to version control!
 
 **Model**: Google Gemini 1.5 Flash
 **Temperature**: 0.7 (balanced creativity and consistency)
