@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { Landing } from './components/Landing';
 import { Login } from './components/Login';
@@ -40,23 +41,25 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <HashRouter>
-      <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/create" element={<ProfileWizard />} />
-        <Route path="/profile" element={<ProfileView />} />
-        <Route path="/plans" element={<PlanSelection />} />
-        <Route path="/payment" element={<Payment />} />
-        <Route path="/admin-login" element={<AdminLogin />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/firebase-test" element={<FirebaseDiagnostic />} />
-        <Route path="/provider" element={<ProviderPage />} />
-        <Route path="/snapshot" element={<ComingSoon />} />
-        <Route path="/snapshot/:snapshotId" element={<ComingSoon />} />
-      </Routes>
-    </HashRouter>
+    <ErrorBoundary>
+      <HashRouter>
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/create" element={<ProfileWizard />} />
+          <Route path="/profile" element={<ProfileView />} />
+          <Route path="/plans" element={<PlanSelection />} />
+          <Route path="/payment" element={<Payment />} />
+          <Route path="/admin-login" element={<AdminLogin />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/firebase-test" element={<FirebaseDiagnostic />} />
+          <Route path="/provider" element={<ProviderPage />} />
+          <Route path="/snapshot" element={<ComingSoon />} />
+          <Route path="/snapshot/:snapshotId" element={<ComingSoon />} />
+        </Routes>
+      </HashRouter>
+    </ErrorBoundary>
   );
 };
 

@@ -5,6 +5,7 @@ import { ChatBot } from './ChatBot';
 import { Button } from './ui/Button';
 import { Input, TextArea } from './ui/Input';
 import { sanitizeForStorage, secureLog } from '../services/security';
+import { StatusBadge } from './ui/StatusBadge';
 import { auth } from '../services/firebase';
 
 export const ProfileView: React.FC = () => {
@@ -305,18 +306,13 @@ export const ProfileView: React.FC = () => {
                     {profile.basicInfo.fullName.charAt(0)}
                  </div>
                  <div>
-                    <h1 className="text-2xl font-bold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
-                      {profile.basicInfo.fullName}
-                      {profile.status === 'approved' && (
-                        <i className="fas fa-check-circle text-green-500 text-lg" title="Approved"></i>
-                      )}
-                      {profile.status === 'pending_verification' && (
-                        <i className="fas fa-exclamation-circle text-yellow-500 text-lg" title="Pending Verification"></i>
-                      )}
-                      {profile.status === 'rejected' && (
-                        <i className="fas fa-times-circle text-orange-500 text-lg" title="Rejected"></i>
-                      )}
-                    </h1>
+                                        <h1 className="text-2xl font-bold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+                                            {profile.basicInfo.fullName}
+                                            {/* Status badge for provider/client */}
+                                            <span className="ml-2">
+                                                <StatusBadge status={profile.status} />
+                                            </span>
+                                        </h1>
                     <div className="flex items-center gap-2">
                          <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>TheMindNetwork ID: {profile._id?.slice(0,8)}</span>
                          <span className="text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wide" style={{ 

@@ -2,6 +2,7 @@ import { MongoClient, Db } from 'mongodb';
 
 let cachedClient: MongoClient | null = null;
 let cachedDb: Db | null = null;
+let indexesEnsured = false;
 
 const MONGODB_URI = process.env.MONGODB_URI;
 const DB_NAME = 'themindnetwork';
@@ -68,6 +69,8 @@ export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db
     cachedDb = db;
 
     console.log('[DB] Connected to MongoDB');
+    // Ensure indexes once per cold start
+    await ensureIndexes(db);
     return { client, db };
   } catch (err) {
     console.error('[DB] MongoDB connection failed:', err);
@@ -78,4 +81,24 @@ export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db
 export async function getProfilesCollection() {
   const { db } = await connectToDatabase();
   return db.collection('profiles');
+}
+
+async function ensureIndexes(db: Db) {
+  if (indexesEnsured) return;
+  try {
+    console.log('[DB] Ensuring indexes...');
+    // Profiles: unique index on phone, status and role for queries
+    await db.collection('profiles').createIndex({ 'basicInfo.phone': 1 }, { unique: true, sparse: true });
+    await db.collection('profiles').createIndex({ role: 1, status: 1 });
+    await db.collection('profiles').createIndex({ createdAt: -1 });
+
+    // Snapshots: primary key is _id (snapshotUrl), plus userId and createdAt
+    await db.collection('snapshots').createIndex({ _id: 1 }, { unique: true });
+    await db.collection('snapshots').createIndex({ userId: 1, createdAt: -1 });
+
+    indexesEnsured = true;
+    console.log('[DB] Indexes ensured');
+  } catch (err) {
+    console.error('[DB] Failed to ensure indexes:', err);
+  }
 }

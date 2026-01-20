@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { connectToDatabase } from './db';
 
 interface Message {
   id: string;
@@ -38,8 +39,8 @@ interface SnapshotData {
   createdAt: number;
 }
 
-// In-memory storage (for development - use a real database in production)
-const snapshots = new Map<string, SnapshotData>();
+// Database storage instead of in-memory Map
+// const snapshots = new Map<string, SnapshotData>(); // REMOVED - was volatile
 
 // Improved system prompt focusing on conversation, not questionnaire
 const SYSTEM_PROMPT = `SYSTEM PROMPT — Psychological Snapshot Builder
@@ -533,7 +534,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         };
       }
 
-      // Store snapshot with complete conversation history
+      // Store snapshot with complete conversation history in MongoDB
       const snapshotData: SnapshotData = {
         userId,
         phoneNumber,
@@ -543,17 +544,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         createdAt: Date.now()
       };
 
-      snapshots.set(snapshotUrl, snapshotData);
-      console.log('[SNAPSHOT] Snapshot saved with URL:', snapshotUrl);
-      console.log('[SNAPSHOT] Snapshot data stored:', snapshotData);
+      // Save to MongoDB
+      const { db } = await connectToDatabase();
+      const snapshotsCollection = db.collection('snapshots');
+      await snapshotsCollection.insertOne({ _id: snapshotUrl, ...snapshotData });
+      console.log('[SNAPSHOT] Snapshot saved to MongoDB with URL:', snapshotUrl);
+    }
+
+    // Retrieve from MongoDB if complete
+    let snapshotDoc = null;
+    if (isComplete) {
+      const { db } = await connectToDatabase();
+      const snapshotsCollection = db.collection('snapshots');
+      snapshotDoc = await snapshotsCollection.findOne({ _id: snapshotUrl });
     }
 
     const responsePayload = {
       response: aiResponse.replace('SNAPSHOT_COMPLETE', '').trim(),
       isComplete,
       snapshotUrl,
-      snapshot: isComplete ? snapshots.get(snapshotUrl)?.snapshot : undefined,
-      createdAt: isComplete ? snapshots.get(snapshotUrl)?.createdAt : undefined,
+      snapshot: isComplete ? snapshotDoc?.snapshot : undefined,
+      createdAt: isComplete ? snapshotDoc?.createdAt : undefined,
       provider: usedProvider // For debugging
     };
     
@@ -589,11 +600,18 @@ export async function getSnapshot(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Invalid snapshot ID' });
   }
 
-  const snapshot = snapshots.get(snapshotId);
+  try {
+    const { db } = await connectToDatabase();
+    const snapshotsCollection = db.collection('snapshots');
+    const snapshot = await snapshotsCollection.findOne({ _id: snapshotId });
 
-  if (!snapshot) {
-    return res.status(404).json({ error: 'Snapshot not found' });
+    if (!snapshot) {
+      return res.status(404).json({ error: 'Snapshot not found' });
+    }
+
+    return res.status(200).json(snapshot);
+  } catch (error) {
+    console.error('[SNAPSHOT GET] Error:', error);
+    return res.status(500).json({ error: 'Failed to retrieve snapshot' });
   }
-
-  return res.status(200).json(snapshot);
 }
