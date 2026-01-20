@@ -23,8 +23,7 @@
       "fullName": "Muskan",
       "email": "muskan@gmail.com",
       "phone": "+91 1111111111",
-      "dob": "2025-08-07",
-      "location": "",
+      "location": "bangalore",
       "gender": "Female"
     },
     "clinical": {
@@ -32,14 +31,13 @@
       "currentMood": "",
       "hasPriorTherapy": true,
       "priorExperience": "found it doesnt much for me",
-      "medications": "",
+      "medications": "none",
       "riskFactors": []
     },
     "preferences": {
-      "providerGenderPreference": "",
       "mode": "online",
-      "budget": "500",
-      "bio": "chilll and cool and cold meh"
+      "providerGenderPreference": "",
+      "budget": "500"
     },
     "providerDetails": {
       "qualification": "",
@@ -56,32 +54,149 @@
     },
     "createdAt": "2025-12-11T12:29:41.437Z",
     "aiSummary": "",
-    "updatedAt": "2025-12-13T15:54:51.629Z",
+    "updatedAt": "2026-01-19T14:51:45.234Z",
     "payments": [
       {
         "planId": "connect",
         "planName": "Connect",
         "amount": 199,
-        "currency": "INR",
         "status": "success",
-        "razorpayOrderId": "order_Rr950Y2229lzDa",
-        "razorpayPaymentId": "pay_Rr95Yunsy7osWe",
-        "razorpaySignature": "6ce5d4832d00d3c19cccb5be696bcfb3fb6c3d79480357f5ee9c1889f2100583",
-        "paidAt": "2025-12-13T15:29:45.090Z",
-        "createdAt": "2025-12-13T15:29:45.090Z"
+        "paidAt": "2025-12-13T15:29:45.090Z"
       },
       {
         "planId": "connect",
         "planName": "Connect",
         "amount": 199,
-        "currency": "INR",
         "status": "success",
-        "razorpayOrderId": "order_Rr9VcIRYaOd76m",
-        "razorpayPaymentId": "pay_Rr9W4wCVUt58dV",
-        "razorpaySignature": "97093e804408303d1557008cf9ca9d627f8698baf563e37429547b460acac796",
-        "paidAt": "2025-12-13T15:54:51.306Z",
-        "createdAt": "2025-12-13T15:54:51.306Z"
+        "paidAt": "2025-12-13T15:54:51.306Z"
       }
     ]
+  },
+  {
+    "id": "c8937f7d-60bd-49d8-b759-2466100ed01d",
+    "status": "pending_verification",
+    "role": "client",
+    "basicInfo": {
+      "fullName": "Client Muskan",
+      "email": "true@gmail.com",
+      "phone": "2222222222",
+      "location": "Patiala",
+      "gender": "Female"
+    },
+    "clinical": {
+      "medications": "none"
+    },
+    "preferences": {
+      "mode": "both",
+      "providerGenderPreference": "",
+      "budget": "₹1000"
+    },
+    "providerDetails": {
+      "qualification": "",
+      "yearsExperience": "",
+      "specializations": [],
+      "mode": "online",
+      "languages": [],
+      "clientType": [],
+      "budgetRange": "",
+      "licenses": "",
+      "therapeuticFocus": "",
+      "therapyStyle": "",
+      "resumeLink": ""
+    },
+    "createdAt": "2026-01-19T11:59:22.079Z",
+    "aiSummary": "",
+    "payments": [],
+    "updatedAt": "2026-01-19T14:36:52.158Z"
+  },
+  {
+    "id": "eac400fb-d0a1-4cd3-903f-5d847ee2ed5a",
+    "status": "pending_verification",
+    "role": "client",
+    "basicInfo": {
+      "fullName": "Test User 33",
+      "email": "test@gmail.com",
+      "phone": "3333333333",
+      "location": "Bangalore",
+      "gender": "Male"
+    },
+    "clinical": {
+      "presentingProblem": "anxiety and stress, unable to breathe",
+      "currentMood": "",
+      "hasPriorTherapy": true,
+      "priorExperience": "",
+      "medications": "",
+      "riskFactors": []
+    },
+    "preferences": {
+      "mode": "online",
+      "providerGenderPreference": "",
+      "budget": "₹500"
+    },
+    "providerDetails": {
+      "qualification": "",
+      "yearsExperience": "",
+      "specializations": [],
+      "mode": "online",
+      "languages": [],
+      "clientType": [],
+      "budgetRange": "",
+      "licenses": "",
+      "therapeuticFocus": "",
+      "therapyStyle": "",
+      "resumeLink": ""
+    },
+    "createdAt": "2026-01-20T04:04:40.252Z",
+    "aiSummary": "",
+    "payments": [],
+    "updatedAt": "2026-01-20T05:16:22.184Z"
+  },
+  {
+    "id": "eba2cb35-29eb-4911-8de4-ee97c8fd49cf",
+    "status": "pending_verification",
+    "role": "provider",
+    "basicInfo": {
+      "fullName": "Provider Tester",
+      "email": "tubak@gmail.com",
+      "phone": "9999999999",
+      "dob": "2026-01-01",
+      "location": "Bangalore",
+      "gender": "Male"
+    },
+    "clinical": {
+      "presentingProblem": "",
+      "currentMood": "",
+      "hasPriorTherapy": false,
+      "medications": "",
+      "riskFactors": []
+    },
+    "preferences": {
+      "providerGenderPreference": ""
+    },
+    "providerDetails": {
+      "qualification": "MA",
+      "yearsExperience": "4",
+      "specializations": [
+        "Anxiety",
+        "SpecialEducation"
+      ],
+      "mode": "online",
+      "languages": [
+        "English",
+        "Hindi"
+      ],
+      "clientType": [
+        "Individuals",
+        "Teenagers",
+        "Adults"
+      ],
+      "budgetRange": "900",
+      "licenses": "",
+      "therapeuticFocus": "Anxiety, Early Career",
+      "therapyStyle": "Collaborative",
+      "resumeLink": ""
+    },
+    "createdAt": "2026-01-20T05:47:26.633Z",
+    "aiSummary": ""
   }
 ]

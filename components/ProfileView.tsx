@@ -5,6 +5,7 @@ import { ChatBot } from './ChatBot';
 import { Button } from './ui/Button';
 import { Input, TextArea } from './ui/Input';
 import { sanitizeForStorage, secureLog } from '../services/security';
+import { auth } from '../services/firebase';
 
 export const ProfileView: React.FC = () => {
   const navigate = useNavigate();
@@ -16,6 +17,9 @@ export const ProfileView: React.FC = () => {
   const [showPaymentSuccess, setShowPaymentSuccess] = useState(false);
   const [selectedPlanName, setSelectedPlanName] = useState<string>('');
   const [paymentWarning, setPaymentWarning] = useState<string>('');
+  const [isPaymentsExpanded, setIsPaymentsExpanded] = useState(false);
+  const [snapshots, setSnapshots] = useState<any[]>([]);
+  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
 
   useEffect(() => {
     // Check for payment success message
@@ -44,30 +48,113 @@ export const ProfileView: React.FC = () => {
       
       return () => clearTimeout(timer);
     }
-  }, [location.state]);  useEffect(() => {
-    // Retrieve from storage
-    const stored = localStorage.getItem('userProfile');
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      
-      // Safety check: if it's an array, something went wrong
-      if (Array.isArray(parsed)) {
-        console.error('[PROFILE] ERROR: Stored profile is an array! Clearing and redirecting to login.');
-        localStorage.removeItem('userProfile');
+  }, [location.state]);
+
+  useEffect(() => {
+    // Wait for Firebase auth to initialize first
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (!user) {
+        console.log('[PROFILE] No authenticated user, redirecting to login');
+        setIsLoadingAuth(false);
         navigate('/login');
         return;
       }
       
-      setProfile(parsed);
-      setEditData(parsed);
-      secureLog('[PROFILE] Loaded profile from localStorage. Payments count:', parsed?.payments?.length || 0);
-      secureLog('[PROFILE] Is client?', parsed?.role === 'client', '| Role:', parsed?.role);
-      if (parsed?.payments?.length > 0) {
-        secureLog('[PROFILE] Payment details:', JSON.stringify(parsed.payments[0], null, 2));
+      console.log('[PROFILE] User authenticated:', user.phoneNumber);
+      
+      // Retrieve from storage
+      const stored = localStorage.getItem('userProfile');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        
+        // Safety check: if it's an array, something went wrong
+        if (Array.isArray(parsed)) {
+          console.error('[PROFILE] ERROR: Stored profile is an array! Clearing and redirecting to login.');
+          localStorage.removeItem('userProfile');
+          setIsLoadingAuth(false);
+          navigate('/login');
+          return;
+        }
+        
+        setProfile(parsed);
+        setEditData(parsed);
+        setIsLoadingAuth(false);
+        secureLog('[PROFILE] Loaded profile from localStorage. Payments count:', parsed?.payments?.length || 0);
+        secureLog('[PROFILE] Is client?', parsed?.role === 'client', '| Role:', parsed?.role);
+        if (parsed?.payments?.length > 0) {
+          secureLog('[PROFILE] Payment details:', JSON.stringify(parsed.payments[0], null, 2));
+        }
+        
+        // Load snapshots from API and localStorage
+        const loadSnapshots = async () => {
+          const phone = parsed.basicInfo?.phone;
+          if (!phone) return;
+          
+          const normalizedPhone = phone.replace(/\s+/g, '');
+          const localSnapshots: any[] = [];
+          
+          // Check localStorage for snapshots - only include if phone matches
+          const localSnapshotUrl = localStorage.getItem('psychSnapshot_url');
+          const localSnapshotData = localStorage.getItem('psychSnapshot_data');
+          const localSnapshotPhone = localStorage.getItem('psychSnapshot_phone');
+          
+          // Only include localStorage snapshot if it belongs to the current user
+          if (localSnapshotUrl && localSnapshotData && localSnapshotPhone === normalizedPhone) {
+            try {
+              const data = JSON.parse(localSnapshotData);
+              localSnapshots.push({
+                snapshotId: localSnapshotUrl,
+                phoneNumber: normalizedPhone,
+                snapshot: data.snapshot || { summary: 'Psychological snapshot' },
+                createdAt: data.createdAt || Date.now()
+              });
+            } catch (e) {
+              console.error('[PROFILE] Failed to parse local snapshot:', e);
+            }
+          } else if (localSnapshotUrl && localSnapshotData && localSnapshotPhone && localSnapshotPhone !== normalizedPhone) {
+            // Clear localStorage snapshot only if we have a phone mismatch (not if phone is missing)
+            console.log('[PROFILE] Clearing localStorage snapshot from different user');
+            localStorage.removeItem('psychSnapshot_url');
+            localStorage.removeItem('psychSnapshot_data');
+            localStorage.removeItem('psychSnapshot_phone');
+          }
+          
+          // Fetch from API
+          try {
+            const response = await fetch(`/api/user/snapshots?phone=${encodeURIComponent(normalizedPhone)}`);
+            if (response.ok) {
+              const apiData = await response.json();
+              const apiSnapshots = apiData.snapshots || [];
+              
+              // Merge local and API snapshots, removing duplicates
+              const allSnapshots = [...localSnapshots];
+              apiSnapshots.forEach((apiSnap: any) => {
+                if (!allSnapshots.find(s => s.snapshotId === apiSnap.snapshotId)) {
+                  allSnapshots.push(apiSnap);
+                }
+              });
+              
+              // Sort by createdAt descending (newest first)
+              allSnapshots.sort((a, b) => b.createdAt - a.createdAt);
+              setSnapshots(allSnapshots);
+            } else {
+              setSnapshots(localSnapshots);
+            }
+          } catch (err) {
+            console.error('[PROFILE] Failed to fetch snapshots:', err);
+            setSnapshots(localSnapshots);
+          }
+        };
+        
+        loadSnapshots();
+      } else {
+        console.log('[PROFILE] No profile in localStorage, redirecting to profile wizard');
+        setIsLoadingAuth(false);
+        navigate('/create', { state: { phone: user.phoneNumber } });
       }
-    } else {
-      navigate('/login');
-    }
+    });
+    
+    return () => unsubscribe();
   }, [navigate]);
 
   // If profile was just created, delay polling to avoid race conditions (10s grace period)
@@ -83,6 +170,18 @@ export const ProfileView: React.FC = () => {
 
   // Removed constant polling - status updates are managed by admin portal
   // Profile changes are reflected when user refreshes or logs in again
+
+  // Show loading state while checking auth
+  if (isLoadingAuth) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-600">Loading your profile...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!profile || !editData) return null;
 
@@ -105,7 +204,7 @@ export const ProfileView: React.FC = () => {
   const handleSave = async () => {
       try {
         const profileId = editData._id;
-        console.log('[PROFILE] Saving profile with _id:', profileId);
+        console.log('[PROFILE] Saving profile');
         
         // Save to backend with _id field
         const response = await fetch('/api/profiles', {
@@ -206,7 +305,18 @@ export const ProfileView: React.FC = () => {
                     {profile.basicInfo.fullName.charAt(0)}
                  </div>
                  <div>
-                    <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{profile.basicInfo.fullName}</h1>
+                    <h1 className="text-2xl font-bold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+                      {profile.basicInfo.fullName}
+                      {profile.status === 'approved' && (
+                        <i className="fas fa-check-circle text-green-500 text-lg" title="Approved"></i>
+                      )}
+                      {profile.status === 'pending_verification' && (
+                        <i className="fas fa-exclamation-circle text-yellow-500 text-lg" title="Pending Verification"></i>
+                      )}
+                      {profile.status === 'rejected' && (
+                        <i className="fas fa-times-circle text-orange-500 text-lg" title="Rejected"></i>
+                      )}
+                    </h1>
                     <div className="flex items-center gap-2">
                          <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>TheMindNetwork ID: {profile._id?.slice(0,8)}</span>
                          <span className="text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wide" style={{ 
@@ -219,18 +329,33 @@ export const ProfileView: React.FC = () => {
                  </div>
             </div>
             <div className="flex gap-2 w-full md:w-auto">
-                {/* Only show edit button for providers, not for seekers/clients */}
-                {isProvider && (
-                    <Button variant="secondary" onClick={() => setIsEditing(!isEditing)} className="flex-1 md:flex-none">
-                        <i className={`fas ${isEditing ? 'fa-times' : 'fa-edit'} mr-2`}></i>
-                        {isEditing ? 'Cancel' : 'Edit Profile'}
+                {!isEditing ? (
+                    <Button variant="secondary" onClick={() => setIsEditing(true)} className="flex-1 md:flex-none">
+                        <i className="fas fa-edit mr-2"></i> Edit Profile
                     </Button>
+                ) : (
+                    <>
+                        <Button variant="outline" onClick={() => setIsEditing(false)} className="flex-1 md:flex-none">
+                            <i className="fas fa-times mr-2"></i> Cancel
+                        </Button>
+                        <Button onClick={handleSave} className="flex-1 md:flex-none" style={{ backgroundColor: 'var(--color-primary)', color: '#fff' }}>
+                            <i className="fas fa-check mr-2"></i> Save
+                        </Button>
+                    </>
                 )}
-                <Button variant="outline" onClick={() => {
-                    localStorage.removeItem('authToken');
-                    localStorage.removeItem('userProfile');
-                    localStorage.removeItem('userPhone');
-                    navigate('/');
+                <Button variant="outline" onClick={async () => {
+                    try {
+                        // Sign out from Firebase
+                        await auth.signOut();
+                        // Clear localStorage
+                        localStorage.removeItem('authToken');
+                        localStorage.removeItem('userProfile');
+                        localStorage.removeItem('userPhone');
+                        // Navigate to landing
+                        navigate('/');
+                    } catch (error) {
+                        console.error('[PROFILE] Logout error:', error);
+                    }
                 }} className="flex-1 md:flex-none">
                     <i className="fas fa-sign-out-alt mr-2"></i> Log Out
                 </Button>
@@ -276,163 +401,54 @@ export const ProfileView: React.FC = () => {
             </div>
         )}
         
-        {profile.status === 'pending_verification' && (
-            <div className="bg-yellow-50 border border-yellow-200 p-6 rounded-xl flex items-start gap-4 animate-slide-up shadow-sm">
-                <div className="text-yellow-600 text-xl mt-1">
-                    <i className="fas fa-clipboard-check"></i>
-                </div>
-                <div>
-                    <h3 className="font-bold text-yellow-800 text-lg">Verification in Progress</h3>
-                    <p className="text-yellow-700 mt-1">
-                        Our team is currently reviewing your details. You will receive an update on your registered email soon.
-                    </p>
-                </div>
-            </div>
-        )}
-
-        {profile.status === 'rejected' && (
-            <div className="bg-orange-50 border border-orange-300 p-6 rounded-xl flex items-start gap-4 animate-slide-up shadow-sm">
-                <div className="text-orange-600 text-xl mt-1">
-                    <i className="fas fa-exclamation-circle"></i>
-                </div>
-                <div>
-                    <h3 className="font-bold text-orange-800 text-lg">Profile Paused</h3>
-                    <p className="text-orange-700 mt-1">
-                        Your profile has been paused. Please contact admin for more details.
-                    </p>
-                </div>
-            </div>
-        )}
-
-        {profile.status === 'approved' && (
-            <div className="bg-green-50 border border-green-200 p-6 rounded-xl flex items-start gap-4 animate-slide-up shadow-sm">
-                <div className="text-green-600 text-xl mt-1">
-                    <i className="fas fa-check-circle"></i>
-                </div>
-                <div>
-                    <h3 className="font-bold text-green-800 text-lg">Profile Approved</h3>
-                    <p className="text-green-700 mt-1">
-                        Your profile has been approved! You can now fully use the TheMindNetwork platform.
-                    </p>
-                </div>
-            </div>
-        )}
-
-        {/* Edit Mode Save Bar */}
-        {isEditing && (
-            <div className="text-white p-4 rounded-xl flex justify-between items-center shadow-lg animate-slide-up" style={{ backgroundColor: 'var(--color-primary)' }}>
-                <span className="font-medium"><i className="fas fa-info-circle mr-2"></i> You are in edit mode. Some fields are locked.</span>
-                <button onClick={handleSave} className="px-6 py-2 rounded-lg font-bold transition-colors" style={{ backgroundColor: '#fff', color: 'var(--color-primary)' }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-secondary)'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fff'}>
-                    Save Changes
-                </button>
-            </div>
-        )}
-
-        {/* Plan Selection CTA for Clients - Available regardless of verification status */}
-        {isClient && (
-            <div className="border-2 p-6 rounded-2xl shadow-lg animate-slide-up" style={{ backgroundColor: 'var(--color-background)', borderColor: 'var(--color-secondary)' }}>
-                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                    <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg" style={{ backgroundColor: 'var(--color-primary)' }}>
-                            <i className="fas fa-sparkles text-white text-xl"></i>
-                        </div>
-                        <div>
-                            <h3 className="text-xl font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>
-                                {profile.payments && profile.payments.length > 0 ? 'Get Another Plan' : 'Ready to Start Your Journey?'}
-                            </h3>
-                            <p style={{ color: 'var(--color-text-muted)' }}>
-                                {profile.payments && profile.payments.length > 0 
-                                    ? 'Purchase additional sessions or upgrade your plan'
-                                    : 'Choose a plan and get matched with the perfect therapist for your needs'
-                                }
-                            </p>
-                        </div>
+        {/* Provider Pending Approval Banner */}
+        {isProvider && profile.status === 'pending_verification' && (
+            <div className="bg-yellow-50 border-2 border-yellow-400 rounded-2xl shadow-md p-6 mb-6 animate-slide-up">
+                <div className="flex items-start gap-4">
+                    <div className="text-3xl text-yellow-600">
+                        <i className="fas fa-clock"></i>
                     </div>
-                    <Button 
-                        onClick={() => navigate('/plans')}
-                        className="whitespace-nowrap shadow-lg"
-                    >
-                        <i className="fas fa-rocket mr-2"></i>
-                        {profile.payments && profile.payments.length > 0 ? 'Buy Plan' : 'Select Your Plan'}
-                    </Button>
+                    <div className="flex-1">
+                        <h3 className="font-bold text-xl text-yellow-900 flex items-center gap-2 mb-2">
+                            <i className="fas fa-hourglass-half"></i>
+                            Pending Approval
+                        </h3>
+                        <p className="text-yellow-800 text-base leading-relaxed">
+                            Thank you for registering as a provider! Your profile is currently under review by our team. 
+                            We'll notify you via email and phone once your profile has been approved.
+                        </p>
+                        <p className="text-yellow-700 text-sm mt-3">
+                            <i className="fas fa-info-circle mr-1"></i>
+                            This process typically takes 1-2 business days. You'll be able to start accepting clients once approved.
+                        </p>
+                    </div>
                 </div>
+            </div>
+        )}
+        
+        {/* Explore Plans Section for Users Without Payment */}
+        {isClient && (!profile.payments || profile.payments.length === 0) && (
+            <div className="bg-gradient-to-r from-primary/5 to-accent/5 border border-slate-200 rounded-2xl shadow-md p-5 mb-6 animate-slide-up flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(var(--color-primary-rgb, 20, 184, 166), 0.1)' }}>
+                        <i className="fas fa-heart text-lg" style={{ color: 'var(--color-primary)' }}></i>
+                    </div>
+                    <h3 className="text-lg font-semibold text-slate-800">
+                        Find a Therapist meant for you
+                    </h3>
+                </div>
+                <Button 
+                    onClick={() => navigate('/plans')}
+                    className="shadow-sm whitespace-nowrap"
+                    style={{ backgroundColor: 'var(--color-primary)', color: '#fff' }}
+                >
+                    <i className="fas fa-search mr-2"></i>
+                    Explore Plans
+                </Button>
             </div>
         )}
 
-        {/* Payment History for Clients */}
-        {isClient && profile.payments && profile.payments.length > 0 && (
-            <div className="bg-white border-2 border-slate-200 p-6 rounded-2xl shadow-lg animate-slide-up">
-                <h3 className="text-xl font-bold text-slate-900 mb-4">
-                    <i className="fas fa-receipt mr-2 text-teal-600"></i>
-                    Payment History
-                </h3>
-                <div className="space-y-4">
-                    {profile.payments.map((payment, index) => (
-                        <div 
-                            key={`${payment.planId}-${index}`}
-                            className={`border-2 p-4 rounded-xl ${
-                                payment.status === 'success' 
-                                    ? 'bg-green-50 border-green-200' 
-                                    : payment.status === 'failed'
-                                    ? 'bg-red-50 border-red-200'
-                                    : 'bg-yellow-50 border-yellow-200'
-                            }`}
-                        >
-                            <div className="flex items-start justify-between mb-3">
-                                <div>
-                                    <h4 className="font-bold text-slate-900">{payment.planName} Plan</h4>
-                                    <p className="text-xs text-slate-500">
-                                        {payment.paidAt ? new Date(payment.paidAt).toLocaleString() : 'Pending'}
-                                    </p>
-                                </div>
-                                <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
-                                    payment.status === 'success'
-                                        ? 'bg-green-500 text-white'
-                                        : payment.status === 'failed'
-                                        ? 'bg-red-500 text-white'
-                                        : 'bg-yellow-500 text-white'
-                                }`}>
-                                    {payment.status}
-                                </span>
-                            </div>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
-                                <div>
-                                    <p className="text-xs text-slate-500">Amount</p>
-                                    <p className="font-bold text-slate-900">₹{payment.amount}</p>
-                                </div>
-                                {payment.paymentMethod && (
-                                    <div>
-                                        <p className="text-xs text-slate-500">Method</p>
-                                        <p className="font-medium text-slate-900 uppercase">{payment.paymentMethod}</p>
-                                    </div>
-                                )}
-                                <div>
-                                    <p className="text-xs text-slate-500">Plan ID</p>
-                                    <p className="font-mono text-xs text-slate-700">{payment.planId}</p>
-                                </div>
-                            </div>
-                            {payment.status === 'failed' && (
-                                <div className="mt-3 pt-3 border-t border-red-300">
-                                    <p className="text-sm text-red-700 mb-2">
-                                        {payment.errorMessage || 'Payment failed'}
-                                    </p>
-                                    <Button 
-                                        onClick={() => navigate('/plans')}
-                                        variant="outline"
-                                        className="text-sm"
-                                    >
-                                        <i className="fas fa-redo mr-2"></i>
-                                        Retry Payment
-                                    </Button>
-                                </div>
-                            )}
-                        </div>
-                    ))}
-                </div>
-            </div>
-        )}
+        {/* Edit Profile Bar */}
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-slide-up" style={{ animationDelay: '0.1s' }}>
@@ -470,10 +486,10 @@ export const ProfileView: React.FC = () => {
                                 {isEditing ? (
                                     <input 
                                         type="text"
-                                        value={editedProfile.basicInfo?.location || ''}
-                                        onChange={(e) => setEditedProfile({
-                                            ...editedProfile,
-                                            basicInfo: { ...editedProfile.basicInfo!, location: e.target.value }
+                                        value={editData.basicInfo?.location || ''}
+                                        onChange={(e) => setEditData({
+                                            ...editData,
+                                            basicInfo: { ...editData.basicInfo!, location: e.target.value }
                                         })}
                                         className="text-sm font-medium border border-slate-300 rounded px-2 py-1 w-full"
                                     />
@@ -491,14 +507,83 @@ export const ProfileView: React.FC = () => {
                  <div className="bg-white border border-slate-200 p-6 rounded-2xl h-full shadow-sm">
                     <div className="flex justify-between items-start mb-6">
                          <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">
-                             {isClient ? 'Clinical Summary' : 'Professional Profile'}
+                             {isClient ? 'Request Summary' : 'Professional Profile'}
                          </h3>
                     </div>
 
-                    {isClient && profile.clinical && (
-                        <div className="text-slate-600">
-                             {/* Client edit mode logic omitted for brevity as focus is on Provider in prompt, but structure allows it */}
-                             <p className="italic">"{profile.clinical.presentingProblem}"</p>
+                    {isClient && (
+                        <div className="space-y-4">
+                             {isEditing ? (
+                                <>
+                                    <TextArea
+                                        label="What brings you here?"
+                                        value={editData.clinical?.presentingProblem || ''}
+                                        onChange={(e) => setEditData({
+                                            ...editData,
+                                            clinical: { ...editData.clinical, presentingProblem: e.target.value }
+                                        })}
+                                        rows={3}
+                                        placeholder="Describe what you're looking for help with..."
+                                    />
+                                    <Input
+                                        label="Medications (if any)"
+                                        value={editData.clinical?.medications || ''}
+                                        onChange={(e) => setEditData({
+                                            ...editData,
+                                            clinical: { ...editData.clinical, medications: e.target.value }
+                                        })}
+                                        placeholder="List any medications..."
+                                    />
+                                    <Input
+                                        label="Preferred Mode"
+                                        value={editData.preferences?.mode || ''}
+                                        onChange={(e) => setEditData({
+                                            ...editData,
+                                            preferences: { ...editData.preferences, mode: e.target.value }
+                                        })}
+                                        placeholder="online/offline/both"
+                                    />
+                                    <Input
+                                        label="Budget (INR)"
+                                        value={editData.preferences?.budget || ''}
+                                        onChange={(e) => setEditData({
+                                            ...editData,
+                                            preferences: { ...editData.preferences, budget: e.target.value }
+                                        })}
+                                        placeholder="e.g., 500-1000"
+                                    />
+                                </>
+                             ) : (
+                                <div className="space-y-3 text-slate-600">
+                                    {profile.clinical?.presentingProblem && (
+                                        <div>
+                                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">What brings you here?</p>
+                                            <p className="italic">"{profile.clinical.presentingProblem}"</p>
+                                        </div>
+                                    )}
+                                    {profile.clinical?.medications && (
+                                        <div>
+                                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Medications</p>
+                                            <p>{profile.clinical.medications}</p>
+                                        </div>
+                                    )}
+                                    {profile.preferences?.mode && (
+                                        <div>
+                                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Preferred Mode</p>
+                                            <p>{profile.preferences.mode}</p>
+                                        </div>
+                                    )}
+                                    {profile.preferences?.budget && (
+                                        <div>
+                                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Budget (INR)</p>
+                                            <p>{profile.preferences.budget}</p>
+                                        </div>
+                                    )}
+                                    {!profile.clinical?.presentingProblem && !profile.clinical?.medications && !profile.preferences?.mode && !profile.preferences?.budget && (
+                                        <p className="text-slate-400 italic">No clinical information added yet.</p>
+                                    )}
+                                </div>
+                             )}
                         </div>
                     )}
 
@@ -711,38 +796,142 @@ export const ProfileView: React.FC = () => {
                         </div>
                     )}
 
-                    {!isEditing && (
-                        <div className="mt-6 pt-6 border-t border-slate-100">
-                             <h5 className="text-sm text-slate-400 mb-2">
-                                {isClient ? 'Profile Summary' : 'Professional Bio'}
-                             </h5>
-                             <p className="text-slate-600 text-sm leading-relaxed border-l-4 border-teal-500 pl-4">
-                                {profile.aiSummary || 'No bio added yet. Click Edit Profile to add one.'}
-                             </p>
-                        </div>
-                    )}
-                    
-                    {isEditing && (
-                        <div className="mt-6 pt-6 border-t border-slate-100">
-                            <TextArea
-                                label={isClient ? 'Profile Summary' : 'Professional Bio'}
-                                placeholder={isClient 
-                                    ? "Describe what you're looking for in therapy and your goals..."
-                                    : "Write a professional bio about your practice, approach, and expertise..."
-                                }
-                                value={editData.aiSummary || ''}
-                                onChange={(e) => setEditData({ ...editData, aiSummary: e.target.value })}
-                                rows={6}
-                            />
-                        </div>
-                    )}
                  </div>
             </div>
         </div>
-      </div>
 
-      {/* RAG Chatbot Integration */}
-      <ChatBot profile={profile} />
+        {/* Snapshots Section for Clients */}
+        {isClient && (
+            <div className="bg-white border-2 border-slate-200 p-4 rounded-2xl shadow-lg animate-slide-up mt-6">
+                <h3 className="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">
+                    <i className="fas fa-brain text-primary"></i>
+                    Your Snapshots
+                </h3>
+                <div className="relative">
+                    <div className="overflow-x-auto scrollbar-hide" style={{ scrollBehavior: 'smooth' }}>
+                        <div className="flex gap-3 pb-2">
+                            {/* Create/Continue Snapshot Card - DISABLED */}
+                            <div
+                                className="bg-gradient-to-br from-slate-100 to-slate-200 border-2 border-dashed border-slate-300 rounded-xl p-3 cursor-not-allowed flex flex-col items-center justify-center min-h-[120px] flex-shrink-0 w-64 opacity-60"
+                            >
+                                <div className="w-10 h-10 rounded-full flex items-center justify-center mb-2 bg-slate-400">
+                                    <i className="fas fa-lock text-white text-lg"></i>
+                                </div>
+                                <h4 className="font-semibold text-slate-700 mb-1 text-sm">
+                                    Snapshot Feature
+                                </h4>
+                                <p className="text-xs text-slate-600 text-center font-medium">
+                                    Coming Soon
+                                </p>
+                                <p className="text-xs text-slate-500 text-center mt-1">
+                                    We're improving this feature
+                                </p>
+                            </div>
+
+                            {/* Existing Snapshots - HIDDEN */}
+                            {false && snapshots.map((snap, index) => (
+                                <button
+                                    key={snap.snapshotId || index}
+                                    onClick={() => navigate(`/snapshot/${snap.snapshotId}`)}
+                                    className="bg-white border-2 border-slate-200 rounded-xl p-3 hover:shadow-lg hover:border-primary/50 transition-all group text-left min-h-[120px] flex flex-col flex-shrink-0 w-64"
+                                >
+                                    <div className="flex items-start gap-2">
+                                        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform" style={{ backgroundColor: 'rgba(var(--color-primary-rgb, 20, 184, 166), 0.1)' }}>
+                                            <i className="fas fa-brain text-sm" style={{ color: 'var(--color-primary)' }}></i>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center justify-between gap-2 mb-1">
+                                                <h4 className="font-semibold text-slate-900 text-sm">Snapshot #{snapshots.length - index}</h4>
+                                                <span className="text-xs text-slate-500 whitespace-nowrap">
+                                                    {new Date(snap.createdAt).toLocaleDateString('en-US', { 
+                                                        month: 'short', 
+                                                        day: 'numeric' 
+                                                    })}
+                                                </span>
+                                            </div>
+                                            <p className="text-xs text-slate-600 line-clamp-2">
+                                                {snap.snapshot?.summary || 'View your profile'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {/* Payment History for Clients */}
+        {isClient && profile.payments && profile.payments.length > 0 && (
+            <div className="bg-white border-2 border-slate-200 rounded-2xl shadow-lg animate-slide-up mt-6">
+                <button
+                    onClick={() => setIsPaymentsExpanded(!isPaymentsExpanded)}
+                    className="w-full p-6 flex items-center justify-between hover:bg-slate-50 transition-colors rounded-t-2xl"
+                >
+                    <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                        <i className="fas fa-receipt text-teal-600"></i>
+                        Payment History
+                    </h3>
+                    <i className={`fas fa-chevron-${isPaymentsExpanded ? 'up' : 'down'} text-slate-400`}></i>
+                </button>
+                {isPaymentsExpanded && (
+                    <div className="px-6 pb-6">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead className="border-b border-slate-200">
+                                    <tr className="text-left text-xs text-slate-500 uppercase">
+                                        <th className="pb-2 font-semibold">Plan</th>
+                                        <th className="pb-2 font-semibold">Date</th>
+                                        <th className="pb-2 font-semibold">Amount</th>
+                                        <th className="pb-2 font-semibold">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {profile.payments.map((payment, index) => (
+                                        <tr key={`${payment.planId}-${index}`} className="hover:bg-slate-50">
+                                            <td className="py-3">
+                                                <span className="font-medium text-slate-900">{payment.planName}</span>
+                                            </td>
+                                            <td className="py-3 text-slate-600">
+                                                {payment.paidAt ? new Date(payment.paidAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Pending'}
+                                            </td>
+                                            <td className="py-3 font-semibold text-slate-900">
+                                                ₹{payment.amount}
+                                            </td>
+                                            <td className="py-3">
+                                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
+                                                    payment.status === 'success'
+                                                        ? 'bg-green-100 text-green-700'
+                                                        : payment.status === 'failed'
+                                                        ? 'bg-red-100 text-red-700'
+                                                        : 'bg-yellow-100 text-yellow-700'
+                                                }`}>
+                                                    {payment.status}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div className="mt-4 pt-4 border-t border-slate-200 flex justify-end">
+                            <Button 
+                                onClick={() => navigate('/plans')}
+                                className="shadow-sm"
+                                style={{ backgroundColor: 'var(--color-primary)', color: '#fff' }}
+                            >
+                                Buy Plan
+                            </Button>
+                        </div>
+                    </div>
+                )}
+            </div>
+        )}
+
+        {/* RAG Chatbot Integration */}
+        <ChatBot profile={profile} />
+      </div>
     </div>
   );
 };

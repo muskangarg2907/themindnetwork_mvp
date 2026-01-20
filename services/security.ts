@@ -108,10 +108,18 @@ export function sanitizeForLog(obj: any): any {
   if (sanitized.basicInfo?.dob) {
     sanitized.basicInfo.dob = '****-**-**';
   }
+  if (sanitized.basicInfo?.fullName) {
+    sanitized.basicInfo.fullName = sanitized.basicInfo.fullName.charAt(0) + '***';
+  }
 
   // Remove clinical data entirely from logs
   if (sanitized.clinical) {
     sanitized.clinical = '[REDACTED]';
+  }
+
+  // Remove provider details
+  if (sanitized.providerDetails) {
+    sanitized.providerDetails = '[REDACTED]';
   }
 
   // Remove payment sensitive data
@@ -123,5 +131,26 @@ export function sanitizeForLog(obj: any): any {
     }));
   }
 
+  // Mask razorpay IDs
+  if (sanitized.razorpayOrderId) sanitized.razorpayOrderId = '****';
+  if (sanitized.razorpayPaymentId) sanitized.razorpayPaymentId = '****';
+  if (sanitized.razorpaySignature) sanitized.razorpaySignature = '****';
+  if (sanitized.orderId) sanitized.orderId = '****';
+  if (sanitized.paymentId) sanitized.paymentId = '****';
+
+  // Mask auth tokens
+  if (sanitized.token) sanitized.token = '****';
+  if (sanitized.accessToken) sanitized.accessToken = '****';
+  if (sanitized.idToken) sanitized.idToken = '****';
+
   return sanitized;
+}
+
+/**
+ * Secure logging that only works in development and sanitizes data
+ */
+export function secureLogData(label: string, data: any): void {
+  if (isDevelopment()) {
+    console.log(label, sanitizeForLog(data));
+  }
 }

@@ -51,18 +51,13 @@ export const AdminDashboard: React.FC = () => {
       const profilesWithPayments = profileList.filter((p: UserProfile) => p.payments && p.payments.length > 0);
       console.log('[ADMIN] Profiles with payments:', profilesWithPayments.length);
       if (profilesWithPayments.length > 0) {
-        console.log('[ADMIN] Sample payment data:', profilesWithPayments[0].payments);
-        console.log('[ADMIN] Profile WITH payments:', {
-          id: profilesWithPayments[0]._id,
-          name: profilesWithPayments[0].basicInfo?.fullName,
-          phone: profilesWithPayments[0].basicInfo?.phone,
-        });
+        console.log('[ADMIN] Sample payment data available');
       }
       
-      // Log ALL profiles for debugging
+      // Log ALL profiles for debugging (sanitized)
       console.log('[ADMIN] All profiles summary:');
       profileList.forEach((p: UserProfile) => {
-        console.log(`  - ${p.basicInfo?.fullName} (${p.basicInfo?.phone}): payments=${p.payments?.length || 0}`);
+        console.log(`  - ${p.basicInfo?.fullName?.charAt(0)}*** (****${p.basicInfo?.phone?.slice(-4)}): payments=${p.payments?.length || 0}`);
       });
       
       setProfiles(profileList);
@@ -227,13 +222,7 @@ export const AdminDashboard: React.FC = () => {
                 <div
                   key={p._id}
                   onClick={() => {
-                    console.log('[ADMIN] Clicking on profile:', {
-                      id: p._id,
-                      name: p.basicInfo?.fullName,
-                      phone: p.basicInfo?.phone,
-                      hasPayments: !!(p.payments && p.payments.length > 0),
-                      paymentCount: p.payments?.length || 0
-                    });
+                    console.log('[ADMIN] Viewing profile details');
                     setSelectedProfile(p);
                   }}
                   className={`p-4 border rounded-lg cursor-pointer transition ${
@@ -311,9 +300,6 @@ export const AdminDashboard: React.FC = () => {
                   console.log('[ADMIN DETAIL] Profile ID:', selectedProfile._id);
                   console.log('[ADMIN DETAIL] Role:', selectedProfile.role, '| Is client?', isClient);
                   console.log('[ADMIN DETAIL] Has payments?', hasPayments, '| Payment count:', selectedProfile.payments?.length || 0);
-                  if (selectedProfile.payments && selectedProfile.payments.length > 0) {
-                    console.log('[ADMIN DETAIL] Payments:', JSON.stringify(selectedProfile.payments, null, 2));
-                  }
                   
                   return isClient && hasPayments && (
                   <div className="pt-4 border-t border-slate-200">

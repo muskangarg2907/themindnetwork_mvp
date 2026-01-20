@@ -32,14 +32,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         console.log('[ADMIN] GET: Total profiles:', allProfiles.length);
         console.log('[ADMIN] GET: Profiles with payments:', profilesWithPayments.length);
         if (profilesWithPayments.length > 0) {
-          console.log('[ADMIN] GET: Sample profile with payments:', {
-            id: profilesWithPayments[0]._id,
-            name: profilesWithPayments[0].basicInfo?.fullName,
-            phone: profilesWithPayments[0].basicInfo?.phone,
-            role: profilesWithPayments[0].role,
-            paymentCount: profilesWithPayments[0].payments?.length,
-            firstPayment: profilesWithPayments[0].payments?.[0]
-          });
+          console.log('[ADMIN] GET: Sample profile with payments available, count:', profilesWithPayments[0].payments?.length);
         }
         
         return res.status(200).json({ profiles: allProfiles, total: allProfiles.length });

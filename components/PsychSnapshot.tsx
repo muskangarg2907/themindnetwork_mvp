@@ -58,14 +58,20 @@ export const PsychSnapshot: React.FC = () => {
   const [snapshotUrl, setSnapshotUrl] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userPhone, setUserPhone] = useState('');
+  const [authLoading, setAuthLoading] = useState(true); // Track if auth is still loading
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages]);
+    // Focus input after messages update (unless snapshot is generated)
+    if (!snapshotGenerated && !isChatLoading) {
+      inputRef.current?.focus();
+    }
+  }, [messages, snapshotGenerated, isChatLoading]);
 
   // Check authentication state
   useEffect(() => {
@@ -73,12 +79,13 @@ export const PsychSnapshot: React.FC = () => {
       if (user) {
         setIsAuthenticated(true);
         setUserPhone(user.phoneNumber || '');
-        console.log('[PsychSnapshot] User authenticated:', user.phoneNumber);
+        console.log('[PsychSnapshot] User authenticated');
       } else {
         setIsAuthenticated(false);
         setUserPhone('');
         console.log('[PsychSnapshot] User not authenticated');
       }
+      setAuthLoading(false); // Auth check complete
     });
 
     return () => unsubscribe();
@@ -86,13 +93,81 @@ export const PsychSnapshot: React.FC = () => {
 
   // Load chat history and snapshot state from localStorage on mount
   useEffect(() => {
+    // Wait for auth to complete before loading/clearing data
+    if (authLoading) return;
+    
+    const normalizedPhone = userPhone.replace(/\s+/g, '');
+    const savedMessagesPhone = localStorage.getItem('psychSnapshot_messages_phone');
     const savedMessages = localStorage.getItem('psychSnapshot_messages');
     const savedSnapshotUrl = localStorage.getItem('psychSnapshot_url');
+    const savedSnapshotPhone = localStorage.getItem('psychSnapshot_phone');
     const savedSnapshotGenerated = localStorage.getItem('psychSnapshot_generated');
     
-    if (savedMessages) {
-      setMessages(JSON.parse(savedMessages));
+    // Check if there's a completed snapshot (either by flag or by checking last message)
+    let shouldStartFresh = false;
+    
+    if (savedSnapshotGenerated === 'true' && savedSnapshotPhone === normalizedPhone) {
+      shouldStartFresh = true;
+    } else if (savedMessages && savedMessagesPhone === normalizedPhone) {
+      // Also check if the last message indicates snapshot was generated
+      try {
+        const parsed = JSON.parse(savedMessages);
+        const lastMessage = parsed[parsed.length - 1];
+        if (lastMessage?.text?.includes('Your snapshot is ready') || 
+            lastMessage?.text?.includes('View Snapshot')) {
+          shouldStartFresh = true;
+        }
+      } catch (e) {
+        console.error('[PSYCHSNAPSHOT] Error parsing saved messages:', e);
+      }
+    }
+    
+    // If snapshot was already generated, start fresh automatically
+    if (shouldStartFresh) {
+      console.log('[PSYCHSNAPSHOT] Previous completed snapshot found, starting fresh chat');
+      localStorage.removeItem('psychSnapshot_messages');
+      localStorage.removeItem('psychSnapshot_messages_phone');
+      localStorage.removeItem('psychSnapshot_url');
+      localStorage.removeItem('psychSnapshot_phone');
+      localStorage.removeItem('psychSnapshot_generated');
+      localStorage.removeItem('psychSnapshot_data');
+      
+      const greeting: Message = {
+        id: 'init',
+        role: 'assistant',
+        text: "This space is for reflection, not evaluation. You can go slowly, skip questions, or stop at any time. Nothing here needs to be finished today. How are you feeling right now?",
+        timestamp: Date.now()
+      };
+      setMessages([greeting]);
+      setSnapshotGenerated(false);
+      setSnapshotUrl('');
+      return;
+    }
+    
+    // Only load messages if they belong to the current user
+    if (savedMessages && savedMessagesPhone === normalizedPhone) {
+      const parsed = JSON.parse(savedMessages);
+      // Only load if it's not just the initial greeting
+      if (parsed.length > 1) {
+        setMessages(parsed);
+      } else {
+        // Start fresh
+        const greeting: Message = {
+          id: 'init',
+          role: 'assistant',
+          text: "This space is for reflection, not evaluation. You can go slowly, skip questions, or stop at any time. Nothing here needs to be finished today. How are you feeling right now?",
+          timestamp: Date.now()
+        };
+        setMessages([greeting]);
+      }
     } else {
+      // Only clear if user is authenticated and phone doesn't match
+      if (savedMessages && savedMessagesPhone && isAuthenticated && savedMessagesPhone !== normalizedPhone) {
+        console.log('[PSYCHSNAPSHOT] Clearing messages from different user');
+        localStorage.removeItem('psychSnapshot_messages');
+        localStorage.removeItem('psychSnapshot_messages_phone');
+      }
+      
       // Send initial greeting only if no saved messages
       const greeting: Message = {
         id: 'init',
@@ -103,21 +178,29 @@ export const PsychSnapshot: React.FC = () => {
       setMessages([greeting]);
     }
     
-    if (savedSnapshotUrl) {
+    // Only load snapshot state if it belongs to the current user (and not already handled above)
+    if (savedSnapshotUrl && savedSnapshotPhone === normalizedPhone && savedSnapshotGenerated !== 'true') {
       setSnapshotUrl(savedSnapshotUrl);
+    } else if (savedSnapshotUrl && savedSnapshotPhone && isAuthenticated && savedSnapshotPhone !== normalizedPhone) {
+      // Only clear if user is authenticated and phone doesn't match
+      console.log('[PSYCHSNAPSHOT] Clearing snapshot state from different user');
+      localStorage.removeItem('psychSnapshot_url');
+      localStorage.removeItem('psychSnapshot_phone');
+      localStorage.removeItem('psychSnapshot_generated');
+      localStorage.removeItem('psychSnapshot_data');
+      setSnapshotGenerated(false);
+      setSnapshotUrl('');
     }
-    
-    if (savedSnapshotGenerated === 'true') {
-      setSnapshotGenerated(true);
-    }
-  }, []);
+  }, [userPhone, authLoading, isAuthenticated]);
 
   // Save messages to localStorage whenever they change
   useEffect(() => {
-    if (messages.length > 0) {
+    if (messages.length > 0 && userPhone) {
+      const normalizedPhone = userPhone.replace(/\s+/g, '');
       localStorage.setItem('psychSnapshot_messages', JSON.stringify(messages));
+      localStorage.setItem('psychSnapshot_messages_phone', normalizedPhone);
     }
-  }, [messages]);
+  }, [messages, userPhone]);
 
   // Helper to detect multiple choice questions and extract options
   const parseMultipleChoice = (text: string): { question: string; options: string[] } | null => {
@@ -186,19 +269,26 @@ export const PsychSnapshot: React.FC = () => {
       if (data.isComplete) {
         console.log('[PSYCHSNAPSHOT] Snapshot complete!');
         console.log('[PSYCHSNAPSHOT] Snapshot URL:', data.snapshotUrl);
-        console.log('[PSYCHSNAPSHOT] Snapshot data:', data.snapshot);
+        // Note: Full snapshot data contains sensitive psychological information - not logged
         
         setSnapshotGenerated(true);
         setSnapshotUrl(data.snapshotUrl);
         
-        // Save to localStorage
+        // Save to localStorage with phone number for user identification
+        const normalizedPhone = userPhone.replace(/\s+/g, '');
         localStorage.setItem('psychSnapshot_url', data.snapshotUrl);
+        localStorage.setItem('psychSnapshot_phone', normalizedPhone);
         localStorage.setItem('psychSnapshot_generated', 'true');
         
         // Save full snapshot data if available
         if (data.snapshot) {
-          console.log('[PSYCHSNAPSHOT] Saving snapshot data to localStorage');
-          localStorage.setItem('psychSnapshot_data', JSON.stringify(data.snapshot));
+          const dataToSave = {
+            snapshot: data.snapshot,
+            createdAt: data.createdAt || Date.now()
+          };
+          console.log('[PSYCHSNAPSHOT] Saving snapshot to localStorage');
+          localStorage.setItem('psychSnapshot_data', JSON.stringify(dataToSave));
+          console.log('[PSYCHSNAPSHOT] Saved to localStorage successfully');
         } else {
           console.warn('[PSYCHSNAPSHOT] No snapshot data received from backend');
         }
@@ -235,7 +325,9 @@ export const PsychSnapshot: React.FC = () => {
   const startFresh = () => {
     if (confirm('Are you sure you want to start fresh? This will clear your current conversation and snapshot.')) {
       localStorage.removeItem('psychSnapshot_messages');
+      localStorage.removeItem('psychSnapshot_messages_phone');
       localStorage.removeItem('psychSnapshot_url');
+      localStorage.removeItem('psychSnapshot_phone');
       localStorage.removeItem('psychSnapshot_generated');
       localStorage.removeItem('psychSnapshot_data');
       
@@ -254,15 +346,17 @@ export const PsychSnapshot: React.FC = () => {
   // Chat Interface
   return (
     <div className="min-h-screen bg-gradient-to-br from-accent/10 via-white to-accent/10">
-      {/* Info Banner */}
-      <div className="bg-blue-50 border-b border-blue-200 py-2.5 px-4">
-        <div className="container mx-auto max-w-4xl">
-          <p className="text-sm text-blue-800 text-center">
-            <i className="fas fa-info-circle mr-2"></i>
-            Your snapshot will be saved temporarily. <strong>Login (free)</strong> to save it permanently and access it anytime.
-          </p>
+      {/* Info Banner - Only show for unauthenticated users */}
+      {!isAuthenticated && (
+        <div className="bg-blue-50 border-b border-blue-200 py-2.5 px-4">
+          <div className="container mx-auto max-w-4xl">
+            <p className="text-sm text-blue-800 text-center">
+              <i className="fas fa-info-circle mr-2"></i>
+              Your snapshot will be saved temporarily. <strong>Login (free)</strong> to save it permanently and access it anytime.
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8 max-w-4xl">
         <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl overflow-hidden">
@@ -276,11 +370,11 @@ export const PsychSnapshot: React.FC = () => {
                   <span className="text-xs sm:text-sm font-medium">Logged in as {userPhone}</span>
                 </div>
                 <button
-                  onClick={() => navigate('/dashboard')}
+                  onClick={() => navigate('/profile')}
                   className="text-xs sm:text-sm px-2 sm:px-3 py-1 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
                 >
-                  <i className="fas fa-th-large mr-1 sm:mr-2"></i>
-                  <span className="hidden sm:inline">Dashboard</span>
+                  <i className="fas fa-user mr-1 sm:mr-2"></i>
+                  My Profile
                 </button>
               </div>
             ) : (
@@ -311,14 +405,16 @@ export const PsychSnapshot: React.FC = () => {
                     <p className="text-xs sm:text-sm">Complete!</p>
                   </div>
                 )}
-                <Button
-                  onClick={startFresh}
-                  variant="outline"
-                  className="bg-white/10 hover:bg-white/20 text-white border-white/30 text-xs sm:text-sm px-3 sm:px-4"
-                >
-                  <i className="fas fa-redo sm:mr-2"></i>
-                  <span className="hidden sm:inline">Start Fresh</span>
-                </Button>
+                {messages.length > 1 && (
+                  <Button
+                    onClick={startFresh}
+                    variant="outline"
+                    className="bg-white/10 hover:bg-white/20 text-white border-white/30 text-xs sm:text-sm px-3 sm:px-4"
+                  >
+                    <i className="fas fa-redo sm:mr-2"></i>
+                    <span className="hidden sm:inline">Start Fresh</span>
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -342,20 +438,21 @@ export const PsychSnapshot: React.FC = () => {
                       </div>
                     </div>
                     <button
-                      onClick={() => {
-                        const url = `${window.location.origin}/#/snapshot/${snapshotUrl}`;
-                        console.log('[PSYCHSNAPSHOT] Opening snapshot in new tab:', url);
-                        console.log('[PSYCHSNAPSHOT] Current localStorage data:', {
-                          url: localStorage.getItem('psychSnapshot_url'),
-                          generated: localStorage.getItem('psychSnapshot_generated'),
-                          hasData: !!localStorage.getItem('psychSnapshot_data')
-                        });
-                        window.open(url, '_blank');
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('[PSYCHSNAPSHOT] Navigating to snapshot:', snapshotUrl);
+                        if (snapshotUrl) {
+                          navigate(`/snapshot/${snapshotUrl}`);
+                        } else {
+                          console.error('[PSYCHSNAPSHOT] No snapshot URL available');
+                        }
                       }}
-                      className="w-full bg-primary hover:bg-primaryHover text-white px-3 sm:px-4 py-2 sm:py-3 rounded-lg font-medium transition-all inline-flex items-center justify-center gap-2 text-sm sm:text-base"
+                      className="w-full bg-primary hover:bg-primaryHover text-white px-3 sm:px-4 py-2 sm:py-3 rounded-lg font-medium transition-all inline-flex items-center justify-center gap-2 text-sm sm:text-base cursor-pointer"
+                      style={{ cursor: 'pointer' }}
                     >
-                      <i className="fas fa-external-link-alt"></i>
-                      View Snapshot
+                      <i className="fas fa-eye"></i>
+                      View My Snapshot
                     </button>
                   </div>
                 ) : (
@@ -469,12 +566,14 @@ export const PsychSnapshot: React.FC = () => {
             <div className="p-3 sm:p-4 bg-white border-t border-slate-200">
               <div className="flex gap-2 items-end">
                 <textarea
+                  ref={inputRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Type your response..."
                   disabled={isChatLoading}
                   rows={1}
+                  autoFocus
                   className="flex-1 resize-none overflow-y-auto max-h-32 px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-slate-100 disabled:cursor-not-allowed"
                   style={{ minHeight: '44px' }}
                   onInput={(e) => {

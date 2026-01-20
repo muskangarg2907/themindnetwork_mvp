@@ -33,7 +33,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       const norm = normalizePhone(phoneNumber);
-      console.log('[LOOKUP] Searching for phone:', phoneNumber, 'normalized:', norm);
+      console.log('[LOOKUP] Searching for phone (normalized)');
       
       // Allow any status except rejected (enable payments without verification)
       const found = await profiles.findOne({
@@ -62,11 +62,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const profilesWithPayments = allProfiles.filter(p => p.payments && p.payments.length > 0);
       console.log('[PROFILES] GET: Profiles with payments:', profilesWithPayments.length);
       if (profilesWithPayments.length > 0) {
-        console.log('[PROFILES] GET: Sample profile with payments:', {
-          id: profilesWithPayments[0]._id,
-          name: profilesWithPayments[0].basicInfo?.fullName,
-          paymentCount: profilesWithPayments[0].payments?.length
-        });
+        console.log('[PROFILES] GET: Sample profile with payments available');
       }
       
       return res.status(200).json(allProfiles);
@@ -92,7 +88,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (normalizedPhone) {
         const existing = await profiles.findOne({ 'basicInfo.phone': normalizedPhone });
         if (existing) {
-          console.log('[PROFILES] POST: DUPLICATE DETECTED - Phone', normalizedPhone, 'already exists with _id:', existing._id);
+          console.log('[PROFILES] POST: DUPLICATE DETECTED - Phone already exists');
           return res.status(409).json({ 
             error: 'Profile already exists for this phone number',
             _id: existing._id,
@@ -106,7 +102,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         createdAt: new Date().toISOString()
       };
 
-      console.log('[PROFILES] POST: Saving NEW profile with phone:', record.basicInfo?.phone);
+      console.log('[PROFILES] POST: Saving NEW profile');
 
       try {
         const result = await profiles.insertOne(record);
@@ -129,9 +125,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       
       console.log('[PROFILES] PUT: Updating profile', _id);
       console.log('[PROFILES] PUT: Has payments?', !!updates.payments, '| Count:', updates.payments?.length || 0);
-      if (updates.payments && updates.payments.length > 0) {
-        console.log('[PROFILES] PUT: Latest payment:', JSON.stringify(updates.payments[updates.payments.length - 1]));
-      }
 
       try {
         let query;

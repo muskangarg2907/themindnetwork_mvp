@@ -12,6 +12,8 @@ import { FirebaseDiagnostic } from './components/FirebaseDiagnostic';
 import ProviderPage from './components/ProviderPage';
 import { PsychSnapshot } from './components/PsychSnapshot';
 import { SnapshotView } from './components/SnapshotView';
+import { SnapshotViewEnhanced } from './components/SnapshotViewEnhanced';
+import { ComingSoon } from './components/ComingSoon';
 import { Dashboard } from './components/Dashboard';
 import { auth } from './services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -21,7 +23,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        console.log('[App] User authenticated:', user.phoneNumber);
+        console.log('[App] User authenticated');
         // Store user info in localStorage for easy access across components
         localStorage.setItem('user_phone', user.phoneNumber || '');
         localStorage.setItem('user_uid', user.uid);
@@ -51,8 +53,8 @@ const App: React.FC = () => {
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/firebase-test" element={<FirebaseDiagnostic />} />
         <Route path="/provider" element={<ProviderPage />} />
-        <Route path="/snapshot" element={<PsychSnapshot />} />
-        <Route path="/snapshot/:snapshotId" element={<SnapshotView />} />
+        <Route path="/snapshot" element={<ComingSoon />} />
+        <Route path="/snapshot/:snapshotId" element={<ComingSoon />} />
       </Routes>
     </HashRouter>
   );

@@ -15,12 +15,16 @@ export const Payment: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const plan = (location.state as any)?.plan as Plan | null;
+  const email = (location.state as any)?.email as string | undefined;
+  const phone = (location.state as any)?.phone as string | undefined;
 
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // Redirect if accessed without proper plan data
   useEffect(() => {
     if (!plan) {
-      navigate('/plans');
+      console.log('[PAYMENT] No plan data found, redirecting to plans page');
+      navigate('/plans', { replace: true });
     }
   }, [plan, navigate]);
 
@@ -64,8 +68,8 @@ export const Payment: React.FC = () => {
         order_id: orderData.orderId,
         prefill: {
           name: userProfile?.basicInfo?.fullName || '',
-          email: userProfile?.basicInfo?.email || '',
-          contact: userProfile?.basicInfo?.phone || '',
+          email: email || userProfile?.basicInfo?.email || localStorage.getItem('userEmail') || '',
+          contact: phone || userProfile?.basicInfo?.phone || localStorage.getItem('userPhone') || '',
         },
         theme: {
           color: '#14b8a6',
@@ -106,7 +110,7 @@ export const Payment: React.FC = () => {
           },
         },
         handler: function (response: any) {
-          console.log('[RAZORPAY] Payment successful:', response);
+          console.log('[RAZORPAY] Payment successful');
           
           // Keep processing state active while updating profile
           // Update user profile with payment details
@@ -167,6 +171,8 @@ export const Payment: React.FC = () => {
         razorpaySignature: razorpayResponse.razorpay_signature,
         paidAt: new Date().toISOString(),
         createdAt: new Date().toISOString(),
+        email: email || userProfile?.basicInfo?.email || localStorage.getItem('userEmail') || '',
+        phone: phone || userProfile?.basicInfo?.phone || localStorage.getItem('userPhone') || '',
       };
 
       // Add to payments array (maintain history)
@@ -176,8 +182,7 @@ export const Payment: React.FC = () => {
         payments: [...existingPayments, paymentDetails],
       };
 
-      console.log('[PAYMENT] Updating profile with _id:', userProfile._id || userProfile.id);
-      console.log('[PAYMENT] Payment details:', paymentDetails);
+      console.log('[PAYMENT] Updating profile');
       console.log('[PAYMENT] Updated profile has', updatedProfile.payments.length, 'payment(s)');
 
       // Save to backend

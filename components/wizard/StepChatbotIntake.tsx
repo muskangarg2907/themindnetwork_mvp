@@ -8,23 +8,32 @@ interface StepChatbotIntakeProps {
   onComplete: () => void;
 }
 
+interface Question {
+  key: string;
+  text: string;
+  buttons?: string[];
+  slider?: boolean;
+  condition?: () => boolean;
+}
+
 export const StepChatbotIntake: React.FC<StepChatbotIntakeProps> = ({ data, updateData, onComplete }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [showSubmit, setShowSubmit] = useState(false);
+  const [showButtons, setShowButtons] = useState<string[]>([]);
+  const [showSlider, setShowSlider] = useState(false);
+  const [sliderValue, setSliderValue] = useState(1000);
   const [responses, setResponses] = useState<any>({
-    presentingProblem: '',
-    currentMood: '',
     hasPriorTherapy: false,
     priorExperience: '',
-    medications: '',
+    hasDiagnosis: false,
+    diagnosisMedications: '',
+    presentingProblem: '',
     mode: '',
     location: '',
     budget: '',
-    preferences: '',
-    bio: '',
     riskFactors: []
   });
   
@@ -32,18 +41,11 @@ export const StepChatbotIntake: React.FC<StepChatbotIntakeProps> = ({ data, upda
   const inputRef = useRef<HTMLInputElement>(null);
   const initialized = useRef(false);
 
-  const questions = [
-    {
-      key: 'confidentiality',
-      text: `Hi ${data.basicInfo.fullName}! Before we begin, I want you to know that this conversation is completely confidential and safe. Everything you share here is private and will only be used to help match you with the right therapist. Shall we start?`
-    },
-    {
-      key: 'presentingProblem',
-      text: "What brings you to therapy today?"
-    },
+  const questions: Question[] = [
     {
       key: 'hasPriorTherapy',
-      text: "Have you tried therapy before? Just type 'yes' or 'no'."
+      text: "Have you tried therapy before?",
+      buttons: ['Yes', 'No']
     },
     {
       key: 'priorExperience',
@@ -51,33 +53,33 @@ export const StepChatbotIntake: React.FC<StepChatbotIntakeProps> = ({ data, upda
       condition: () => responses.hasPriorTherapy
     },
     {
-      key: 'medications',
-      text: "Do you have an existing diagnosis or medications prescribed? If not, just type 'none'."
+      key: 'hasDiagnosis',
+      text: "Do you have an existing diagnosis or medications prescribed?",
+      buttons: ['Yes', 'No']
+    },
+    {
+      key: 'diagnosisMedications',
+      text: "Please share your diagnosis and medications.",
+      condition: () => responses.hasDiagnosis
+    },
+    {
+      key: 'presentingProblem',
+      text: "What issues are you currently facing that you'd like help with?"
     },
     {
       key: 'mode',
-      text: "Are you looking for Online or In-person sessions, or are you open to both? Just type 'online', 'in-person', or 'both'."
+      text: "Are you looking for Online or In-person sessions, or are you open to both?",
+      buttons: ['Online', 'In-person', 'Both']
     },
     {
       key: 'location',
-      text: "Which city and area do you stay in?",
-      condition: () => responses.mode !== 'online'
+      text: "Which city do you stay in?",
+      condition: () => responses.mode === 'offline'
     },
     {
       key: 'budget',
-      text: "What is your budget range per session? (Typically a session is 1 hour)"
-    },
-    {
-      key: 'preferences',
-      text: "Do you have any preferences for your therapist? (Gender, age, specialization, etc.) If none, just type 'none'."
-    },
-    {
-      key: 'reachout',
-      text: "Great, I have all the details now! Please wait for us to get in touch with you. We will reach out via email and the phone number you provided with therapists who would be best for you. One last thing before you go..."
-    },
-    {
-      key: 'bio',
-      text: "How would you describe yourself as a person?"
+      text: "What is your budget per session? (Typically a session is 1 hour)",
+      slider: true
     },
     {
       key: 'complete',
@@ -86,10 +88,13 @@ export const StepChatbotIntake: React.FC<StepChatbotIntakeProps> = ({ data, upda
   ];
 
   useEffect(() => {
-    // Start with greeting only once
+    // Start with first question
     if (!initialized.current) {
       initialized.current = true;
       addBotMessage(questions[0].text);
+      if (questions[0].buttons) {
+        setShowButtons(questions[0].buttons);
+      }
     }
   }, []);
 
@@ -121,12 +126,20 @@ export const StepChatbotIntake: React.FC<StepChatbotIntakeProps> = ({ data, upda
     setMessages(prev => [...prev, msg]);
   };
 
-  const handleSend = async () => {
-    if (!input.trim()) return;
+  const handleButtonClick = async (buttonText: string) => {
+    addUserMessage(buttonText);
+    setShowButtons([]);
+    await processResponse(buttonText);
+  };
 
-    const userText = input.trim();
-    addUserMessage(userText);
-    setInput('');
+  const handleSliderSubmit = async () => {
+    const budgetText = `₹${sliderValue}`;
+    addUserMessage(budgetText);
+    setShowSlider(false);
+    await processResponse(budgetText);
+  };
+
+  const processResponse = async (userText: string) => {
     setIsTyping(true);
 
     // Simulate thinking delay
@@ -140,53 +153,42 @@ export const StepChatbotIntake: React.FC<StepChatbotIntakeProps> = ({ data, upda
     let updatedResponses = { ...responses };
     
     // Update responses based on current question
-    if (q.key === 'confidentiality') {
-      // Just acknowledgment, no data to store
-    } else if (q.key === 'presentingProblem') {
-      updatedResponses.presentingProblem = userText;
-    } else if (q.key === 'hasPriorTherapy') {
-      // Flexible yes/no detection
-      const text = userText.toLowerCase();
-      const isYes = text.includes('yes') || text.includes('yeah') || text.includes('yep') || text.includes('yup') || text.match(/^y$/i);
-      updatedResponses.hasPriorTherapy = isYes;
+    if (q.key === 'hasPriorTherapy') {
+      updatedResponses.hasPriorTherapy = userText.toLowerCase() === 'yes';
     } else if (q.key === 'priorExperience') {
       updatedResponses.priorExperience = userText;
-    } else if (q.key === 'medications') {
-      // Flexible none detection
-      const text = userText.toLowerCase();
-      const isNone = text === 'none' || text === 'no' || text === 'nope' || text === 'nothing' || text === 'n/a' || text === 'na';
-      updatedResponses.medications = isNone ? '' : userText;
+    } else if (q.key === 'hasDiagnosis') {
+      updatedResponses.hasDiagnosis = userText.toLowerCase() === 'yes';
+    } else if (q.key === 'diagnosisMedications') {
+      updatedResponses.diagnosisMedications = userText;
+    } else if (q.key === 'presentingProblem') {
+      updatedResponses.presentingProblem = userText;
+      // Save presenting problem immediately to profile
+      updateData('clinical', {
+        ...data.clinical,
+        presentingProblem: userText
+      });
     } else if (q.key === 'mode') {
-      // Flexible mode detection
       const text = userText.toLowerCase();
-      let mode = 'both';
-      if (text.includes('online') || text.includes('virtual') || text.includes('remote') || text.includes('video')) {
-        mode = 'online';
-      } else if (text.includes('in-person') || text.includes('offline') || text.includes('face to face') || text.includes('physical') || text.includes('in person')) {
-        mode = 'offline';
+      if (text.includes('online')) {
+        updatedResponses.mode = 'online';
+      } else if (text.includes('in-person')) {
+        updatedResponses.mode = 'offline';
+      } else {
+        updatedResponses.mode = 'both';
       }
-      updatedResponses.mode = mode;
     } else if (q.key === 'location') {
       updatedResponses.location = userText;
     } else if (q.key === 'budget') {
       updatedResponses.budget = userText;
-    } else if (q.key === 'preferences') {
-      // Flexible none detection
-      const text = userText.toLowerCase();
-      const isNone = text === 'none' || text === 'no' || text === 'nope' || text === 'nothing' || text === 'n/a' || text === 'na' || text.includes('no preference');
-      updatedResponses.preferences = isNone ? '' : userText;
-    } else if (q.key === 'reachout') {
-      // Just acknowledgment, no data to store
-    } else if (q.key === 'bio') {
-      updatedResponses.bio = userText;
       
-      // Save all responses to profile
+      // Save all responses to profile when budget is answered (last data question)
       updateData('clinical', {
         presentingProblem: updatedResponses.presentingProblem,
-        currentMood: updatedResponses.preferences || '',
+        currentMood: '',
         hasPriorTherapy: updatedResponses.hasPriorTherapy,
         priorExperience: updatedResponses.priorExperience,
-        medications: updatedResponses.medications,
+        medications: updatedResponses.diagnosisMedications,
         riskFactors: []
       });
       
@@ -195,12 +197,10 @@ export const StepChatbotIntake: React.FC<StepChatbotIntakeProps> = ({ data, upda
         location: updatedResponses.location || data.basicInfo.location
       });
       
-      // Store additional data in preferences
       updateData('preferences', {
-        providerGenderPreference: updatedResponses.preferences || '',
+        providerGenderPreference: '',
         mode: updatedResponses.mode,
-        budget: updatedResponses.budget,
-        bio: userText
+        budget: updatedResponses.budget
       });
     }
     
@@ -215,11 +215,7 @@ export const StepChatbotIntake: React.FC<StepChatbotIntakeProps> = ({ data, upda
       const nextQ = questions[nextQuestionIndex];
       
       // Check if this question should be skipped based on updated responses
-      if (nextQ.key === 'priorExperience' && !updatedResponses.hasPriorTherapy) {
-        nextQuestionIndex++;
-        continue;
-      }
-      if (nextQ.key === 'location' && updatedResponses.mode === 'online') {
+      if (nextQ.condition && !nextQ.condition()) {
         nextQuestionIndex++;
         continue;
       }
@@ -230,20 +226,33 @@ export const StepChatbotIntake: React.FC<StepChatbotIntakeProps> = ({ data, upda
     
     if (nextQuestionIndex < questions.length) {
       console.log('Moving to question:', nextQuestionIndex, questions[nextQuestionIndex].key);
-      console.log('showSubmit status:', showSubmit);
       setCurrentQuestion(nextQuestionIndex);
       addBotMessage(questions[nextQuestionIndex].text);
       
-      // Show submit button ONLY if we reached the complete message (last question)
+      // Show buttons or slider if applicable
+      if (questions[nextQuestionIndex].buttons) {
+        setShowButtons(questions[nextQuestionIndex].buttons);
+      } else if (questions[nextQuestionIndex].slider) {
+        setShowSlider(true);
+      }
+      
+      // Show submit button ONLY if we reached the complete message
       if (questions[nextQuestionIndex].key === 'complete') {
         console.log('Showing submit button NOW');
         setShowSubmit(true);
       }
-    } else {
-      console.log('ERROR: nextQuestionIndex out of bounds:', nextQuestionIndex);
     }
     
     setIsTyping(false);
+  };
+
+  const handleSend = async () => {
+    if (!input.trim()) return;
+
+    const userText = input.trim();
+    addUserMessage(userText);
+    setInput('');
+    await processResponse(userText);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -256,9 +265,9 @@ export const StepChatbotIntake: React.FC<StepChatbotIntakeProps> = ({ data, upda
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-slate-800 mb-2">Let's Chat About Your Needs</h2>
-        <p className="text-slate-600">
-          I'll ask you a few questions to understand how we can best support you.
+        <h2 className="text-3xl font-bold text-slate-800 mb-3">Let's Chat About Your Needs</h2>
+        <p className="text-lg text-slate-600">
+          Welcome! I'll ask you a few simple questions to understand how we can best support you. This will only take a few minutes.
         </p>
       </div>
 
@@ -273,22 +282,89 @@ export const StepChatbotIntake: React.FC<StepChatbotIntakeProps> = ({ data, upda
               <div
                 className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                   msg.role === 'user'
-                    ? 'bg-teal-500 text-white'
-                    : 'bg-slate-100 text-slate-800'
+                    ? 'text-white shadow-sm'
+                    : 'bg-slate-50 border border-slate-200 text-slate-700'
                 }`}
+                style={msg.role === 'user' ? {
+                  backgroundColor: 'var(--color-primary)'
+                } : {}}
               >
                 <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
               </div>
             </div>
           ))}
           
+          {/* Button Options - Inside chat area */}
+          {showButtons.length > 0 && !isTyping && (
+            <div className="flex justify-start">
+              <div className="flex gap-2 flex-wrap max-w-[80%]">
+                {showButtons.map((button) => (
+                  <button
+                    key={button}
+                    onClick={() => handleButtonClick(button)}
+                    className="px-5 py-2.5 bg-white rounded-xl transition-all text-sm font-medium shadow-sm hover:shadow-md border-2"
+                    style={{
+                      borderColor: 'var(--color-primary)',
+                      color: 'var(--color-primary)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'var(--color-primary)';
+                      e.currentTarget.style.color = 'white';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'white';
+                      e.currentTarget.style.color = 'var(--color-primary)';
+                    }}
+                  >
+                    {button}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Budget Slider - Inside chat area */}
+          {showSlider && !isTyping && (
+            <div className="flex justify-start">
+              <div className="max-w-[80%] bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 space-y-3">
+                <div className="text-center">
+                  <p className="text-2xl font-bold" style={{ color: 'var(--color-primary)' }}>₹{sliderValue}</p>
+                  <p className="text-xs text-slate-500">per session</p>
+                </div>
+                <input
+                  type="range"
+                  min="100"
+                  max="5000"
+                  step="100"
+                  value={sliderValue}
+                  onChange={(e) => setSliderValue(Number(e.target.value))}
+                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                  style={{ accentColor: 'var(--color-primary)' }}
+                />
+                <div className="flex justify-between text-xs text-slate-400">
+                  <span>₹100</span>
+                  <span>₹5,000</span>
+                </div>
+                <button
+                  onClick={handleSliderSubmit}
+                  className="w-full py-2.5 text-white rounded-lg transition-all text-sm font-medium hover:shadow-md"
+                  style={{
+                    backgroundColor: 'var(--color-primary)'
+                  }}
+                >
+                  Continue <i className="fas fa-arrow-right ml-2"></i>
+                </button>
+              </div>
+            </div>
+          )}
+          
           {isTyping && (
             <div className="flex justify-start">
-              <div className="bg-slate-100 rounded-2xl px-4 py-3">
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3">
                 <div className="flex gap-1">
-                  <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                  <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                  <div className="w-2 h-2 rounded-full animate-bounce" style={{ backgroundColor: 'var(--color-primary)' }}></div>
+                  <div className="w-2 h-2 rounded-full animate-bounce" style={{ backgroundColor: 'var(--color-primary)', animationDelay: '0.2s' }}></div>
+                  <div className="w-2 h-2 rounded-full animate-bounce" style={{ backgroundColor: 'var(--color-primary)', animationDelay: '0.4s' }}></div>
                 </div>
               </div>
             </div>
@@ -297,7 +373,7 @@ export const StepChatbotIntake: React.FC<StepChatbotIntakeProps> = ({ data, upda
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Area */}
+        {/* Input Area - Always show except when submitted */}
         {!showSubmit && (
           <div className="border-t border-slate-200 p-4">
             <div className="flex gap-3">

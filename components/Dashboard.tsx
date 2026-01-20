@@ -46,11 +46,17 @@ export const Dashboard: React.FC = () => {
   const checkUserProfile = async (phone: string) => {
     setProfileLoading(true);
     try {
-      const response = await fetch(`/api/profiles?action=lookup&phone=${encodeURIComponent(phone)}`);
+      // Normalize phone - remove spaces for consistent lookups
+      const normalizedPhone = phone.replace(/\s+/g, '');
+      console.log('[Dashboard] Looking up profile for:', normalizedPhone);
+      const response = await fetch(`/api/profiles?action=lookup&phone=${encodeURIComponent(normalizedPhone)}`);
       if (response.ok) {
         const data = await response.json();
         console.log('[Dashboard] Profile found:', data);
         setProfile(data);
+        // CRITICAL: Save to localStorage so ProfileView can access it
+        localStorage.setItem('userProfile', JSON.stringify(data));
+        console.log('[Dashboard] Profile saved to localStorage');
       } else if (response.status === 404) {
         console.log('[Dashboard] No profile found for user');
         setProfile(null);
@@ -65,13 +71,65 @@ export const Dashboard: React.FC = () => {
 
   const loadUserSnapshots = async (phone: string) => {
     try {
-      const response = await fetch(`/api/user/snapshots?phone=${encodeURIComponent(phone)}`);
+      // Normalize phone number
+      const normalizedPhone = phone.replace(/\s+/g, '');
+      
+      // Check localStorage first for any snapshots
+      const localSnapshotUrl = localStorage.getItem('psychSnapshot_url');
+      const localSnapshotData = localStorage.getItem('psychSnapshot_data');
+      
+      const localSnapshots: SnapshotData[] = [];
+      if (localSnapshotUrl && localSnapshotData) {
+        try {
+          const data = JSON.parse(localSnapshotData);
+          localSnapshots.push({
+            snapshotId: localSnapshotUrl,
+            phoneNumber: normalizedPhone,
+            snapshot: data.snapshot || { summary: 'Psychological snapshot' },
+            createdAt: data.createdAt || Date.now()
+          });
+        } catch (e) {
+          console.error('Failed to parse local snapshot:', e);
+        }
+      }
+
+      // Try to fetch from API as well
+      const response = await fetch(`/api/user/snapshots?phone=${encodeURIComponent(normalizedPhone)}`);
       if (response.ok) {
         const data = await response.json();
-        setSnapshots(data.snapshots || []);
+        const apiSnapshots = data.snapshots || [];
+        
+        // Merge local and API snapshots, removing duplicates
+        const allSnapshots = [...localSnapshots];
+        apiSnapshots.forEach((apiSnap: SnapshotData) => {
+          if (!allSnapshots.find(s => s.snapshotId === apiSnap.snapshotId)) {
+            allSnapshots.push(apiSnap);
+          }
+        });
+        
+        setSnapshots(allSnapshots);
+      } else {
+        // If API fails, just use local snapshots
+        setSnapshots(localSnapshots);
       }
     } catch (err) {
       console.error('Failed to load snapshots:', err);
+      // Fallback to local snapshots only
+      const localSnapshotUrl = localStorage.getItem('psychSnapshot_url');
+      const localSnapshotData = localStorage.getItem('psychSnapshot_data');
+      if (localSnapshotUrl && localSnapshotData) {
+        try {
+          const data = JSON.parse(localSnapshotData);
+          setSnapshots([{
+            snapshotId: localSnapshotUrl,
+            phoneNumber: normalizedPhone,
+            snapshot: data.snapshot || { summary: 'Psychological snapshot' },
+            createdAt: data.createdAt || Date.now()
+          }]);
+        } catch (e) {
+          setSnapshots([]);
+        }
+      }
     }
   };
 
@@ -111,14 +169,16 @@ export const Dashboard: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center gap-2 sm:gap-3">
-              <Button
-                onClick={() => navigate('/profile')}
-                className="flex-1 sm:flex-none bg-primary hover:bg-primaryHover text-sm"
-              >
-                <i className="fas fa-id-card mr-2"></i>
-                <span className="hidden sm:inline">My Profile</span>
-                <span className="sm:hidden">Profile</span>
-              </Button>
+              {profile && (
+                <Button
+                  onClick={() => navigate('/profile')}
+                  className="flex-1 sm:flex-none bg-primary hover:bg-primaryHover text-sm"
+                >
+                  <i className="fas fa-id-card mr-2"></i>
+                  <span className="hidden sm:inline">My Profile</span>
+                  <span className="sm:hidden">Profile</span>
+                </Button>
+              )}
               <Button
                 onClick={handleLogout}
                 className="flex-1 sm:flex-none bg-slate-600 hover:bg-slate-700 text-sm"

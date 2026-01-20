@@ -15,7 +15,9 @@ export const StepBasicInfo: React.FC<StepProps> = ({ data, updateData }) => {
      // Pre-fill phone if available from login
      const savedPhone = localStorage.getItem('userPhone');
      if (savedPhone && !data.basicInfo.phone) {
-         updateData('basicInfo', { ...data.basicInfo, phone: savedPhone });
+         // Phone should already be normalized from Login, but ensure it
+         const normalizedPhone = savedPhone.replace(/\s+/g, '');
+         updateData('basicInfo', { ...data.basicInfo, phone: normalizedPhone });
      }
   }, []);
 

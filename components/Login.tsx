@@ -96,8 +96,7 @@ export const Login: React.FC = () => {
     setIsLoading(true);
     
     const fullPhone = `${countryCode}${phoneNumber}`;
-    console.log('[LOGIN] Attempting to send OTP to:', fullPhone);
-    console.log('[LOGIN] Country code:', countryCode, 'Phone:', phoneNumber);
+    console.log('[LOGIN] Attempting to send OTP');
     
     try {
       // Clear any existing verifier and container first
@@ -137,7 +136,7 @@ export const Login: React.FC = () => {
       });
 
       const appVerifier = window.recaptchaVerifier;
-      console.log('[LOGIN] Calling signInWithPhoneNumber with:', fullPhone);
+      console.log('[LOGIN] Calling signInWithPhoneNumber');
       
       // Add timeout wrapper
       const signInPromise = signInWithPhoneNumber(auth, fullPhone, appVerifier);
@@ -150,7 +149,7 @@ export const Login: React.FC = () => {
       
       setIsLoading(false);
       setStep('otp');
-      console.log('[LOGIN] OTP sent successfully to', fullPhone);
+      console.log('[LOGIN] OTP sent successfully');
     } catch (err: any) {
       console.error('[LOGIN] Error sending OTP:', err);
       console.error('[LOGIN] Error code:', err.code);
@@ -224,25 +223,25 @@ export const Login: React.FC = () => {
       
 
       // Set auth tokens
+      // Normalize phone number - remove spaces for consistent storage and API lookups
+      const normalizedPhone = fullPhone.replace(/\s+/g, '');
       localStorage.setItem('authToken', 'firebase_verified');
-      localStorage.setItem('userPhone', fullPhone);
+      localStorage.setItem('userPhone', normalizedPhone);
+      console.log('[LOGIN] Phone normalized for lookup');
       
       // Check if profile exists
-      console.log('[LOGIN] Checking if profile exists for phone:', fullPhone);
-      const resp = await fetch(`/api/profiles?action=lookup&phone=${encodeURIComponent(fullPhone)}`);
+      console.log('[LOGIN] Checking if profile exists');
+      const resp = await fetch(`/api/profiles?action=lookup&phone=${encodeURIComponent(normalizedPhone)}`);
       
       console.log('[LOGIN] Lookup response status:', resp.status);
       
       if (resp.ok) {
         // EXISTING USER - Profile found
         const profile = await resp.json();
-        console.log('[LOGIN] EXISTING USER - Found profile:', profile._id, profile.basicInfo?.fullName);
+        console.log('[LOGIN] EXISTING USER - Found profile');
         console.log('[LOGIN] Profile type check:', Array.isArray(profile) ? 'ARRAY (ERROR!)' : 'OBJECT (CORRECT)');
         console.log('[LOGIN] Profile role:', profile.role, '| Button flow role:', preselectedRole);
         console.log('[LOGIN] Profile has payments?', !!profile.payments, '| Payment count:', profile.payments?.length || 0);
-        if (profile.payments && profile.payments.length > 0) {
-          console.log('[LOGIN] Payment sample:', profile.payments[0]);
-        }
         
         if (Array.isArray(profile)) {
           console.error('[LOGIN] ERROR: Lookup returned array instead of single profile!');
@@ -252,18 +251,23 @@ export const Login: React.FC = () => {
         }
         
         // Override button flow - if user already has a profile, use existing profile regardless of which button clicked
-        secureLog('[LOGIN] User already has a profile - going to dashboard');
-        localStorage.setItem('userProfile', JSON.stringify(sanitizeForStorage(profile)));
+        secureLog('[LOGIN] User already has a profile - going to profile view');
+        const sanitizedProfile = sanitizeForStorage(profile);
+        localStorage.setItem('userProfile', JSON.stringify(sanitizedProfile));
+        console.log('[LOGIN] Profile saved to localStorage, navigating to /profile');
         setIsLoading(false);
-        navigate('/dashboard');
+        // Small delay to ensure localStorage is written before navigation
+        setTimeout(() => {
+          navigate('/profile');
+        }, 100);
         return;
       }
 
-      // NEW USER - Profile not found, go to dashboard (they can create profile from there)
+      // NEW USER - Profile not found, go to profile creation wizard
       if (resp.status === 404) {
-        console.log('[LOGIN] NEW USER - No profile found, going to dashboard');
+        console.log('[LOGIN] NEW USER - No profile found, going to profile creation');
         setIsLoading(false);
-        navigate('/dashboard');
+        navigate('/create');
         return;
       }
 

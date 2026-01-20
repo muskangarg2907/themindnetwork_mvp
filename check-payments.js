@@ -33,9 +33,9 @@ async function checkPayments() {
     if (profilesWithPayments.length > 0) {
       console.log('=== PROFILES WITH PAYMENTS ===\n');
       profilesWithPayments.forEach((p, index) => {
-        console.log(`${index + 1}. ${p.basicInfo?.fullName || 'Unknown'}`);
+        console.log(`${index + 1}. ${p.basicInfo?.fullName?.charAt(0)}*** `);
         console.log(`   ID: ${p._id}`);
-        console.log(`   Phone: ${p.basicInfo?.phone}`);
+        console.log(`   Phone: ****${p.basicInfo?.phone?.slice(-4) || 'N/A'}`);
         console.log(`   Role: ${p.role}`);
         console.log(`   Payment count: ${p.payments.length}`);
         p.payments.forEach((payment, pIdx) => {
@@ -53,13 +53,13 @@ async function checkPayments() {
     
     // Check specific phone number
     const testPhone = '1111111111';
-    console.log(`\n🔍 Searching for phone: ${testPhone}`);
+    console.log(`\n🔍 Searching for test phone`);
     const testProfile = await profiles.findOne({ 'basicInfo.phone': testPhone });
     
     if (testProfile) {
       console.log('✅ Profile found!');
       console.log(`   ID: ${testProfile._id}`);
-      console.log(`   Name: ${testProfile.basicInfo?.fullName}`);
+      console.log(`   Name: ${testProfile.basicInfo?.fullName?.charAt(0)}***`);
       console.log(`   Role: ${testProfile.role}`);
       console.log(`   Status: ${testProfile.status}`);
       console.log(`   Has payments field? ${!!testProfile.payments}`);
@@ -72,7 +72,7 @@ async function checkPayments() {
         console.log('   ❌ NO PAYMENTS in this profile');
       }
     } else {
-      console.log(`❌ No profile found with phone ${testPhone}`);
+      console.log(`❌ No profile found with test phone`);
     }
     
     // List all profiles with their phone numbers
@@ -80,7 +80,7 @@ async function checkPayments() {
     allProfiles.forEach((p, idx) => {
       const hasPayments = p.payments && p.payments.length > 0;
       const paymentIcon = hasPayments ? '💰' : '  ';
-      console.log(`${paymentIcon} ${idx + 1}. ${p.basicInfo?.fullName} | ${p.basicInfo?.phone} | ${p.role} | Payments: ${p.payments?.length || 0}`);
+      console.log(`${paymentIcon} ${idx + 1}. ${p.basicInfo?.fullName?.charAt(0)}*** | ****${p.basicInfo?.phone?.slice(-4) || 'N/A'} | ${p.role} | Payments: ${p.payments?.length || 0}`);
     });
     
   } catch (error) {

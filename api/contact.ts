@@ -133,7 +133,7 @@ Submitted on: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
           // Don't fail the request if email sending fails
         }
       } else {
-        console.log('RESEND_API_KEY not set. Email not sent. Email data:', emailData);
+        console.log('RESEND_API_KEY not set. Email not sent.');
       }
     } catch (emailError) {
       console.error('Error sending email:', emailError);

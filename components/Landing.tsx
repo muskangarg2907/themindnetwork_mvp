@@ -95,28 +95,52 @@ export const Landing: React.FC = () => {
             >
               For Providers
             </button>
-            <button
-              onClick={() => navigate('/login')}
-              className="px-6 py-2 text-base font-semibold shadow-md rounded-lg transition-all text-white"
-              style={{ backgroundColor: 'var(--color-primary)' }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary-hover)'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary)'}
-            >
-              <i className="fas fa-sign-in-alt mr-2"></i>Login
-            </button>
+            {isLoggedIn ? (
+              <button
+                onClick={() => navigate('/profile')}
+                className="px-6 py-2 text-base font-semibold shadow-md rounded-lg transition-all text-white"
+                style={{ backgroundColor: 'var(--color-primary)' }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary-hover)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary)'}
+              >
+                <i className="fas fa-user-circle mr-2"></i>Go to Profile
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate('/login')}
+                className="px-6 py-2 text-base font-semibold shadow-md rounded-lg transition-all text-white"
+                style={{ backgroundColor: 'var(--color-primary)' }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary-hover)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary)'}
+              >
+                <i className="fas fa-sign-in-alt mr-2"></i>Login
+              </button>
+            )}
           </div>
 
-          {/* Mobile Login Button */}
+          {/* Mobile Button */}
           <div className="md:hidden">
-            <button
-              onClick={() => navigate('/login')}
-              className="px-4 py-2 text-sm font-medium rounded-lg transition-all text-white"
-              style={{ backgroundColor: 'var(--color-primary)' }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary-hover)'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary)'}
-            >
-              Login <i className="fas fa-sign-in-alt ml-1"></i>
-            </button>
+            {isLoggedIn ? (
+              <button
+                onClick={() => navigate('/profile')}
+                className="px-4 py-2 text-sm font-medium rounded-lg transition-all text-white"
+                style={{ backgroundColor: 'var(--color-primary)' }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary-hover)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary)'}
+              >
+                Profile <i className="fas fa-user-circle ml-1"></i>
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate('/login')}
+                className="px-4 py-2 text-sm font-medium rounded-lg transition-all text-white"
+                style={{ backgroundColor: 'var(--color-primary)' }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary-hover)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary)'}
+              >
+                Login <i className="fas fa-sign-in-alt ml-1"></i>
+              </button>
+            )}
           </div>
         </div>
       </nav>
@@ -140,7 +164,7 @@ export const Landing: React.FC = () => {
 
           <div className="flex flex-col items-center gap-6 mb-12">
             <button 
-              onClick={() => navigate('/login', { state: { role: 'client' } })}
+              onClick={() => navigate(isLoggedIn ? '/profile' : '/login', { state: { role: 'client' } })}
               className="text-lg px-14 py-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 text-white font-semibold"
               style={{ backgroundColor: 'var(--color-primary)' }}
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary-hover)'}
@@ -241,12 +265,8 @@ export const Landing: React.FC = () => {
 
                 <button
                   onClick={() => {
-                    if (!isLoggedIn) {
-                      alert('Please login first to select a plan');
-                      navigate('/login', { state: { role: 'client' } });
-                    } else {
-                      navigate('/payment');
-                    }
+                    // Always navigate to plans page to ensure proper auth flow
+                    navigate('/plans');
                   }}
                   className="w-full py-4 rounded-xl text-lg font-semibold shadow-lg transition-all hover:shadow-xl text-white"
                   style={{ backgroundColor: plan.highlight ? 'var(--color-primary)' : 'var(--color-accent)' }}

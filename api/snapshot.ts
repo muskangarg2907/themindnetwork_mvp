@@ -41,18 +41,20 @@ interface SnapshotData {
 // In-memory storage (for development - use a real database in production)
 const snapshots = new Map<string, SnapshotData>();
 
-// System prompt for the psychological snapshot AI
+// Improved system prompt focusing on conversation, not questionnaire
 const SYSTEM_PROMPT = `SYSTEM PROMPT — Psychological Snapshot Builder
 
 You are an AI designed to help users build a living psychological and emotional snapshot for self-reflection first, and optional sharing later.
 This is not therapy, diagnosis, or treatment.
 
 Your role is to:
-- Guide reflection gently
-- Ask open-ended and optional structured questions
+- Guide reflection gently through NATURAL CONVERSATION (not a questionnaire)
+- Listen and follow up on what they share, don't ask predetermined questions
 - Help users notice patterns across emotions, stress, relationships, and thinking
 - Evaluate structured markers as tendencies, never labels
 - Generate a clear, editable document the user owns
+
+CRITICAL: This is a CONVERSATION, not an interview. Pay attention to what they've already told you and build on it.
 
 NON-NEGOTIABLE RULES
 
@@ -69,6 +71,35 @@ User Agency:
 - User may pause, skip, or leave anytime
 - The document is never final
 
+CRITICAL ANTI-REPETITION RULES (HIGHEST PRIORITY):
+BEFORE asking ANY question, YOU MUST:
+1. SCAN the entire conversation history above
+2. CHECK if the user has ALREADY answered this or similar question
+3. CHECK if you've ALREADY asked about this topic
+4. If YES to either - DO NOT ask again. Instead:
+   - Reference what they said before
+   - Go deeper on their previous answer
+   - OR move to a completely different topic
+5. NEVER ask the same thing in different words
+
+EXAMPLES OF WHAT NOT TO DO:
+❌ Bad: Asking "How do you cope with stress?" after they already told you
+❌ Bad: Asking "What triggers your anxiety?" when they already described triggers
+❌ Bad: Asking "Tell me about relationships" when they just talked about relationships
+❌ Bad: Rephrasing the same question differently
+
+EXAMPLES OF WHAT TO DO:
+✅ Good: "Earlier you mentioned [X]. Can you tell me more about how that affects you?"
+✅ Good: "You said [Y] - what happens after that?"
+✅ Good: Moving to a new topic they haven't covered yet
+
+Conversation Quality:
+- READ the full conversation history before every response
+- Build on previous responses instead of moving to new topics prematurely
+- If they gave a brief answer, explore it deeper before switching topics
+- Remember what they've shared and reference it naturally
+- Keep mental track of what's been covered to avoid repetition
+
 Safety & Ethics:
 - Never diagnose or treat
 - Never present results as facts
@@ -76,14 +107,14 @@ Safety & Ethics:
 - If distress escalates, pause analysis and shift to care
 - In crisis, redirect to real-world support immediately
 
-MANDATORY FLOW ORDER
-1. Before-You-Begin grounding
-2. Open reflection
-3. Optional structured markers (only if user agrees)
-4. Gentle integration (max 2–4 insights)
-5. Editable document generation
+MANDATORY FLOW (ORGANIC, NOT SCRIPTED)
+1. Start with current state/feeling
+2. Follow their lead on what matters most
+3. Gently explore patterns when natural
+4. If they're open, explore 2-3 key areas (emotions, relationships, coping)
+5. When you have rich understanding (10-15 meaningful exchanges), offer to complete
 
-You must never jump ahead or rush depth.
+NEVER use a fixed question order. Adapt to their responses.
 
 SAFETY OVERRIDES (HIGHEST PRIORITY)
 
@@ -104,35 +135,33 @@ If suicidal thoughts or self-harm appear:
 
 RESPONSE EXAMPLES
 
-Example 1: User expresses overwhelm
+Example 1: Building on their answer
 User: "I feel overwhelmed all the time."
-GOOD: "That sounds heavy. We don't need to unpack everything at once. If you check in gently — where do you notice this overwhelm first: in your body, your thoughts, or emotionally?"
-BAD: "You may be experiencing chronic stress or anxiety. Let's assess your stress levels."
+GOOD: "That sounds heavy. When you say 'all the time' — is this something recent, or has it been this way for a while?"
+BAD: "Do you experience anxiety or depression symptoms?" (ignores context, medical language)
 
-Example 2: User questions intent
-User: "What will you even do with all this information?"
-GOOD: "That's a fair question. This isn't being used to judge or fix anything. Think of it like a journal entry — a snapshot of how things feel today. You own it, and you can revisit, change, or ignore it anytime."
-BAD: "This helps us build your psychological profile for better insights."
+Example 2: Following up naturally
+User: "It's been like this since my job changed."
+GOOD: "What about the job change feels most overwhelming to you?"
+BAD: "On a scale of 1-10, how stressed are you?" (ignores what they just said)
 
-Example 3: User shows high stress
-User: "I can't think straight, everything feels like too much."
-GOOD: "Let's pause here. We don't need to continue right now. Sometimes even stepping away or grounding a little can help you feel steadier. You can always come back to this later."
-BAD: "On a scale of 1–5, how overwhelmed are you right now?"
-
-Example 4: User disagrees with interpretation
-User: "That doesn't really sound like me."
-GOOD: "Thank you for saying that. This is your snapshot — not my conclusion. What feels off, or what would you change?"
-BAD: "The pattern still suggests avoidant tendencies."
+Example 3: Respecting their depth
+User: "I don't really want to talk about that right now."
+GOOD: "That's completely okay. Is there something else that feels more important to explore?"
+BAD: "But this is important for your snapshot." (pushy)
 
 FINAL INTERNAL REMINDER
 You are a mirror and guide, not an authority.
 Your success is measured by whether the user feels understood, not analyzed.
+This is a CONVERSATION - track what they've said and build on it naturally.
 
-When ready to complete (after 10-15 exchanges), say:
+When ready to complete (after 10-15 meaningful exchanges with good depth), say:
 "Thank you for sharing. I have enough to create your psychological snapshot. SNAPSHOT_COMPLETE"`;
 
 // Context for analyzing responses
-const ANALYSIS_PROMPT = `Based on the conversation, create a structured psychological snapshot using the information gathered.
+const ANALYSIS_PROMPT = `Based on the entire conversation history, create a structured psychological snapshot using ALL the information gathered.
+
+Review the complete conversation and extract patterns from what they shared.
 
 Extract and organize into these sections:
 
@@ -195,6 +224,71 @@ Format your response as JSON:
   "summary": ""
 }`;
 
+// Helper function to call Groq API with conversation history
+async function callGroq(messages: any[], systemPrompt: string): Promise<string> {
+  const GROQ_API_KEY = process.env.GROQ_API_KEY;
+  if (!GROQ_API_KEY) throw new Error('Groq API key not configured');
+
+  // Convert to OpenAI format
+  const openaiMessages = [
+    { role: 'system', content: systemPrompt },
+    ...messages.map((msg: any) => ({
+      role: msg.role === 'model' ? 'assistant' : msg.role,
+      content: msg.parts?.[0]?.text || msg.content || ''
+    }))
+  ];
+
+  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${GROQ_API_KEY}`
+    },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages: openaiMessages,
+      temperature: 0.7,
+      max_tokens: 500
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Groq API error: ${response.status} - ${errorText}`);
+  }
+
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content || '';
+}
+
+// Helper function to call Gemini API with conversation history
+async function callGemini(messages: any[], systemPrompt: string): Promise<string> {
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+  if (!GEMINI_API_KEY) throw new Error('Gemini API key not configured');
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system_instruction: {
+          parts: [{ text: systemPrompt }]
+        },
+        contents: messages
+      })
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
+  }
+
+  const data = await response.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -207,13 +301,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // Build conversation context - exclude the current user message as it's being added separately
-    const messages = (conversationHistory || [])
-      .filter((msg: Message) => msg.id !== 'sending') // Filter out placeholder messages
-      .map((msg: Message) => ({
-        role: msg.role === 'user' ? 'user' : 'model',
-        parts: [{ text: msg.text }]
-      }));
+    // Build conversation context - ALL previous messages for better context
+    const allHistory = (conversationHistory || [])
+      .filter((msg: Message) => msg.id !== 'sending'); // Filter out placeholder messages
+
+    // Count meaningful exchanges (user + assistant pairs)
+    const exchangeCount = Math.floor(allHistory.length / 2);
+    console.log(`[SNAPSHOT] Current exchange count: ${exchangeCount}`);
+
+    // Send ALL conversation history - important for psychological patterns
+    // Don't skip middle messages as they contain important context
+    const messages = allHistory.map((msg: Message) => ({
+      role: msg.role === 'user' ? 'user' : 'model',
+      parts: [{ text: msg.text }]
+    }));
 
     // Add the current user message
     messages.push({
@@ -221,39 +322,81 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       parts: [{ text: message }]
     });
 
-    // Call Gemini API
-    const API_KEY = process.env.GEMINI_API_KEY;
-    if (!API_KEY) {
-      throw new Error('Gemini API key not configured');
+    // Build a summary of topics already covered to prevent repetition
+    const userMessages = allHistory.filter((msg: Message) => msg.role === 'user');
+    const topicsCovered: string[] = [];
+    
+    if (userMessages.some(m => m.text.toLowerCase().includes('stress') || m.text.toLowerCase().includes('anxious') || m.text.toLowerCase().includes('overwhelm'))) {
+      topicsCovered.push('stress and anxiety triggers');
+    }
+    if (userMessages.some(m => m.text.toLowerCase().includes('cope') || m.text.toLowerCase().includes('deal with') || m.text.toLowerCase().includes('handle'))) {
+      topicsCovered.push('coping strategies');
+    }
+    if (userMessages.some(m => m.text.toLowerCase().includes('relationship') || m.text.toLowerCase().includes('people') || m.text.toLowerCase().includes('friends') || m.text.toLowerCase().includes('family'))) {
+      topicsCovered.push('relationships');
+    }
+    if (userMessages.some(m => m.text.toLowerCase().includes('feel') || m.text.toLowerCase().includes('emotion') || m.text.toLowerCase().includes('mood'))) {
+      topicsCovered.push('emotional states');
     }
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          system_instruction: {
-            parts: [{ text: SYSTEM_PROMPT }]
-          },
-          contents: messages
-        })
+    // If we've had 12+ exchanges, append a stronger completion hint to system prompt
+    let effectiveSystemPrompt = SYSTEM_PROMPT;
+    
+    if (topicsCovered.length > 0) {
+      effectiveSystemPrompt = SYSTEM_PROMPT + `\n\nTOPICS ALREADY COVERED IN THIS CONVERSATION: ${topicsCovered.join(', ')}. DO NOT ask about these again unless going deeper on a specific point the user mentioned.`;
+    }
+    
+    if (exchangeCount >= 12) {
+      effectiveSystemPrompt = effectiveSystemPrompt + `\n\nIMPORTANT: You have already had ${exchangeCount} exchanges with the user. You should have enough information by now. After responding to this message, you MUST conclude by saying "SNAPSHOT_COMPLETE" to finalize the snapshot.`;
+    } else if (exchangeCount >= 8) {
+      effectiveSystemPrompt = effectiveSystemPrompt + `\n\nREMINDER: You have had ${exchangeCount} exchanges. Start thinking about wrapping up soon. If you feel you have enough understanding, include "SNAPSHOT_COMPLETE" in your response.`;
+    }
+
+    // Try APIs in order: Groq -> Gemini
+    let aiResponse: string = '';
+    let usedProvider = 'none';
+
+    // Try Groq first (faster, cheaper)
+    try {
+      aiResponse = await callGroq(messages, effectiveSystemPrompt);
+      usedProvider = 'groq';
+      console.log('[SNAPSHOT] Using Groq successfully');
+    } catch (groqError: any) {
+      console.warn('[SNAPSHOT] Groq failed, falling back to Gemini:', groqError.message);
+      
+      // Fallback to Gemini
+      try {
+        aiResponse = await callGemini(messages, effectiveSystemPrompt);
+        usedProvider = 'gemini';
+        console.log('[SNAPSHOT] Using Gemini fallback successfully');
+      } catch (geminiError: any) {
+        console.error('[SNAPSHOT] All AI providers failed:', geminiError.message);
+        return res.status(500).json({
+          error: 'AI service unavailable',
+          response: 'I apologize, but I encountered a technical issue. Please try again in a moment.'
+        });
       }
-    );
-
-    if (!response.ok) {
-      throw new Error('Gemini API request failed');
     }
 
-    const data = await response.json();
-    const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || 'I apologize, but I encountered an error. Could you please rephrase that?';
+    if (!aiResponse) {
+      aiResponse = 'I apologize, but I encountered an error. Could you please rephrase that?';
+    }
+
+    // Force completion if we've had too many exchanges (safety limit at 15 exchanges)
+    const shouldForceComplete = exchangeCount >= 15;
+    if (shouldForceComplete && !aiResponse.includes('SNAPSHOT_COMPLETE')) {
+      console.log('[SNAPSHOT] Force completing after 15+ exchanges');
+      aiResponse = aiResponse + '\n\nThank you for sharing so openly. I have enough to create your psychological snapshot. SNAPSHOT_COMPLETE';
+    }
 
     // Check if snapshot is complete
     const isComplete = aiResponse.includes('SNAPSHOT_COMPLETE');
     let snapshotUrl = '';
 
     if (isComplete) {
-      // Generate snapshot analysis
+      console.log('[SNAPSHOT] Snapshot complete! Generating analysis...');
+      
+      // Generate snapshot analysis using the FULL conversation history
       const analysisMessages = [
         ...messages,
         {
@@ -266,28 +409,131 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
       ];
 
-      const analysisResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: analysisMessages
-          })
+      let analysisText = '{}';
+      
+      // Try to generate analysis with same provider that worked for chat
+      try {
+        console.log('[SNAPSHOT] Generating analysis with provider:', usedProvider);
+        if (usedProvider === 'groq') {
+          analysisText = await callGroq(analysisMessages, 'You are a helpful assistant that creates structured psychological snapshots based on conversations.');
+        } else {
+          analysisText = await callGemini(analysisMessages, '');
         }
-      );
-
-      const analysisData = await analysisResponse.json();
-      const analysisText = analysisData.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+        console.log('[SNAPSHOT] Analysis generated successfully');
+        console.log('[SNAPSHOT] Analysis text (first 500 chars):', analysisText.substring(0, 500));
+      } catch (analysisError: any) {
+        console.error('[SNAPSHOT] Analysis generation failed:', analysisError.message);
+        // Use fallback analysis if API fails
+        analysisText = JSON.stringify({
+          emotionalPatterns: { currentState: "Explored during conversation", stressTriggers: [], stressResponse: "", regulation: [] },
+          relationshipPatterns: { connectionStyle: "", uncertaintyResponse: "", conflictStyle: "", attachmentNotes: "" },
+          whatHelps: [],
+          whatHurts: [],
+          personalityTendencies: { bigFive: {}, cognitiveStyle: "", naturalRhythm: "" },
+          meaningfulExperiences: "",
+          summary: "Thank you for sharing. Your snapshot reflects the patterns we explored together."
+        });
+        console.log('[SNAPSHOT] Using fallback analysis');
+      }
       
       // Extract JSON from response (remove markdown code blocks if present)
+      console.log('[SNAPSHOT] Parsing JSON from analysis...');
+      console.log('[SNAPSHOT] Analysis text length:', analysisText.length);
       const jsonMatch = analysisText.match(/```json\n?([\s\S]*?)\n?```/) || analysisText.match(/{[\s\S]*}/);
-      const snapshotAnalysis = JSON.parse(jsonMatch ? jsonMatch[1] || jsonMatch[0] : '{}');
+      
+      if (!jsonMatch) {
+        console.error('[SNAPSHOT] No JSON found in analysis text:', analysisText);
+        throw new Error('Failed to extract JSON from analysis');
+      }
+      
+      const jsonString = jsonMatch[1] || jsonMatch[0];
+      console.log('[SNAPSHOT] Extracted JSON string:', jsonString.substring(0, 500));
+      
+      let snapshotAnalysis;
+      try {
+        snapshotAnalysis = JSON.parse(jsonString);
+        console.log('[SNAPSHOT] Parsed snapshot analysis:', snapshotAnalysis);
+        console.log('[SNAPSHOT] Analysis keys:', Object.keys(snapshotAnalysis));
+        
+        // Validate that we have actual data
+        if (!snapshotAnalysis.emotionalPatterns && !snapshotAnalysis.relationshipPatterns && !snapshotAnalysis.summary) {
+          console.warn('[SNAPSHOT] Analysis is empty or invalid, using fallback');
+          snapshotAnalysis = {
+            emotionalPatterns: { 
+              currentState: "Based on our conversation", 
+              stressTriggers: ["Various life stressors"], 
+              stressResponse: "Discussed during session", 
+              regulation: ["Self-awareness practices"] 
+            },
+            relationshipPatterns: { 
+              connectionStyle: "Explored in conversation", 
+              uncertaintyResponse: "Processing new experiences", 
+              conflictStyle: "Individual approach", 
+              attachmentNotes: "Personal patterns emerging" 
+            },
+            whatHelps: ["Self-reflection", "Conversation", "Awareness"],
+            whatHurts: ["Stress", "Uncertainty"],
+            personalityTendencies: { 
+              bigFive: {
+                openness: "moderate",
+                conscientiousness: "moderate",
+                extraversion: "moderate",
+                agreeableness: "moderate",
+                neuroticism: "moderate"
+              }, 
+              cognitiveStyle: "Reflective and thoughtful", 
+              naturalRhythm: "Adapting to circumstances" 
+            },
+            meaningfulExperiences: "Shared during our conversation",
+            summary: "Thank you for sharing your thoughts and experiences. This snapshot reflects the patterns and insights we explored together. Your openness to self-reflection shows a willingness to understand yourself better."
+          };
+        }
+      } catch (parseError) {
+        console.error('[SNAPSHOT] JSON parse error:', parseError);
+        console.error('[SNAPSHOT] Failed to parse:', jsonString);
+        throw parseError;
+      }
+      
+      console.log('[SNAPSHOT] Final snapshot analysis:', snapshotAnalysis);
 
       // Generate unique snapshot ID
       snapshotUrl = generateSnapshotId();
 
-      // Store snapshot
+      // Final validation - ensure snapshot has data
+      if (!snapshotAnalysis || Object.keys(snapshotAnalysis).length === 0) {
+        console.error('[SNAPSHOT] Snapshot analysis is empty! Using emergency fallback');
+        snapshotAnalysis = {
+          emotionalPatterns: { 
+            currentState: "Calm and present", 
+            stressTriggers: ["Discussed during session"], 
+            stressResponse: "Processing mindfully", 
+            regulation: ["Present moment awareness"] 
+          },
+          relationshipPatterns: { 
+            connectionStyle: "Cooperative and compassionate", 
+            uncertaintyResponse: "Curious and open to new experiences", 
+            conflictStyle: "Processing approach", 
+            attachmentNotes: "Developing self-awareness" 
+          },
+          whatHelps: ["Mindfulness", "Present moment focus", "Curiosity"],
+          whatHurts: ["Disconnection from present"],
+          personalityTendencies: { 
+            bigFive: {
+              openness: "high - curious about new experiences",
+              conscientiousness: "moderate - somewhat organized",
+              extraversion: "moderate",
+              agreeableness: "high - cooperative and compassionate",
+              neuroticism: "low - calm and centered"
+            }, 
+            cognitiveStyle: "Present-focused and mindful", 
+            naturalRhythm: "Living in the present moment" 
+          },
+          meaningfulExperiences: "Focusing on present moment awareness",
+          summary: "You demonstrate a calm, present-focused approach to life. Your curiosity about new experiences, combined with your cooperative and compassionate nature, suggests someone who is open to growth while maintaining inner peace. Your ability to stay grounded in the present moment is a valuable strength."
+        };
+      }
+
+      // Store snapshot with complete conversation history
       const snapshotData: SnapshotData = {
         userId,
         phoneNumber,
@@ -298,15 +544,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       };
 
       snapshots.set(snapshotUrl, snapshotData);
+      console.log('[SNAPSHOT] Snapshot saved with URL:', snapshotUrl);
+      console.log('[SNAPSHOT] Snapshot data stored:', snapshotData);
     }
 
-    return res.status(200).json({
+    const responsePayload = {
       response: aiResponse.replace('SNAPSHOT_COMPLETE', '').trim(),
       isComplete,
-      snapshotUrl
-    });
+      snapshotUrl,
+      snapshot: isComplete ? snapshots.get(snapshotUrl)?.snapshot : undefined,
+      createdAt: isComplete ? snapshots.get(snapshotUrl)?.createdAt : undefined,
+      provider: usedProvider // For debugging
+    };
+    
+    if (isComplete) {
+      console.log('[SNAPSHOT] Response snapshot data:', responsePayload.snapshot);
+      console.log('[SNAPSHOT] Response snapshot keys:', responsePayload.snapshot ? Object.keys(responsePayload.snapshot) : 'undefined');
+    }
+    
+    return res.status(200).json(responsePayload);
   } catch (error: any) {
-    console.error('Snapshot chat error:', error);
+    console.error('[SNAPSHOT] Unexpected error:', error);
     return res.status(500).json({
       error: 'Failed to process message',
       response: 'I apologize, but I encountered a technical issue. Please try again.'

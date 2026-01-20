@@ -66,11 +66,18 @@ export const ProfileWizard: React.FC = () => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user && user.phoneNumber) {
         try {
-          const response = await fetch(`/api/profiles?action=lookup&phone=${encodeURIComponent(user.phoneNumber)}`);
+          // Normalize phone number for consistent lookups
+          const normalizedPhone = user.phoneNumber.replace(/\s+/g, '');
+          console.log('[ProfileWizard] Checking for existing profile');
+          const response = await fetch(`/api/profiles?action=lookup&phone=${encodeURIComponent(normalizedPhone)}`);
           if (response.ok) {
             const profile = await response.json();
-            console.log('[ProfileWizard] User already has profile:', profile);
-            setExistingProfile(profile);
+            console.log('[ProfileWizard] Profile exists, redirecting');
+            // Save to localStorage so they don't see this check again
+            localStorage.setItem('userProfile', JSON.stringify(profile));
+            // Redirect directly to profile
+            navigate('/profile');
+            return;
           }
         } catch (err) {
           console.error('[ProfileWizard] Error checking profile:', err);
@@ -80,7 +87,7 @@ export const ProfileWizard: React.FC = () => {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [navigate]);
 
   // Add keyboard listener for Enter key
   React.useEffect(() => {
