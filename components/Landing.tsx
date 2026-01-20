@@ -159,7 +159,7 @@ export const Landing: React.FC = () => {
           </h1>
           
           <p className="text-xl md:text-2xl mb-12 max-w-3xl mx-auto leading-relaxed font-light" style={{ color: 'var(--color-text-muted)' }}>
-            Personalized matching with licensed professionals who understand your unique needs.
+            Personalized matching with trained professionals who understand your unique needs.
           </p>
 
           <div className="flex flex-col items-center gap-6 mb-12">
@@ -182,7 +182,7 @@ export const Landing: React.FC = () => {
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold text-base" style={{ color: 'var(--color-text-primary)' }}>Verified Professionals</h3>
-                <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Licensed & experienced therapists</p>
+                <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Trained & experienced therapists</p>
               </div>
             </div>
             <div className="flex items-start gap-3 text-left">
@@ -295,7 +295,7 @@ export const Landing: React.FC = () => {
           <div className="grid md:grid-cols-3 gap-6 mb-12">
             <div className="bg-white rounded-2xl p-6 shadow-md">
               <div className="flex items-center gap-2 mb-3">
-                <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Client testimonial avatar" className="w-10 h-10 rounded-full" loading="lazy" />
+                <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Client testimonial avatar" className="w-10 h-10 rounded-full blur-md" loading="lazy" />
                 <span className="text-xs text-gray-500">j*** s****</span>
                 <div className="text-left">
                   <div className="flex text-yellow-500 text-sm">
@@ -314,7 +314,7 @@ export const Landing: React.FC = () => {
 
             <div className="bg-white rounded-2xl p-6 shadow-md">
               <div className="flex items-center gap-2 mb-3">
-                <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Client testimonial avatar" className="w-10 h-10 rounded-full" loading="lazy" />
+                <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Client testimonial avatar" className="w-10 h-10 rounded-full blur-md" loading="lazy" />
                 <span className="text-xs text-gray-500">a*** k****</span>
                 <div className="text-left">
                   <div className="flex text-yellow-500 text-sm">
@@ -333,7 +333,7 @@ export const Landing: React.FC = () => {
 
             <div className="bg-white rounded-2xl p-6 shadow-md">
               <div className="flex items-center gap-2 mb-3">
-                <img src="https://randomuser.me/api/portraits/men/65.jpg" alt="Client testimonial avatar" className="w-10 h-10 rounded-full" loading="lazy" />
+                <img src="https://randomuser.me/api/portraits/men/65.jpg" alt="Client testimonial avatar" className="w-10 h-10 rounded-full blur-md" loading="lazy" />
                 <span className="text-xs text-gray-500">r*** p****</span>
                 <div className="text-left">
                   <div className="flex text-yellow-500 text-sm">

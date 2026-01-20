@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { UserProfile } from '../types';
-import { ChatBot } from './ChatBot';
 import { Button } from './ui/Button';
 import { Input, TextArea } from './ui/Input';
 import { sanitizeForStorage, secureLog } from '../services/security';
 import { apiClient } from '../services/apiClient';
 import { StatusBadge } from './ui/StatusBadge';
 // auth handled via useAuth hook
-import { useAuth } from '../hooks/useAuth';
+import { useAuth, signOutUser } from '../hooks/useAuth';
 import { useProfile } from '../hooks/useProfile';
 
 export const ProfileView: React.FC = () => {
@@ -281,13 +280,7 @@ export const ProfileView: React.FC = () => {
                 )}
                 <Button variant="outline" onClick={async () => {
                     try {
-                        // Sign out from Firebase
-                        await auth.signOut();
-                        // Clear localStorage
-                        localStorage.removeItem('authToken');
-                        localStorage.removeItem('userProfile');
-                        localStorage.removeItem('userPhone');
-                        // Navigate to landing
+                        await signOutUser();
                         navigate('/');
                     } catch (error) {
                         console.error('[PROFILE] Logout error:', error);
@@ -865,8 +858,7 @@ export const ProfileView: React.FC = () => {
             </div>
         )}
 
-        {/* RAG Chatbot Integration */}
-        <ChatBot profile={profile} />
+                {/* Chat support removed as requested */}
       </div>
     </div>
   );
