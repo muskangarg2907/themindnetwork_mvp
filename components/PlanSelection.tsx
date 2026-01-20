@@ -194,7 +194,7 @@ export const PlanSelection: React.FC = () => {
             Choose Your <span className="text-transparent bg-clip-text bg-gradient-to-r" style={{ backgroundImage: 'linear-gradient(to right, var(--color-primary), var(--color-secondary))' }}>Care Plan</span>
           </h1>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-            Select the plan that best fits your mental wellness journey. Not sure? Book a free consultation with our team.
+            Select the plan that best fits your mental wellness journey. Questions? Contact Us.
           </p>
         </div>
 
@@ -332,8 +332,8 @@ export const PlanSelection: React.FC = () => {
             variant="outline"
             className="w-full sm:w-auto px-8 py-3 text-lg"
           >
-            <i className="fas fa-calendar mr-2"></i>
-            Need Help? Book Free Consultation
+            <i className="fas fa-envelope mr-2"></i>
+            Questions? Contact Us
           </Button>
 
           <Button
