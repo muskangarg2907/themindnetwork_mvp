@@ -5,6 +5,7 @@ import { Input } from './ui/Input';
 import { auth } from '../services/firebase';
 import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
 import { sanitizeForStorage, secureLog } from '../services/security';
+import { apiClient } from '../services/apiClient';
 
 const COUNTRY_CODES = [
   { code: '+91', country: 'IN' },
@@ -229,15 +230,12 @@ export const Login: React.FC = () => {
       localStorage.setItem('userPhone', normalizedPhone);
       console.log('[LOGIN] Phone normalized for lookup');
       
-      // Check if profile exists
+      // Check if profile exists via API client
       console.log('[LOGIN] Checking if profile exists');
-      const resp = await fetch(`/api/profiles?action=lookup&phone=${encodeURIComponent(normalizedPhone)}`);
+      const profile = await apiClient.lookupProfileByPhone(normalizedPhone);
       
-      console.log('[LOGIN] Lookup response status:', resp.status);
-      
-      if (resp.ok) {
+      if (profile) {
         // EXISTING USER - Profile found
-        const profile = await resp.json();
         console.log('[LOGIN] EXISTING USER - Found profile');
         console.log('[LOGIN] Profile type check:', Array.isArray(profile) ? 'ARRAY (ERROR!)' : 'OBJECT (CORRECT)');
         console.log('[LOGIN] Profile role:', profile.role, '| Button flow role:', preselectedRole);
@@ -261,21 +259,13 @@ export const Login: React.FC = () => {
           navigate('/profile');
         }, 100);
         return;
-      }
-
-      // NEW USER - Profile not found, go to profile creation wizard
-      if (resp.status === 404) {
+      } else {
+        // NEW USER - Profile not found, go to profile creation wizard
         console.log('[LOGIN] NEW USER - No profile found, going to profile creation');
         setIsLoading(false);
         navigate('/create');
         return;
       }
-
-      // Server error - still allow them to access dashboard
-      const errBody = await resp.json().catch(() => ({}));
-      console.warn('[LOGIN] Lookup error:', errBody, '- going to dashboard');
-      setIsLoading(false);
-      navigate('/dashboard');
     } catch (err: any) {
       console.error('[LOGIN] OTP verification error:', err);
       console.error('[LOGIN] Error code:', err.code);

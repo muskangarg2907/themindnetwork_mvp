@@ -5,6 +5,7 @@ import { ChatBot } from './ChatBot';
 import { Button } from './ui/Button';
 import { Input, TextArea } from './ui/Input';
 import { sanitizeForStorage, secureLog } from '../services/security';
+import { apiClient } from '../services/apiClient';
 import { StatusBadge } from './ui/StatusBadge';
 import { auth } from '../services/firebase';
 
@@ -204,23 +205,8 @@ export const ProfileView: React.FC = () => {
 
   const handleSave = async () => {
       try {
-        const profileId = editData._id;
-        console.log('[PROFILE] Saving profile');
-        
-        // Save to backend with _id field
-        const response = await fetch('/api/profiles', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...editData, _id: profileId })
-        });
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('[PROFILE] Save failed:', response.status, errorText);
-          throw new Error('Failed to save profile');
-        }
-        
-        const savedProfile = await response.json();
+                console.log('[PROFILE] Saving profile');
+                const savedProfile = await apiClient.updateProfile(editData as any);
         secureLog('[PROFILE] Save successful');
         setProfile(savedProfile);
         setEditData(savedProfile);

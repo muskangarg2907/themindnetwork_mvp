@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { sanitizeForStorage, secureLog } from '../services/security';
+import { apiClient } from '../services/apiClient';
 
 interface Plan {
   id: string;
@@ -185,22 +186,8 @@ export const Payment: React.FC = () => {
       console.log('[PAYMENT] Updating profile');
       console.log('[PAYMENT] Updated profile has', updatedProfile.payments.length, 'payment(s)');
 
-      // Save to backend
-      const response = await fetch('/api/profiles', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedProfile),
-      });
-
-      console.log('[PAYMENT] Backend response status:', response.status);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('[PAYMENT] Backend save failed:', response.status, errorText);
-        throw new Error('Failed to update profile with payment: ' + errorText);
-      }
-
-      const savedProfile = await response.json();
+      // Save to backend via API client
+      const savedProfile = await apiClient.updateProfile(updatedProfile as any);
       
       // Update localStorage with sanitized data
       const sanitized = sanitizeForStorage(savedProfile);

@@ -14,6 +14,7 @@ import { generateProfileSummary, generateProviderBio } from '../services/geminiS
 import { saveProfile } from '../services/api';
 import { auth } from '../services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import { apiClient } from '../services/apiClient';
 
 const INITIAL_PROFILE: UserProfile = {
   status: 'draft',
@@ -69,9 +70,8 @@ export const ProfileWizard: React.FC = () => {
           // Normalize phone number for consistent lookups
           const normalizedPhone = user.phoneNumber.replace(/\s+/g, '');
           console.log('[ProfileWizard] Checking for existing profile');
-          const response = await fetch(`/api/profiles?action=lookup&phone=${encodeURIComponent(normalizedPhone)}`);
-          if (response.ok) {
-            const profile = await response.json();
+          const profile = await apiClient.lookupProfileByPhone(normalizedPhone);
+          if (profile) {
             console.log('[ProfileWizard] Profile exists, redirecting');
             // Save to localStorage so they don't see this check again
             localStorage.setItem('userProfile', JSON.stringify(profile));
