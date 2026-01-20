@@ -13,7 +13,8 @@ interface Question {
   text: string;
   buttons?: string[];
   slider?: boolean;
-  condition?: () => boolean;
+  // Evaluate visibility based on the latest responses snapshot
+  condition?: (r: typeof responses) => boolean;
 }
 
 export const StepChatbotIntake: React.FC<StepChatbotIntakeProps> = ({ data, updateData, onComplete }) => {
@@ -50,7 +51,7 @@ export const StepChatbotIntake: React.FC<StepChatbotIntakeProps> = ({ data, upda
     {
       key: 'priorExperience',
       text: "How was your experience with therapy?",
-      condition: () => responses.hasPriorTherapy
+      condition: (r) => r.hasPriorTherapy
     },
     {
       key: 'hasDiagnosis',
@@ -60,7 +61,7 @@ export const StepChatbotIntake: React.FC<StepChatbotIntakeProps> = ({ data, upda
     {
       key: 'diagnosisMedications',
       text: "Please share your diagnosis and medications.",
-      condition: () => responses.hasDiagnosis
+      condition: (r) => r.hasDiagnosis
     },
     {
       key: 'presentingProblem',
@@ -74,7 +75,7 @@ export const StepChatbotIntake: React.FC<StepChatbotIntakeProps> = ({ data, upda
     {
       key: 'location',
       text: "Which city do you stay in?",
-      condition: () => responses.mode === 'offline'
+      condition: (r) => r.mode === 'offline'
     },
     {
       key: 'budget',
@@ -207,7 +208,7 @@ export const StepChatbotIntake: React.FC<StepChatbotIntakeProps> = ({ data, upda
     // Update state with new responses
     setResponses(updatedResponses);
 
-    // Find next question using the updated responses
+    // Find next question using the updated responses (not stale state)
     let nextQuestionIndex = currentQuestion + 1;
     
     // Skip conditional questions that shouldn't be shown
@@ -215,7 +216,7 @@ export const StepChatbotIntake: React.FC<StepChatbotIntakeProps> = ({ data, upda
       const nextQ = questions[nextQuestionIndex];
       
       // Check if this question should be skipped based on updated responses
-      if (nextQ.condition && !nextQ.condition()) {
+      if (nextQ.condition && !nextQ.condition(updatedResponses)) {
         nextQuestionIndex++;
         continue;
       }
