@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/Button';
 import { auth } from '../services/firebase';
+import { apiClient } from '../services/apiClient';
 
 interface SnapshotData {
   snapshotId: string;
@@ -48,16 +49,15 @@ export const Dashboard: React.FC = () => {
     try {
       // Normalize phone - remove spaces for consistent lookups
       const normalizedPhone = phone.replace(/\s+/g, '');
-      console.log('[Dashboard] Looking up profile for:', normalizedPhone);
-      const response = await fetch(`/api/profiles?action=lookup&phone=${encodeURIComponent(normalizedPhone)}`);
-      if (response.ok) {
-        const data = await response.json();
-        console.log('[Dashboard] Profile found:', data);
+      console.log('[Dashboard] Looking up profile');
+      const data = await apiClient.lookupProfileByPhone(normalizedPhone);
+      if (data) {
+        console.log('[Dashboard] Profile found');
         setProfile(data);
         // CRITICAL: Save to localStorage so ProfileView can access it
         localStorage.setItem('userProfile', JSON.stringify(data));
         console.log('[Dashboard] Profile saved to localStorage');
-      } else if (response.status === 404) {
+      } else {
         console.log('[Dashboard] No profile found for user');
         setProfile(null);
       }
@@ -94,10 +94,8 @@ export const Dashboard: React.FC = () => {
       }
 
       // Try to fetch from API as well
-      const response = await fetch(`/api/user/snapshots?phone=${encodeURIComponent(normalizedPhone)}`);
-      if (response.ok) {
-        const data = await response.json();
-        const apiSnapshots = data.snapshots || [];
+      // Placeholder: if an endpoint exists later, switch to apiClient
+      const apiSnapshots: SnapshotData[] = [];
         
         // Merge local and API snapshots, removing duplicates
         const allSnapshots = [...localSnapshots];
@@ -108,10 +106,6 @@ export const Dashboard: React.FC = () => {
         });
         
         setSnapshots(allSnapshots);
-      } else {
-        // If API fails, just use local snapshots
-        setSnapshots(localSnapshots);
-      }
     } catch (err) {
       console.error('Failed to load snapshots:', err);
       // Fallback to local snapshots only

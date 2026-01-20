@@ -8,6 +8,8 @@ import { sanitizeForStorage, secureLog } from '../services/security';
 import { apiClient } from '../services/apiClient';
 import { StatusBadge } from './ui/StatusBadge';
 import { auth } from '../services/firebase';
+import { useAuth } from '../hooks/useAuth';
+import { useProfile } from '../hooks/useProfile';
 
 export const ProfileView: React.FC = () => {
   const navigate = useNavigate();
@@ -22,6 +24,18 @@ export const ProfileView: React.FC = () => {
   const [isPaymentsExpanded, setIsPaymentsExpanded] = useState(false);
   const [snapshots, setSnapshots] = useState<any[]>([]);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
+
+    // Centralized auth + profile loading
+    const { phoneNumber, isLoading: isAuthLoading } = useAuth();
+    const { profile: hookProfile, isLoading: isProfileLoading } = useProfile(phoneNumber);
+
+    // Sync hook profile into local state for existing UI paths
+    useEffect(() => {
+        if (hookProfile) {
+            setProfile(hookProfile);
+            setEditData(hookProfile);
+        }
+    }, [hookProfile]);
 
   useEffect(() => {
     // Check for payment success message
