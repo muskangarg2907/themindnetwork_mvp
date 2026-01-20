@@ -23,7 +23,7 @@ export const ProfileView: React.FC = () => {
   const [paymentWarning, setPaymentWarning] = useState<string>('');
   const [isPaymentsExpanded, setIsPaymentsExpanded] = useState(false);
   const [snapshots, setSnapshots] = useState<any[]>([]);
-  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
+    // Deprecated local auth loading; replaced by useAuth/useProfile
 
     // Centralized auth + profile loading
     const { phoneNumber, isLoading: isAuthLoading } = useAuth();
@@ -66,112 +66,54 @@ export const ProfileView: React.FC = () => {
     }
   }, [location.state]);
 
-  useEffect(() => {
-    // Wait for Firebase auth to initialize first
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (!user) {
-        console.log('[PROFILE] No authenticated user, redirecting to login');
-        setIsLoadingAuth(false);
-        navigate('/login');
-        return;
-      }
-      
-      console.log('[PROFILE] User authenticated:', user.phoneNumber);
-      
-      // Retrieve from storage
-      const stored = localStorage.getItem('userProfile');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        
-        // Safety check: if it's an array, something went wrong
-        if (Array.isArray(parsed)) {
-          console.error('[PROFILE] ERROR: Stored profile is an array! Clearing and redirecting to login.');
-          localStorage.removeItem('userProfile');
-          setIsLoadingAuth(false);
-          navigate('/login');
-          return;
-        }
-        
-        setProfile(parsed);
-        setEditData(parsed);
-        setIsLoadingAuth(false);
-        secureLog('[PROFILE] Loaded profile from localStorage. Payments count:', parsed?.payments?.length || 0);
-        secureLog('[PROFILE] Is client?', parsed?.role === 'client', '| Role:', parsed?.role);
-        if (parsed?.payments?.length > 0) {
-          secureLog('[PROFILE] Payment details:', JSON.stringify(parsed.payments[0], null, 2));
-        }
-        
-        // Load snapshots from API and localStorage
-        const loadSnapshots = async () => {
-          const phone = parsed.basicInfo?.phone;
-          if (!phone) return;
-          
-          const normalizedPhone = phone.replace(/\s+/g, '');
-          const localSnapshots: any[] = [];
-          
-          // Check localStorage for snapshots - only include if phone matches
-          const localSnapshotUrl = localStorage.getItem('psychSnapshot_url');
-          const localSnapshotData = localStorage.getItem('psychSnapshot_data');
-          const localSnapshotPhone = localStorage.getItem('psychSnapshot_phone');
-          
-          // Only include localStorage snapshot if it belongs to the current user
-          if (localSnapshotUrl && localSnapshotData && localSnapshotPhone === normalizedPhone) {
-            try {
-              const data = JSON.parse(localSnapshotData);
-              localSnapshots.push({
-                snapshotId: localSnapshotUrl,
-                phoneNumber: normalizedPhone,
-                snapshot: data.snapshot || { summary: 'Psychological snapshot' },
-                createdAt: data.createdAt || Date.now()
-              });
-            } catch (e) {
-              console.error('[PROFILE] Failed to parse local snapshot:', e);
+    // Redirect unauthenticated users
+    useEffect(() => {
+        if (!isAuthLoading) {
+            const isAuthed = localStorage.getItem('user_authenticated') === 'true';
+            if (!isAuthed) {
+                console.log('[PROFILE] No authenticated user, redirecting to login');
+                navigate('/login');
             }
-          } else if (localSnapshotUrl && localSnapshotData && localSnapshotPhone && localSnapshotPhone !== normalizedPhone) {
-            // Clear localStorage snapshot only if we have a phone mismatch (not if phone is missing)
-            console.log('[PROFILE] Clearing localStorage snapshot from different user');
-            localStorage.removeItem('psychSnapshot_url');
-            localStorage.removeItem('psychSnapshot_data');
-            localStorage.removeItem('psychSnapshot_phone');
-          }
-          
-          // Fetch from API
-          try {
-            const response = await fetch(`/api/user/snapshots?phone=${encodeURIComponent(normalizedPhone)}`);
-            if (response.ok) {
-              const apiData = await response.json();
-              const apiSnapshots = apiData.snapshots || [];
-              
-              // Merge local and API snapshots, removing duplicates
-              const allSnapshots = [...localSnapshots];
-              apiSnapshots.forEach((apiSnap: any) => {
-                if (!allSnapshots.find(s => s.snapshotId === apiSnap.snapshotId)) {
-                  allSnapshots.push(apiSnap);
+        }
+    }, [isAuthLoading, navigate]);
+
+    // Load snapshots when profile is available
+    useEffect(() => {
+        const run = async () => {
+            if (!profile?.basicInfo?.phone) return;
+            const normalizedPhone = profile.basicInfo.phone.replace(/\s+/g, '');
+            const localSnapshots: any[] = [];
+      
+            const localSnapshotUrl = localStorage.getItem('psychSnapshot_url');
+            const localSnapshotData = localStorage.getItem('psychSnapshot_data');
+            const localSnapshotPhone = localStorage.getItem('psychSnapshot_phone');
+      
+            if (localSnapshotUrl && localSnapshotData && localSnapshotPhone === normalizedPhone) {
+                try {
+                    const data = JSON.parse(localSnapshotData);
+                    localSnapshots.push({
+                        snapshotId: localSnapshotUrl,
+                        phoneNumber: normalizedPhone,
+                        snapshot: data.snapshot || { summary: 'Psychological snapshot' },
+                        createdAt: data.createdAt || Date.now()
+                    });
+                } catch (e) {
+                    console.error('[PROFILE] Failed to parse local snapshot:', e);
                 }
-              });
-              
-              // Sort by createdAt descending (newest first)
-              allSnapshots.sort((a, b) => b.createdAt - a.createdAt);
-              setSnapshots(allSnapshots);
-            } else {
-              setSnapshots(localSnapshots);
+            } else if (localSnapshotUrl && localSnapshotData && localSnapshotPhone && localSnapshotPhone !== normalizedPhone) {
+                console.log('[PROFILE] Clearing localStorage snapshot from different user');
+                localStorage.removeItem('psychSnapshot_url');
+                localStorage.removeItem('psychSnapshot_data');
+                localStorage.removeItem('psychSnapshot_phone');
             }
-          } catch (err) {
-            console.error('[PROFILE] Failed to fetch snapshots:', err);
-            setSnapshots(localSnapshots);
-          }
+      
+            // Placeholder: merge with API snapshots when endpoint exists
+            const allSnapshots = [...localSnapshots];
+            allSnapshots.sort((a, b) => b.createdAt - a.createdAt);
+            setSnapshots(allSnapshots);
         };
-        
-        loadSnapshots();
-      } else {
-        console.log('[PROFILE] No profile in localStorage, redirecting to profile wizard');
-        setIsLoadingAuth(false);
-        navigate('/create', { state: { phone: user.phoneNumber } });
-      }
-    });
-    
-    return () => unsubscribe();
-  }, [navigate]);
+        run();
+    }, [profile]);
 
   // If profile was just created, delay polling to avoid race conditions (10s grace period)
   useEffect(() => {
@@ -187,8 +129,8 @@ export const ProfileView: React.FC = () => {
   // Removed constant polling - status updates are managed by admin portal
   // Profile changes are reflected when user refreshes or logs in again
 
-  // Show loading state while checking auth
-  if (isLoadingAuth) {
+    // Show loading state while hooks are loading
+    if (isAuthLoading || isProfileLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
