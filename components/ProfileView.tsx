@@ -7,7 +7,7 @@ import { Input, TextArea } from './ui/Input';
 import { sanitizeForStorage, secureLog } from '../services/security';
 import { apiClient } from '../services/apiClient';
 import { StatusBadge } from './ui/StatusBadge';
-import { auth } from '../services/firebase';
+// auth handled via useAuth hook
 import { useAuth } from '../hooks/useAuth';
 import { useProfile } from '../hooks/useProfile';
 
@@ -27,7 +27,7 @@ export const ProfileView: React.FC = () => {
 
     // Centralized auth + profile loading
     const { phoneNumber, isLoading: isAuthLoading } = useAuth();
-    const { profile: hookProfile, isLoading: isProfileLoading } = useProfile(phoneNumber);
+    const { profile: hookProfile, isLoading: isProfileLoading, updateProfile } = useProfile(phoneNumber);
 
     // Sync hook profile into local state for existing UI paths
     useEffect(() => {
@@ -159,20 +159,18 @@ export const ProfileView: React.FC = () => {
     );
   }
 
-  const handleSave = async () => {
-      try {
-                console.log('[PROFILE] Saving profile');
-                const savedProfile = await apiClient.updateProfile(editData as any);
-        secureLog('[PROFILE] Save successful');
-        setProfile(savedProfile);
-        setEditData(savedProfile);
-        localStorage.setItem('userProfile', JSON.stringify(sanitizeForStorage(savedProfile)));
-        setIsEditing(false);
-      } catch (err) {
-        console.error('Error saving profile:', err);
-        alert('Failed to save profile. Please try again.');
-      }
-  };
+    const handleSave = async () => {
+        try {
+            console.log('[PROFILE] Saving profile');
+            if (!editData) return;
+            await updateProfile(editData);
+            secureLog('[PROFILE] Save successful');
+            setIsEditing(false);
+        } catch (err) {
+            console.error('Error saving profile:', err);
+            alert('Failed to save profile. Please try again.');
+        }
+    };
 
   // Helper for array updates in edit mode
   const handleArrayChange = (section: 'clinical' | 'providerDetails', key: string, value: string) => {
