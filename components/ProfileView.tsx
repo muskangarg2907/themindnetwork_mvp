@@ -22,6 +22,7 @@ export const ProfileView: React.FC = () => {
   const [paymentWarning, setPaymentWarning] = useState<string>('');
   const [isPaymentsExpanded, setIsPaymentsExpanded] = useState(false);
   const [snapshots, setSnapshots] = useState<any[]>([]);
+  const [showSensitiveInfo, setShowSensitiveInfo] = useState(false);
     // Deprecated local auth loading; replaced by useAuth/useProfile
 
     // Centralized auth + profile loading
@@ -486,8 +487,22 @@ export const ProfileView: React.FC = () => {
                                 <div className="space-y-3 text-slate-600">
                                     {profile.clinical?.presentingProblem && (
                                         <div>
-                                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">What brings you here?</p>
-                                            <p className="italic">"{profile.clinical.presentingProblem}"</p>
+                                            <div className="flex items-center justify-between mb-1">
+                                                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">What brings you here?</p>
+                                                <button
+                                                    onClick={() => setShowSensitiveInfo(!showSensitiveInfo)}
+                                                    className="text-slate-400 hover:text-slate-600 transition-colors focus:outline-none"
+                                                    title={showSensitiveInfo ? "Hide sensitive information" : "Show sensitive information"}
+                                                    aria-label={showSensitiveInfo ? "Hide sensitive information" : "Show sensitive information"}
+                                                >
+                                                    <i className={`fas ${showSensitiveInfo ? 'fa-eye-slash' : 'fa-eye'} text-sm`}></i>
+                                                </button>
+                                            </div>
+                                            {showSensitiveInfo ? (
+                                                <p className="italic">"{profile.clinical.presentingProblem}"</p>
+                                            ) : (
+                                                <p className="text-slate-400 italic select-none">••••••••••••••••</p>
+                                            )}
                                         </div>
                                     )}
                                     {profile.clinical?.medications && (
