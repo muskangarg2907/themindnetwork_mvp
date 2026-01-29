@@ -497,9 +497,45 @@ export const Landing: React.FC = () => {
                 </div>
                 <span className="text-lg font-bold text-white">TheMindNetwork</span>
               </div>
-              <p className="text-sm leading-relaxed" style={{ color: 'var(--color-secondary)' }}>
+              <p className="text-sm leading-relaxed mb-3" style={{ color: 'var(--color-secondary)' }}>
                 Connecting you with verified mental health professionals for your wellness journey.
               </p>
+              <div className="flex gap-3">
+                <a
+                  href="https://www.linkedin.com/company/themindnetwork/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-9 h-9 rounded-lg flex items-center justify-center transition-all"
+                  style={{ backgroundColor: 'rgba(163, 177, 138, 0.2)', color: 'var(--color-secondary)' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--color-accent)'; e.currentTarget.style.color = 'white'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(163, 177, 138, 0.2)'; e.currentTarget.style.color = 'var(--color-secondary)'; }}
+                  aria-label="Visit our LinkedIn page"
+                >
+                  <i className="fab fa-linkedin"></i>
+                </a>
+                <a
+                  href="mailto:muskangarg.official@gmail.com"
+                  className="w-9 h-9 rounded-lg flex items-center justify-center transition-all"
+                  style={{ backgroundColor: 'rgba(163, 177, 138, 0.2)', color: 'var(--color-secondary)' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--color-accent)'; e.currentTarget.style.color = 'white'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(163, 177, 138, 0.2)'; e.currentTarget.style.color = 'var(--color-secondary)'; }}
+                  aria-label="Send us an email"
+                >
+                  <i className="fas fa-envelope"></i>
+                </a>
+                <a
+                  href="https://calendar.app.google/tcTjSbY4A2fcoWQW8"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-9 h-9 rounded-lg flex items-center justify-center transition-all"
+                  style={{ backgroundColor: 'rgba(163, 177, 138, 0.2)', color: 'var(--color-secondary)' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--color-accent)'; e.currentTarget.style.color = 'white'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(163, 177, 138, 0.2)'; e.currentTarget.style.color = 'var(--color-secondary)'; }}
+                  aria-label="Book a consultation slot"
+                >
+                  <i className="fas fa-calendar-check"></i>
+                </a>
+              </div>
             </div>
 
             {/* Quick Links */}
@@ -608,7 +644,7 @@ export const Landing: React.FC = () => {
           </div>
 
           {/* Bottom Bar */}
-          <div className="pt-8 text-center" style={{ borderTopWidth: '1px', borderTopColor: 'rgba(163, 177, 138, 0.3)' }}>
+          <div className="text-center">
             <p className="text-sm" style={{ color: 'var(--color-secondary)' }}>
               © {new Date().getFullYear()} TheMindNetwork. All rights reserved.
             </p>
