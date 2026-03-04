@@ -46,29 +46,16 @@ export const Landing: React.FC = () => {
     {
       name: 'Explore',
       icon: 'fa-compass',
-      price: '₹1,799',
-      oldPrice: '₹2,997',
-      description: 'Try different therapists and find your perfect match',
+        price: '₹249',
+      description: 'Start your mental wellness journey with complete confidence',
       features: [
-        'Unlimited consultations with our team',
-        'Try different therapists',
-        'Get 3 therapy sessions'
+        'An exploration call with our team',
+        '10% discount on your first 3 sessions',
+        'Try different therapists to find your match',
+        'Refund anytime, no questions asked'
       ],
-      cta: 'Start Exploring',
+      cta: 'Get Started',
       highlight: true
-    },
-    {
-      name: 'Connect',
-      icon: 'fa-handshake',
-      price: '₹1,299',
-      description: 'AI-powered matching for the best fit',
-      features: [
-        'AI-powered therapist matching',
-        'First 3 sessions included',
-        'Cancel anytime'
-      ],
-      cta: 'Connect Now',
-      highlight: false
     }
   ];
 
@@ -212,28 +199,24 @@ export const Landing: React.FC = () => {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
             <h2 className="text-4xl md:text-5xl font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>
-              Choose Your <span style={{ color: 'var(--color-primary)' }}>Care Plan</span>
+              Your <span style={{ color: 'var(--color-primary)' }}>Care Plan</span>
             </h2>
             <p className="text-xl max-w-2xl mx-auto" style={{ color: 'var(--color-text-muted)' }}>
-              Flexible options designed for your mental health journey
+              Everything you need to start your mental health journey — with flexibility and peace of mind.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <div className="flex justify-center">
             {plans.map((plan, index) => (
               <div 
                 key={index}
-                className="relative bg-white border-2 rounded-3xl p-8 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl flex flex-col"
+                className="relative bg-white border-2 rounded-3xl p-8 transition-all duration-300 shadow-lg hover:shadow-xl flex flex-col w-full max-w-md"
                 style={{ 
                   borderColor: plan.highlight ? 'var(--color-primary)' : 'var(--color-secondary)',
                   boxShadow: plan.highlight ? '0 20px 25px -5px rgba(46, 58, 47, 0.1), 0 10px 10px -5px rgba(46, 58, 47, 0.04)' : undefined
                 }}
               >
-                {plan.highlight && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-6 py-2 rounded-full text-white text-xs font-bold shadow-lg" style={{ backgroundColor: 'var(--color-primary)' }}>
-                    MOST POPULAR
-                  </div>
-                )}
+
 
                 <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-lg" style={{ backgroundColor: plan.highlight ? 'var(--color-primary)' : 'var(--color-secondary)' }}>
                   <i className={`fas ${plan.icon} text-2xl ${plan.highlight ? 'text-white' : ''}`} style={{ color: plan.highlight ? '#fff' : 'var(--color-primary)' }}></i>
@@ -242,17 +225,7 @@ export const Landing: React.FC = () => {
                 <h3 className="text-2xl font-bold mb-3" style={{ color: 'var(--color-text-primary)' }}>{plan.name}</h3>
                 <p className="mb-6 leading-relaxed" style={{ color: 'var(--color-text-muted)' }}>{plan.description}</p>
 
-                <div className="mb-8">
-                  {plan.oldPrice && (
-                    <div className="mb-2">
-                      <span className="text-2xl line-through" style={{ color: 'var(--color-secondary)' }}>{plan.oldPrice}</span>
-                    </div>
-                  )}
-                  <span className="text-5xl font-bold" style={{ color: 'var(--color-primary)' }}>{plan.price}</span>
-                  {!plan.noSessionText && (
-                    <p className="text-sm mt-2 font-medium" style={{ color: 'var(--color-text-muted)' }}>for your first 3 sessions</p>
-                  )}
-                </div>
+
 
                 <ul className="space-y-4 mb-8 flex-grow">
                   {plan.features.map((feature, i) => (

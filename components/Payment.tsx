@@ -10,6 +10,7 @@ interface Plan {
   name: string;
   price: string;
   description: string;
+  features?: string[];
 }
 
 export const Payment: React.FC = () => {
@@ -243,17 +244,37 @@ export const Payment: React.FC = () => {
                     <p className="text-sm text-slate-600">{plan.description}</p>
                   </div>
                 </div>
+
+                {/* Plan Features */}
+                {plan.features && plan.features.length > 0 && (
+                  <ul className="space-y-2 pt-2">
+                    {plan.features.map((feature, idx) => (
+                      <li key={idx} className="flex items-start gap-2 text-sm text-slate-700">
+                        <i className="fas fa-check-circle mt-0.5 flex-shrink-0 text-teal-500"></i>
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
                 
                 <div className="border-t border-slate-200 pt-4">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-slate-600">Plan Price (GST Inclusive)</span>
-                    <span className="text-slate-900">{plan.price}</span>
+                    <span className="text-slate-600">Service Fee (GST Inclusive)</span>
+                    <span className="text-slate-900">₹249</span>
                   </div>
                   <div className="border-t border-slate-200 mt-3 pt-3 flex justify-between items-center">
                     <span className="text-lg font-bold text-slate-900">Total Amount</span>
-                    <span className="text-2xl font-bold text-teal-600">{plan.price}</span>
+                    <span className="text-2xl font-bold text-teal-600">₹249</span>
                   </div>
                   <p className="text-xs text-slate-500 mt-2">* All prices include 18% GST</p>
+                </div>
+              </div>
+
+              {/* Callback Notice */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                <div className="flex items-start gap-2 text-blue-700">
+                  <i className="fas fa-phone-volume mt-0.5 flex-shrink-0"></i>
+                  <span className="text-sm font-medium">Our team will call you back as soon as possible to schedule your exploration call.</span>
                 </div>
               </div>
 
@@ -333,7 +354,7 @@ export const Payment: React.FC = () => {
                   ) : (
                     <>
                       <i className="fas fa-lock mr-2"></i>
-                      Pay {plan.price}
+                      Pay ₹249
                     </>
                   )}
                 </Button>

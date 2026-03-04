@@ -26,34 +26,21 @@ const PLANS: Plan[] = [
     id: 'explore',
     name: 'Explore',
     icon: 'fa-compass',
-    price: '₹1,799',
-    oldPrice: '₹2,997',
-    description: 'Try different therapists and find your perfect match',
+    price: '₹249',
+    description: 'Start your mental wellness journey with complete confidence',
     features: [
-      'Unlimited consultations with our team',
-      'Try different therapists',
-      'Get 3 therapy sessions'
+      'An exploration call with our team',
+      '10% discount on your first 3 sessions',
+      'Try different therapists to find your match',
+      'Refund anytime, no questions asked'
     ],
     highlight: true
-  },
-  {
-    id: 'connect',
-    name: 'Connect',
-    icon: 'fa-handshake',
-    price: '₹1,299',
-    description: 'AI-powered matching for the best fit',
-    features: [
-      'AI-powered therapist matching',
-      'First 3 sessions included',
-      'Cancel anytime'
-    ],
-    highlight: false
   }
 ];
 
 export const PlanSelection: React.FC = () => {
   const navigate = useNavigate();
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<string | null>('explore');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   
@@ -188,13 +175,13 @@ export const PlanSelection: React.FC = () => {
         <div className="text-center mb-12 animate-fade-in">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm mb-4" style={{ backgroundColor: 'var(--color-accent)', borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}>
             <i className="fas fa-sparkles"></i>
-            <span className="font-medium">Select Your Perfect Plan</span>
+            <span className="font-medium">Your Mental Wellness Plan</span>
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
-            Choose Your <span className="text-transparent bg-clip-text bg-gradient-to-r" style={{ backgroundImage: 'linear-gradient(to right, var(--color-primary), var(--color-secondary))' }}>Care Plan</span>
+            Your <span className="text-transparent bg-clip-text bg-gradient-to-r" style={{ backgroundImage: 'linear-gradient(to right, var(--color-primary), var(--color-secondary))' }}>Care Plan</span>
           </h1>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-            Select the plan that best fits your mental wellness journey. Questions? Contact Us.
+            Everything you need to begin your mental wellness journey — with flexibility and peace of mind.
           </p>
         </div>
 
@@ -229,14 +216,15 @@ export const PlanSelection: React.FC = () => {
                   <span className="text-white font-bold">4</span>
                 </div>
                 <h4 className="font-semibold text-slate-900 mb-1">We Contact You</h4>
-                <p className="text-sm text-slate-600">Our team schedules your session</p>
+                <p className="text-sm text-slate-600">Our team calls you for a consultation</p>
               </div>
             </div>
           </div>
         )}
 
         {/* Plans Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 max-w-4xl mx-auto">
+        <div className="flex justify-center mb-8">
+        <div className="w-full max-w-md">
           {PLANS.map((plan) => (
             <div
               key={plan.id}
@@ -256,14 +244,7 @@ export const PlanSelection: React.FC = () => {
                 </div>
               )}
 
-              {/* Most Popular Badge */}
-              {plan.highlight && (
-                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                  <span className="px-4 py-1 text-white text-xs font-bold rounded-full shadow-lg" style={{ backgroundImage: 'linear-gradient(to right, var(--color-primary), var(--color-secondary))' }}>
-                    MOST POPULAR
-                  </span>
-                </div>
-              )}
+
 
               <div className="p-6">
                 {/* Icon */}
@@ -278,15 +259,7 @@ export const PlanSelection: React.FC = () => {
                 {/* Plan Name */}
                 <h3 className="text-2xl font-bold text-slate-900 mb-2">{plan.name}</h3>
 
-                {/* Price */}
-                <div className="mb-4">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-bold text-slate-900">{plan.price}</span>
-                    {plan.oldPrice && (
-                      <span className="text-lg text-slate-400 line-through">{plan.oldPrice}</span>
-                    )}
-                  </div>
-                </div>
+
 
                 {/* Description */}
                 <p className="text-slate-600 mb-6">{plan.description}</p>
@@ -323,6 +296,7 @@ export const PlanSelection: React.FC = () => {
               </div>
             </div>
           ))}
+        </div>
         </div>
 
         {/* Action Buttons */}
