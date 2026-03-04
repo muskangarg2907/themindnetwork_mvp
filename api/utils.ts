@@ -41,10 +41,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const { action } = req.query;
 
-  // HEALTH CHECK
-  if (!action || action === 'health') {
-    return res.status(200).json({ ok: true, db: !!process.env.MONGODB_URI });
-  }
+  // HEALTH CHECK\n  if (!action || action === 'health') {\n    return res.status(200).json({ ok: true });\n  }
 
   // CONTACT FORM
   if (action === 'contact') {

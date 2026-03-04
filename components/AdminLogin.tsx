@@ -3,30 +3,33 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 
-const ADMIN_USERNAME = 'admin123';
-const ADMIN_PASSWORD = 'muskanadmin123';
-
 export const AdminLogin: React.FC = () => {
   const navigate = useNavigate();
-  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    const trimmedUsername = username.trim();
-    const trimmedPassword = password.trim();
-    
-    console.log('[ADMIN LOGIN] Attempting login with username:', trimmedUsername);
-    console.log('[ADMIN LOGIN] Expected username:', ADMIN_USERNAME);
-    console.log('[ADMIN LOGIN] Password match:', trimmedPassword === ADMIN_PASSWORD);
-    
-    if (trimmedUsername === ADMIN_USERNAME && trimmedPassword === ADMIN_PASSWORD) {
-      console.log('[ADMIN LOGIN] Login successful');
-      localStorage.setItem('adminAuth', 'authenticated');
-      navigate('/admin');
-    } else {
-      console.log('[ADMIN LOGIN] Login failed');
-      setError('Invalid username or password');
+  const handleLogin = async () => {
+    if (!password) { setError('Enter password'); return; }
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/admin?action=login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        sessionStorage.setItem('adminToken', data.token);
+        navigate('/admin');
+      } else {
+        setError('Invalid password');
+      }
+    } catch {
+      setError('Login failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -43,15 +46,6 @@ export const AdminLogin: React.FC = () => {
 
         <div className="space-y-4">
           <Input
-            label="Username"
-            placeholder="Enter admin username"
-            value={username}
-            onChange={(e) => {
-              setUsername(e.target.value);
-              setError('');
-            }}
-          />
-          <Input
             label="Password"
             type="password"
             placeholder="Enter admin password"
@@ -61,9 +55,7 @@ export const AdminLogin: React.FC = () => {
               setError('');
             }}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                handleLogin();
-              }
+              if (e.key === 'Enter') handleLogin();
             }}
           />
           
@@ -74,8 +66,8 @@ export const AdminLogin: React.FC = () => {
             </div>
           )}
 
-          <Button className="w-full" onClick={handleLogin}>
-            <i className="fas fa-sign-in-alt mr-2"></i> Login
+          <Button className="w-full" onClick={handleLogin} disabled={loading}>
+            {loading ? <><i className="fas fa-spinner fa-spin mr-2"></i>Verifying...</> : <><i className="fas fa-sign-in-alt mr-2"></i>Login</>}
           </Button>
         </div>
       </div>

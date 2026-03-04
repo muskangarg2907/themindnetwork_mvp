@@ -12,62 +12,30 @@ export const AdminDashboard: React.FC = () => {
 
   // Check authentication
   useEffect(() => {
-    const adminAuth = localStorage.getItem('adminAuth');
-    console.log('[ADMIN] Auth check:', adminAuth);
-    if (adminAuth !== 'authenticated') {
-      console.log('[ADMIN] Not authenticated, redirecting to login');
+    const token = sessionStorage.getItem('adminToken');
+    if (!token) {
       navigate('/admin-login');
     } else {
-      console.log('[ADMIN] Authenticated, proceeding to dashboard');
+      fetchProfiles();
     }
   }, [navigate]);
 
-  useEffect(() => {
-    // Initial fetch only. Manual refresh button is provided for updates.
-    fetchProfiles();
-  }, []);
+  const getAdminHeaders = () => ({
+    'Content-Type': 'application/json',
+    'x-admin-token': sessionStorage.getItem('adminToken') || ''
+  });
 
   const fetchProfiles = async () => {
     setLoading(true);
     try {
-      console.log('[ADMIN] Fetching profiles from /api/admin?action=profiles');
-      const res = await fetch('/api/admin?action=profiles');
-      console.log('[ADMIN] Response status:', res.status);
-      
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error('[ADMIN] Fetch failed:', res.status, errorText);
-        setProfiles([]);
-        setLoading(false);
-        return;
-      }
-      
+      const res = await fetch('/api/admin?action=profiles', { headers: getAdminHeaders() });
+      if (!res.ok) { setProfiles([]); setLoading(false); return; }
       const data = await res.json();
-      console.log('[ADMIN] Received data:', data);
       const profileList = data.profiles || [];
-      console.log('[ADMIN] Profile count:', profileList.length);
-      
-      // Debug: Check if any profiles have payments
-      const profilesWithPayments = profileList.filter((p: UserProfile) => p.payments && p.payments.length > 0);
-      console.log('[ADMIN] Profiles with payments:', profilesWithPayments.length);
-      if (profilesWithPayments.length > 0) {
-        console.log('[ADMIN] Sample payment data available');
-      }
-      
-      // Log ALL profiles for debugging (sanitized)
-      console.log('[ADMIN] All profiles summary:');
-      profileList.forEach((p: UserProfile) => {
-        console.log(`  - ${p.basicInfo?.fullName?.charAt(0)}*** (****${p.basicInfo?.phone?.slice(-4)}): payments=${p.payments?.length || 0}`);
-      });
-      
       setProfiles(profileList);
-      
-      // If a profile is selected, update it with fresh data from the list
       if (selectedProfile) {
         const updatedSelected = profileList.find((p: UserProfile) => p._id === selectedProfile._id);
-        if (updatedSelected) {
-          setSelectedProfile(updatedSelected);
-        }
+        if (updatedSelected) setSelectedProfile(updatedSelected);
       }
     } catch (err) {
       console.error('Error fetching profiles:', err);
@@ -78,28 +46,15 @@ export const AdminDashboard: React.FC = () => {
   const handleApprove = async (id: string) => {
     setLoading(true);
     try {
-      console.log('[ADMIN] Approving profile:', id);
       const res = await fetch(`/api/admin?action=profiles&id=${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAdminHeaders(),
         body: JSON.stringify({ status: 'approved' })
       });
-      
-      console.log('[ADMIN] Approve response status:', res.status);
-      const data = await res.json();
-      console.log('[ADMIN] Approve response data:', data);
-      
       if (res.ok) {
-        // Update selectedProfile immediately with response data
-        if (selectedProfile?._id === id) {
-          const updated = data.profile || data;
-          console.log('[ADMIN] Updating selected profile with:', updated);
-          setSelectedProfile(updated);
-        }
-        // Then refresh the full list
+        const data = await res.json();
+        if (selectedProfile?._id === id) setSelectedProfile(data.profile || data);
         await fetchProfiles();
-      } else {
-        console.error('[ADMIN] Approve failed:', data);
       }
     } catch (err) {
       console.error('Error approving:', err);
@@ -123,28 +78,15 @@ export const AdminDashboard: React.FC = () => {
     
     setLoading(true);
     try {
-      console.log('[ADMIN] Rejecting profile:', id);
       const res = await fetch(`/api/admin?action=profiles&id=${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAdminHeaders(),
         body: JSON.stringify({ status: 'rejected' })
       });
-      
-      console.log('[ADMIN] Reject response status:', res.status);
-      const data = await res.json();
-      console.log('[ADMIN] Reject response data:', data);
-      
       if (res.ok) {
-        // Update selectedProfile immediately with response data
-        if (selectedProfile?._id === id) {
-          const updated = data.profile || data;
-          console.log('[ADMIN] Updating selected profile with:', updated);
-          setSelectedProfile(updated);
-        }
-        // Then refresh the full list
+        const data = await res.json();
+        if (selectedProfile?._id === id) setSelectedProfile(data.profile || data);
         await fetchProfiles();
-      } else {
-        console.error('[ADMIN] Reject failed:', data);
       }
     } catch (err) {
       console.error('Error rejecting:', err);
@@ -174,7 +116,10 @@ export const AdminDashboard: React.FC = () => {
     
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin?action=profiles&id=${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin?action=profiles&id=${id}`, {
+        method: 'DELETE',
+        headers: getAdminHeaders()
+      });
       if (res.ok) {
         setSelectedProfile(null);
         await fetchProfiles();
@@ -197,6 +142,7 @@ export const AdminDashboard: React.FC = () => {
               <i className="fas fa-sync-alt mr-2"></i> Refresh
             </Button>
             <Button variant="outline" onClick={() => {
+              sessionStorage.removeItem('adminToken');
               localStorage.removeItem('adminAuth');
               navigate('/admin-login');
             }} className="bg-slate-100 text-slate-700 hover:bg-slate-200">
@@ -222,7 +168,6 @@ export const AdminDashboard: React.FC = () => {
                 <div
                   key={p._id}
                   onClick={() => {
-                    console.log('[ADMIN] Viewing profile details');
                     setSelectedProfile(p);
                   }}
                   className={`p-4 border rounded-lg cursor-pointer transition ${
@@ -297,10 +242,6 @@ export const AdminDashboard: React.FC = () => {
                 {(() => {
                   const isClient = selectedProfile.role === 'client';
                   const hasPayments = selectedProfile.payments && selectedProfile.payments.length > 0;
-                  console.log('[ADMIN DETAIL] Profile ID:', selectedProfile._id);
-                  console.log('[ADMIN DETAIL] Role:', selectedProfile.role, '| Is client?', isClient);
-                  console.log('[ADMIN DETAIL] Has payments?', hasPayments, '| Payment count:', selectedProfile.payments?.length || 0);
-                  
                   return isClient && hasPayments && (
                   <div className="pt-4 border-t border-slate-200">
                     <h3 className="text-lg font-bold mb-3 text-slate-900">

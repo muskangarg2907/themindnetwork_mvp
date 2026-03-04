@@ -6,11 +6,18 @@ import { getProfilesCollection } from '../lib/db.js';
 const NOTIFY_FILE = '/tmp/themindnetwork_admin_notify.json';
 const DATA_FILE = '/tmp/themindnetwork_profiles.json';
 
+function checkAdminAuth(req: VercelRequest): boolean {
+  const token = req.headers['x-admin-token'];
+  const secret = process.env.ADMIN_SECRET;
+  if (!secret) return false; // block all if env var not set
+  return token === secret;
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Content-Type', 'application/json');
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-admin-token');
 
   if (req.method === 'OPTIONS') {
     res.status(200).end();
@@ -19,6 +26,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const { action } = req.query;
 
+  // LOGIN — validates password against env var, no other auth needed
+  if (action === 'login') {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    const { password } = req.body || {};
+    const secret = process.env.ADMIN_SECRET;
+    if (!secret || !password || password !== secret) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+    return res.status(200).json({ success: true, token: secret });
+  }
+
+  // All other actions require valid admin token
+  if (!checkAdminAuth(req)) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
   try {
     // PROFILES MANAGEMENT
     if (action === 'profiles') {
@@ -26,15 +49,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (req.method === 'GET') {
         const allProfiles = await profiles.find({}).toArray();
-        
-        // Log payment statistics for debugging
-        const profilesWithPayments = allProfiles.filter(p => p.payments && p.payments.length > 0);
-        console.log('[ADMIN] GET: Total profiles:', allProfiles.length);
-        console.log('[ADMIN] GET: Profiles with payments:', profilesWithPayments.length);
-        if (profilesWithPayments.length > 0) {
-          console.log('[ADMIN] GET: Sample profile with payments available, count:', profilesWithPayments[0].payments?.length);
-        }
-        
         return res.status(200).json({ profiles: allProfiles, total: allProfiles.length });
       }
 

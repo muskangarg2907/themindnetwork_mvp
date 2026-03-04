@@ -2,6 +2,13 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 import { ObjectId } from 'mongodb';
 import { getProfilesCollection } from '../lib/db.js';
 
+function checkAdminAuth(req: VercelRequest): boolean {
+  const token = req.headers['x-admin-token'];
+  const secret = process.env.ADMIN_SECRET;
+  if (!secret) return false;
+  return token === secret;
+}
+
 // Normalize phone: extract last 10 digits (for Indian numbers)
 function normalizePhone(s: string) {
   if (!s) return '';
@@ -33,38 +40,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       const norm = normalizePhone(phoneNumber);
-      console.log('[LOOKUP] Searching for phone (normalized)');
       
-      // Allow any status except rejected (enable payments without verification)
+      // Allow any status except rejected
       const found = await profiles.findOne({
         'basicInfo.phone': norm,
         status: { $ne: 'rejected' }
       });
 
       if (!found) {
-        console.log('[LOOKUP] NO MATCH FOUND (or rejected)');
-        return res.status(404).json({ error: 'Not found', searched: norm });
+        return res.status(404).json({ error: 'Not found' });
       }
       
-      console.log('[LOOKUP] FOUND:', found._id, '| Role:', found.role, '| Has payments?', !!found.payments, '| Payment count:', found.payments?.length || 0);
-      if (found.payments && found.payments.length > 0) {
-        console.log('[LOOKUP] Payment sample:', JSON.stringify(found.payments[0]));
-      }
       return res.status(200).json(found);
     }
 
-    // GET all profiles
+    // GET all profiles — admin only
     if (req.method === 'GET') {
-      const allProfiles = await profiles.find({}).toArray();
-      console.log('[PROFILES] GET: Found', allProfiles.length, 'profiles');
-      
-      // Log payment statistics
-      const profilesWithPayments = allProfiles.filter(p => p.payments && p.payments.length > 0);
-      console.log('[PROFILES] GET: Profiles with payments:', profilesWithPayments.length);
-      if (profilesWithPayments.length > 0) {
-        console.log('[PROFILES] GET: Sample profile with payments available');
+      if (!checkAdminAuth(req)) {
+        return res.status(401).json({ error: 'Unauthorized' });
       }
-      
+      const allProfiles = await profiles.find({}).toArray();
       return res.status(200).json(allProfiles);
     }
 
