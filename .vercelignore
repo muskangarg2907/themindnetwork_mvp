@@ -1,5 +1,4 @@
 backend/
-lib/
 snapshot.ts.backup
 check-payments.js
 test-groq-local.js
