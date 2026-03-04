@@ -547,7 +547,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Save to MongoDB
       const { db } = await connectToDatabase();
       const snapshotsCollection = db.collection('snapshots');
-      await snapshotsCollection.insertOne({ _id: snapshotUrl, ...snapshotData });
+      await snapshotsCollection.insertOne({ _id: snapshotUrl as any, ...snapshotData });
       console.log('[SNAPSHOT] Snapshot saved to MongoDB with URL:', snapshotUrl);
     }
 
@@ -556,7 +556,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (isComplete) {
       const { db } = await connectToDatabase();
       const snapshotsCollection = db.collection('snapshots');
-      snapshotDoc = await snapshotsCollection.findOne({ _id: snapshotUrl });
+      snapshotDoc = await snapshotsCollection.findOne({ _id: snapshotUrl as any });
     }
 
     const responsePayload = {
@@ -603,7 +603,7 @@ export async function getSnapshot(req: VercelRequest, res: VercelResponse) {
   try {
     const { db } = await connectToDatabase();
     const snapshotsCollection = db.collection('snapshots');
-    const snapshot = await snapshotsCollection.findOne({ _id: snapshotId });
+    const snapshot = await snapshotsCollection.findOne({ _id: snapshotId as any });
 
     if (!snapshot) {
       return res.status(404).json({ error: 'Snapshot not found' });
