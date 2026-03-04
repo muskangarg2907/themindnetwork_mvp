@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { connectToDatabase } from './db';
+import { connectToDatabase } from '../lib/db';
 
 interface Message {
   id: string;

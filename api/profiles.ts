@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { ObjectId } from 'mongodb';
-import { getProfilesCollection } from './db.js';
+import { getProfilesCollection } from '../lib/db.js';
 
 // Normalize phone: extract last 10 digits (for Indian numbers)
 function normalizePhone(s: string) {

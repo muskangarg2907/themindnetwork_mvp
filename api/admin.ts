@@ -1,7 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { ObjectId } from 'mongodb';
 import { promises as fs } from 'fs';
-import { getProfilesCollection } from './db.js';
+import { getProfilesCollection } from '../lib/db.js';
 
 const NOTIFY_FILE = '/tmp/themindnetwork_admin_notify.json';
 const DATA_FILE = '/tmp/themindnetwork_profiles.json';
