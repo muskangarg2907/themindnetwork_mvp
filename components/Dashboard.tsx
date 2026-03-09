@@ -284,7 +284,8 @@ export const Dashboard: React.FC = () => {
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-slate-900 mb-1">Snapshot #{snapshots.length - idx}</p>
                       <p className="text-xs text-slate-500 truncate">
-                        {new Date(snap.createdAt).toLocaleDateString('en-US', {
+                        {new Date(snap.createdAt).toLocaleString('en-IN', {
+                          timeZone: 'Asia/Kolkata',
                           year: 'numeric',
                           month: 'short',
                           day: 'numeric',

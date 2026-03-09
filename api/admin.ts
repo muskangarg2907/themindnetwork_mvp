@@ -48,7 +48,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const profiles = await getProfilesCollection();
 
       if (req.method === 'GET') {
-        const allProfiles = await profiles.find({}).toArray();
+        // Exclude large base64 resume data from bulk list — fetched separately per profile
+        const allProfiles = await profiles.find({}, {
+          projection: { 'providerDetails.resumeFileData': 0 }
+        }).toArray();
         return res.status(200).json({ profiles: allProfiles, total: allProfiles.length });
       }
 
@@ -157,7 +160,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    return res.status(400).json({ error: 'Invalid action parameter. Use: profiles, notify, or reset' });
+    // RESUME — fetch base64 resume data for a single provider profile
+    if (action === 'resume') {
+      if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+      const { id } = req.query;
+      if (!id) return res.status(400).json({ error: 'id query parameter required' });
+      const profiles = await getProfilesCollection();
+      let query;
+      try { query = { _id: new ObjectId(id as string) }; } catch { query = { _id: id as string }; }
+      const profile = await profiles.findOne(query, {
+        projection: { 'providerDetails.resumeFileData': 1, 'providerDetails.resumeFileName': 1 }
+      });
+      if (!profile) return res.status(404).json({ error: 'Profile not found' });
+      return res.status(200).json({
+        resumeFileData: profile.providerDetails?.resumeFileData || null,
+        resumeFileName: profile.providerDetails?.resumeFileName || null
+      });
+    }
+
+    return res.status(400).json({ error: 'Invalid action parameter. Use: profiles, notify, reset, or resume' });
 
   } catch (err: any) {
     console.error('[ADMIN] Error:', err);

@@ -787,7 +787,8 @@ export const ProfileView: React.FC = () => {
                                             <div className="flex items-center justify-between gap-2 mb-1">
                                                 <h4 className="font-semibold text-slate-900 text-sm">Snapshot #{snapshots.length - index}</h4>
                                                 <span className="text-xs text-slate-500 whitespace-nowrap">
-                                                    {new Date(snap.createdAt).toLocaleDateString('en-US', { 
+                                                    {new Date(snap.createdAt).toLocaleDateString('en-IN', { 
+                                                        timeZone: 'Asia/Kolkata',
                                                         month: 'short', 
                                                         day: 'numeric' 
                                                     })}
@@ -838,7 +839,7 @@ export const ProfileView: React.FC = () => {
                                                 <span className="font-medium text-slate-900">{payment.planName}</span>
                                             </td>
                                             <td className="py-3 text-slate-600">
-                                                {payment.paidAt ? new Date(payment.paidAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Pending'}
+                                                {payment.paidAt ? new Date(payment.paidAt).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric', year: 'numeric' }) : 'Pending'}
                                             </td>
                                             <td className="py-3 font-semibold text-slate-900">
                                                 ₹{payment.amount}

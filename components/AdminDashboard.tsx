@@ -9,6 +9,8 @@ export const AdminDashboard: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
   const [editStatus, setEditStatus] = useState('pending_verification');
+  const [resumeData, setResumeData] = useState<{ fileData: string; fileName: string } | null>(null);
+  const [resumeLoading, setResumeLoading] = useState(false);
 
   // Check authentication
   useEffect(() => {
@@ -24,6 +26,23 @@ export const AdminDashboard: React.FC = () => {
     'Content-Type': 'application/json',
     'x-admin-token': sessionStorage.getItem('adminToken') || ''
   });
+
+  const fetchResume = async (id: string) => {
+    setResumeData(null);
+    setResumeLoading(true);
+    try {
+      const res = await fetch(`/api/admin?action=resume&id=${id}`, { headers: getAdminHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.resumeFileData) {
+          setResumeData({ fileData: data.resumeFileData, fileName: data.resumeFileName || 'resume' });
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching resume:', err);
+    }
+    setResumeLoading(false);
+  };
 
   const fetchProfiles = async () => {
     setLoading(true);
@@ -169,6 +188,8 @@ export const AdminDashboard: React.FC = () => {
                   key={p._id}
                   onClick={() => {
                     setSelectedProfile(p);
+                    setResumeData(null);
+                    if (p.role === 'provider' && p._id) fetchResume(p._id);
                   }}
                   className={`p-4 border rounded-lg cursor-pointer transition ${
                     selectedProfile?._id === p._id
@@ -257,7 +278,7 @@ export const AdminDashboard: React.FC = () => {
                   </div>
                   <div className="pt-1">
                     <label className="text-xs text-slate-500 font-bold">Registered</label>
-                    <p className="text-slate-800 text-xs">{new Date(selectedProfile.createdAt).toLocaleString()}</p>
+                    <p className="text-slate-800 text-xs">{new Date(selectedProfile.createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
                   </div>
                 </div>
 
@@ -358,21 +379,23 @@ export const AdminDashboard: React.FC = () => {
                       {/* Resume */}
                       <div>
                         <label className="text-xs text-slate-500 font-bold">Resume / CV</label>
-                        {pd.resumeFileData ? (
+                        {resumeLoading ? (
+                          <p className="text-slate-400 text-xs mt-1"><i className="fas fa-spinner fa-spin mr-1"></i>Loading...</p>
+                        ) : resumeData ? (
                           <div className="mt-1 flex items-center gap-2 flex-wrap">
                             <i className="fas fa-file-alt text-teal-600 text-sm"></i>
-                            <span className="text-xs text-slate-700 truncate max-w-[120px]" title={pd.resumeFileName}>
-                              {pd.resumeFileName || 'Resume'}
+                            <span className="text-xs text-slate-700 truncate max-w-[120px]" title={resumeData.fileName}>
+                              {resumeData.fileName}
                             </span>
                             <a
-                              href={pd.resumeFileData}
-                              download={pd.resumeFileName || 'resume'}
+                              href={resumeData.fileData}
+                              download={resumeData.fileName}
                               className="px-2 py-0.5 text-xs font-semibold bg-teal-600 text-white rounded hover:bg-teal-700"
                             >
                               <i className="fas fa-download mr-1"></i>Download
                             </a>
                             <a
-                              href={pd.resumeFileData}
+                              href={resumeData.fileData}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="px-2 py-0.5 text-xs font-semibold bg-slate-200 text-slate-700 rounded hover:bg-slate-300"
@@ -434,7 +457,7 @@ export const AdminDashboard: React.FC = () => {
                             )}
                           </div>
                           {payment.paidAt && (
-                            <p className="text-xs text-slate-500 mt-1">{new Date(payment.paidAt).toLocaleString()}</p>
+                            <p className="text-xs text-slate-500 mt-1">{new Date(payment.paidAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
                           )}
                           {payment.razorpayPaymentId && (
                             <p className="text-xs text-slate-500 font-mono mt-1 truncate" title={payment.razorpayPaymentId}>

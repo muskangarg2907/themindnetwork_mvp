@@ -293,7 +293,8 @@ export const SnapshotViewEnhanced: React.FC = () => {
               <div className="text-white/80 text-sm text-right">
                 <div className="bg-white/10 rounded-lg px-3 py-1">
                   <i className="fas fa-calendar mr-1"></i>
-                  {new Date(snapshot.createdAt).toLocaleDateString('en-US', {
+                  {new Date(snapshot.createdAt).toLocaleDateString('en-IN', {
+                    timeZone: 'Asia/Kolkata',
                     month: 'short',
                     day: 'numeric',
                     year: 'numeric'

@@ -358,7 +358,8 @@ export const SnapshotView: React.FC = () => {
   }
 
   const { emotionalPatterns = {}, relationshipPatterns = {}, whatHelps = [], whatHurts = [], personalityTendencies = {}, meaningfulExperiences = '', summary = '' } = snapshot.snapshot || {};
-  const createdDate = snapshot.createdAt ? new Date(snapshot.createdAt).toLocaleDateString('en-US', {
+  const createdDate = snapshot.createdAt ? new Date(snapshot.createdAt).toLocaleDateString('en-IN', {
+    timeZone: 'Asia/Kolkata',
     year: 'numeric',
     month: 'long',
     day: 'numeric'
@@ -538,7 +539,8 @@ export const SnapshotView: React.FC = () => {
                         <div className="flex-1">
                           <p className="font-medium text-slate-900 mb-1">Snapshot #{idx + 1}</p>
                           <p className="text-xs text-slate-500">
-                            {new Date(snap.createdAt).toLocaleDateString('en-US', {
+                            {new Date(snap.createdAt).toLocaleString('en-IN', {
+                              timeZone: 'Asia/Kolkata',
                               year: 'numeric',
                               month: 'short',
                               day: 'numeric',
