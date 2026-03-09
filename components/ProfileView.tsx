@@ -211,9 +211,9 @@ export const ProfileView: React.FC = () => {
   const handleResumeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Max 5MB
-      if (file.size > 5 * 1024 * 1024) {
-        alert('File size must be less than 5MB');
+      // Max 2MB — Vercel has a 4.5MB request body limit; base64 adds ~33% overhead
+      if (file.size > 2 * 1024 * 1024) {
+        alert('File size must be less than 2MB. Please compress your PDF before uploading.');
         return;
       }
       
@@ -614,7 +614,7 @@ export const ProfileView: React.FC = () => {
                                                 <div className="flex items-center gap-2">
                                                     <i className="fas fa-cloud-upload-alt text-lg"></i>
                                                     <span className="font-medium text-sm">
-                                                        {editData.providerDetails.resumeFileName || 'Click to upload PDF or DOC (max 5MB)'}
+                                                        {editData.providerDetails.resumeFileName || 'Click to upload PDF or DOC (max 2MB)'}
                                                     </span>
                                                 </div>
                                                 {editData.providerDetails.resumeFileName && (

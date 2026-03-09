@@ -61,9 +61,9 @@ export const StepProviderPractice: React.FC<StepProps> = ({ data, updateData }) 
   const handleResumeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Max 5MB
-      if (file.size > 5 * 1024 * 1024) {
-        alert('File size must be less than 5MB');
+      // Max 2MB — Vercel has a 4.5MB request body limit; base64 adds ~33% overhead
+      if (file.size > 2 * 1024 * 1024) {
+        alert('File size must be less than 2MB. Please compress your PDF before uploading.');
         return;
       }
       
@@ -187,7 +187,7 @@ export const StepProviderPractice: React.FC<StepProps> = ({ data, updateData }) 
           >
             <i className="fas fa-cloud-upload-alt text-xl"></i>
             <span className="font-medium">
-              {resumeFile ? resumeFile.name : 'Click to upload PDF or DOC (max 5MB)'}
+              {resumeFile ? resumeFile.name : 'Click to upload PDF or DOC (max 2MB)'}
             </span>
           </label>
           {resumeFile && (
@@ -205,7 +205,7 @@ export const StepProviderPractice: React.FC<StepProps> = ({ data, updateData }) 
           )}
         </div>
         <span className="text-xs text-slate-500 ml-1">
-          Accepted formats: PDF, DOC, DOCX (Maximum size: 5MB)
+          Accepted formats: PDF, DOC, DOCX (Maximum size: 2MB — compress your PDF if needed)
         </span>
       </div>
     </div>
