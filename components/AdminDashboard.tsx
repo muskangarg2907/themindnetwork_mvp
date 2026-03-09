@@ -11,6 +11,7 @@ export const AdminDashboard: React.FC = () => {
   const [editStatus, setEditStatus] = useState('pending_verification');
   const [resumeData, setResumeData] = useState<{ fileData: string; fileName: string } | null>(null);
   const [resumeLoading, setResumeLoading] = useState(false);
+  const [resumeError, setResumeError] = useState<string | null>(null);
 
   // Check authentication
   useEffect(() => {
@@ -29,6 +30,7 @@ export const AdminDashboard: React.FC = () => {
 
   const fetchResume = async (id: string) => {
     setResumeData(null);
+    setResumeError(null);
     setResumeLoading(true);
     try {
       const res = await fetch(`/api/admin?action=resume&id=${id}`, { headers: getAdminHeaders() });
@@ -36,10 +38,16 @@ export const AdminDashboard: React.FC = () => {
         const data = await res.json();
         if (data.resumeFileData) {
           setResumeData({ fileData: data.resumeFileData, fileName: data.resumeFileName || 'resume' });
+        } else {
+          // File name exists in DB but binary data was not saved (likely upload failed during signup)
+          setResumeError(data.resumeFileName ? `File recorded ("${data.resumeFileName}") but file data was not saved — provider must re-upload.` : 'No resume data in database.');
         }
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setResumeError(`Failed to load resume (${res.status}): ${err.error || res.statusText}`);
       }
-    } catch (err) {
-      console.error('Error fetching resume:', err);
+    } catch (err: any) {
+      setResumeError(`Network error: ${err?.message || 'unknown'}`);
     }
     setResumeLoading(false);
   };
@@ -189,6 +197,7 @@ export const AdminDashboard: React.FC = () => {
                   onClick={() => {
                     setSelectedProfile(p);
                     setResumeData(null);
+                    setResumeError(null);
                     if (p.role === 'provider' && p._id) fetchResume(p._id);
                   }}
                   className={`p-4 border rounded-lg cursor-pointer transition ${
@@ -379,8 +388,14 @@ export const AdminDashboard: React.FC = () => {
                       {/* Resume */}
                       <div>
                         <label className="text-xs text-slate-500 font-bold">Resume / CV</label>
+                        {/* Show filename from profile metadata immediately (available from bulk fetch) */}
+                        {pd.resumeFileName && !resumeData && (
+                          <p className="text-xs text-slate-500 mt-0.5 italic" title={pd.resumeFileName}>
+                            <i className="fas fa-paperclip mr-1"></i>{pd.resumeFileName}
+                          </p>
+                        )}
                         {resumeLoading ? (
-                          <p className="text-slate-400 text-xs mt-1"><i className="fas fa-spinner fa-spin mr-1"></i>Loading...</p>
+                          <p className="text-slate-400 text-xs mt-1"><i className="fas fa-spinner fa-spin mr-1"></i>Loading file...</p>
                         ) : resumeData ? (
                           <div className="mt-1 flex items-center gap-2 flex-wrap">
                             <i className="fas fa-file-alt text-teal-600 text-sm"></i>
@@ -403,9 +418,11 @@ export const AdminDashboard: React.FC = () => {
                               <i className="fas fa-eye mr-1"></i>View
                             </a>
                           </div>
-                        ) : (
+                        ) : resumeError ? (
+                          <p className="text-orange-600 text-xs mt-1"><i className="fas fa-exclamation-triangle mr-1"></i>{resumeError}</p>
+                        ) : !pd.resumeFileName ? (
                           <p className="text-slate-400 text-xs mt-1">No resume uploaded</p>
-                        )}
+                        ) : null}
                       </div>
                     </div>
                   );
