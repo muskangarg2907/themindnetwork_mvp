@@ -32,6 +32,25 @@ export function sanitizeForStorage(profile: any) {
     // REMOVED ENTIRELY: clinical data (presentingProblem, medications, riskFactors, etc.)
     // This data should only be fetched from backend when needed
     
+    // Keep provider professional details for display (resumeFileData excluded — too large for localStorage)
+    providerDetails: profile.role === 'provider' && profile.providerDetails ? {
+      qualification: profile.providerDetails.qualification,
+      yearsExperience: profile.providerDetails.yearsExperience,
+      specializations: profile.providerDetails.specializations,
+      mode: profile.providerDetails.mode,
+      offlineLocation: profile.providerDetails.offlineLocation,
+      languages: profile.providerDetails.languages,
+      clientType: profile.providerDetails.clientType,
+      budgetRange: profile.providerDetails.budgetRange,
+      website: profile.providerDetails.website,
+      licenses: profile.providerDetails.licenses,
+      therapeuticFocus: profile.providerDetails.therapeuticFocus,
+      therapyStyle: profile.providerDetails.therapyStyle,
+      resumeLink: profile.providerDetails.resumeLink,
+      resumeFileName: profile.providerDetails.resumeFileName,
+      // resumeFileData intentionally excluded — fetched on demand via API
+    } : undefined,
+
     // Keep payment summary (non-sensitive) for UI display
     payments: profile.payments?.map((p: any) => ({
       planId: p.planId,

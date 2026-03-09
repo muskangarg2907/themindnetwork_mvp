@@ -23,6 +23,7 @@ export const ProfileView: React.FC = () => {
   const [isPaymentsExpanded, setIsPaymentsExpanded] = useState(false);
   const [snapshots, setSnapshots] = useState<any[]>([]);
   const [showSensitiveInfo, setShowSensitiveInfo] = useState(false);
+  const [resumeDownloading, setResumeDownloading] = useState(false);
     // Deprecated local auth loading; replaced by useAuth/useProfile
 
     // Centralized auth + profile loading
@@ -197,15 +198,41 @@ export const ProfileView: React.FC = () => {
       }
   };
 
-  const handleDownloadResume = () => {
-      if (profile.providerDetails?.resumeFileData && profile.providerDetails?.resumeFileName) {
+  const handleDownloadResume = async () => {
+    // Fast path: data already in memory
+    if (profile.providerDetails?.resumeFileData && profile.providerDetails?.resumeFileName) {
+      const link = document.createElement('a');
+      link.href = profile.providerDetails.resumeFileData;
+      link.download = profile.providerDetails.resumeFileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      return;
+    }
+    // resumeFileData not in localStorage cache — fetch fresh from API
+    if (!phoneNumber) return;
+    setResumeDownloading(true);
+    try {
+      const res = await fetch(`/api/profiles?action=lookup&phone=${encodeURIComponent(phoneNumber)}`);
+      if (res.ok) {
+        const freshProfile = await res.json();
+        const fileData = freshProfile.providerDetails?.resumeFileData;
+        const fileName = freshProfile.providerDetails?.resumeFileName || 'resume';
+        if (fileData) {
           const link = document.createElement('a');
-          link.href = profile.providerDetails.resumeFileData;
-          link.download = profile.providerDetails.resumeFileName;
+          link.href = fileData;
+          link.download = fileName;
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
+        } else {
+          alert('Resume file not found. Please re-upload your resume via Edit Profile.');
+        }
       }
+    } catch (err) {
+      console.error('[ProfileView] Resume download error:', err);
+    }
+    setResumeDownloading(false);
   };
 
   const handleResumeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -714,8 +741,14 @@ export const ProfileView: React.FC = () => {
                                             {/* Resume Download */}
                                             {profile.providerDetails.resumeFileName && (
                                                 <div className="col-span-2 mt-2">
-                                                    <button onClick={handleDownloadResume} className="text-teal-600 hover:underline flex items-center">
-                                                        <i className="fas fa-file-pdf mr-1"></i> Download Resume ({profile.providerDetails.resumeFileName})
+                                                    <button
+                                                      onClick={handleDownloadResume}
+                                                      disabled={resumeDownloading}
+                                                      className="text-teal-600 hover:underline flex items-center disabled:opacity-60"
+                                                    >
+                                                      {resumeDownloading
+                                                        ? <><i className="fas fa-spinner fa-spin mr-1"></i> Loading resume...</>
+                                                        : <><i className="fas fa-file-pdf mr-1"></i> Download Resume ({profile.providerDetails.resumeFileName})</>}
                                                     </button>
                                                 </div>
                                             )}

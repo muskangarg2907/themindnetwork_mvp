@@ -71,8 +71,12 @@ export const StepProviderPractice: React.FC<StepProps> = ({ data, updateData }) 
       const reader = new FileReader();
       reader.onload = (event) => {
         const base64 = event.target?.result as string;
-        updateDetails('resumeFileData', base64);
-        updateDetails('resumeFileName', file.name);
+        // Single updateData call to avoid stale-closure overwrite bug
+        updateData('providerDetails', {
+          ...details,
+          resumeFileData: base64,
+          resumeFileName: file.name,
+        });
       };
       reader.readAsDataURL(file);
     }
