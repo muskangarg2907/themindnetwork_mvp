@@ -211,45 +211,195 @@ export const AdminDashboard: React.FC = () => {
           </div>
 
           {/* Profile Details */}
-          <div className="bg-white rounded-xl shadow p-6">
+          <div className="bg-white rounded-xl shadow p-6 overflow-y-auto max-h-[85vh]">
             <h2 className="text-xl font-bold mb-4">Details</h2>
             {selectedProfile ? (
               <div className="space-y-4">
-                <div>
-                  <label className="text-sm text-slate-500 font-bold">Name</label>
-                  <p className="text-slate-800 font-medium">{selectedProfile.basicInfo.fullName}</p>
-                </div>
-                <div>
-                  <label className="text-sm text-slate-500 font-bold">Email</label>
-                  <p className="text-slate-800 font-medium text-sm">{selectedProfile.basicInfo.email}</p>
-                </div>
-                <div>
-                  <label className="text-sm text-slate-500 font-bold">Phone</label>
-                  <p className="text-slate-800 font-medium">{selectedProfile.basicInfo.phone}</p>
-                </div>
-                <div>
-                  <label className="text-sm text-slate-500 font-bold">Role</label>
-                  <p className="text-slate-800 font-medium capitalize">{selectedProfile.role}</p>
-                </div>
-                <div>
-                  <label className="text-sm text-slate-500 font-bold">Created</label>
-                  <p className="text-slate-800 font-medium text-xs">
-                    {new Date(selectedProfile.createdAt).toLocaleString()}
-                  </p>
+
+                {/* ── Basic Info ── */}
+                <div className="bg-slate-50 rounded-lg p-3 space-y-2">
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Basic Info</p>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                    <div>
+                      <label className="text-xs text-slate-500 font-bold">Name</label>
+                      <p className="text-slate-800 font-medium text-sm">{selectedProfile.basicInfo.fullName || '—'}</p>
+                    </div>
+                    <div>
+                      <label className="text-xs text-slate-500 font-bold">Role</label>
+                      <p className="text-slate-800 font-medium text-sm capitalize">{selectedProfile.role}</p>
+                    </div>
+                    <div>
+                      <label className="text-xs text-slate-500 font-bold">Email</label>
+                      <p className="text-slate-800 text-xs break-all">{selectedProfile.basicInfo.email || '—'}</p>
+                    </div>
+                    <div>
+                      <label className="text-xs text-slate-500 font-bold">Phone</label>
+                      <p className="text-slate-800 text-sm">{selectedProfile.basicInfo.phone || '—'}</p>
+                    </div>
+                    {selectedProfile.basicInfo.dob && (
+                      <div>
+                        <label className="text-xs text-slate-500 font-bold">Date of Birth</label>
+                        <p className="text-slate-800 text-sm">{selectedProfile.basicInfo.dob}</p>
+                      </div>
+                    )}
+                    {selectedProfile.basicInfo.gender && (
+                      <div>
+                        <label className="text-xs text-slate-500 font-bold">Gender</label>
+                        <p className="text-slate-800 text-sm capitalize">{selectedProfile.basicInfo.gender}</p>
+                      </div>
+                    )}
+                    {selectedProfile.basicInfo.location && (
+                      <div className="col-span-2">
+                        <label className="text-xs text-slate-500 font-bold">Location</label>
+                        <p className="text-slate-800 text-sm">{selectedProfile.basicInfo.location}</p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="pt-1">
+                    <label className="text-xs text-slate-500 font-bold">Registered</label>
+                    <p className="text-slate-800 text-xs">{new Date(selectedProfile.createdAt).toLocaleString()}</p>
+                  </div>
                 </div>
 
-                {/* Payment Information for Clients */}
+                {/* ── Provider Details ── */}
+                {selectedProfile.role === 'provider' && selectedProfile.providerDetails && (() => {
+                  const pd = selectedProfile.providerDetails;
+                  return (
+                    <div className="bg-teal-50 rounded-lg p-3 space-y-3 border border-teal-100">
+                      <p className="text-xs font-bold text-teal-600 uppercase tracking-wider">Provider Intake</p>
+
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                        <div>
+                          <label className="text-xs text-slate-500 font-bold">Qualification</label>
+                          <p className="text-slate-800 text-sm">{pd.qualification || '—'}</p>
+                        </div>
+                        <div>
+                          <label className="text-xs text-slate-500 font-bold">Experience</label>
+                          <p className="text-slate-800 text-sm">{pd.yearsExperience ? `${pd.yearsExperience} yrs` : '—'}</p>
+                        </div>
+                        <div>
+                          <label className="text-xs text-slate-500 font-bold">Mode</label>
+                          <p className="text-slate-800 text-sm capitalize">{pd.mode || '—'}</p>
+                        </div>
+                        <div>
+                          <label className="text-xs text-slate-500 font-bold">Budget Range</label>
+                          <p className="text-slate-800 text-sm">{pd.budgetRange || '—'}</p>
+                        </div>
+                      </div>
+
+                      {pd.offlineLocation && (
+                        <div>
+                          <label className="text-xs text-slate-500 font-bold">Offline Location</label>
+                          <p className="text-slate-800 text-sm">{pd.offlineLocation}</p>
+                        </div>
+                      )}
+
+                      {pd.licenses && (
+                        <div>
+                          <label className="text-xs text-slate-500 font-bold">Licenses & Certifications</label>
+                          <p className="text-slate-800 text-sm">{pd.licenses}</p>
+                        </div>
+                      )}
+
+                      {pd.specializations && pd.specializations.length > 0 && (
+                        <div>
+                          <label className="text-xs text-slate-500 font-bold">Specializations</label>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {pd.specializations.map((s, i) => (
+                              <span key={i} className="bg-teal-100 text-teal-800 text-xs px-2 py-0.5 rounded-full">{s}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {pd.languages && pd.languages.length > 0 && (
+                        <div>
+                          <label className="text-xs text-slate-500 font-bold">Languages</label>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {pd.languages.map((l, i) => (
+                              <span key={i} className="bg-slate-100 text-slate-700 text-xs px-2 py-0.5 rounded-full">{l}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {pd.clientType && pd.clientType.length > 0 && (
+                        <div>
+                          <label className="text-xs text-slate-500 font-bold">Client Types</label>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {pd.clientType.map((c, i) => (
+                              <span key={i} className="bg-slate-100 text-slate-700 text-xs px-2 py-0.5 rounded-full capitalize">{c}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {pd.therapeuticFocus && (
+                        <div>
+                          <label className="text-xs text-slate-500 font-bold">Therapeutic Focus</label>
+                          <p className="text-slate-800 text-sm">{pd.therapeuticFocus}</p>
+                        </div>
+                      )}
+
+                      {pd.therapyStyle && (
+                        <div>
+                          <label className="text-xs text-slate-500 font-bold">Therapy Style</label>
+                          <p className="text-slate-800 text-sm">{pd.therapyStyle}</p>
+                        </div>
+                      )}
+
+                      {pd.website && (
+                        <div>
+                          <label className="text-xs text-slate-500 font-bold">Website / LinkedIn</label>
+                          <p className="text-slate-800 text-sm break-all">{pd.website}</p>
+                        </div>
+                      )}
+
+                      {/* Resume */}
+                      <div>
+                        <label className="text-xs text-slate-500 font-bold">Resume / CV</label>
+                        {pd.resumeFileData ? (
+                          <div className="mt-1 flex items-center gap-2 flex-wrap">
+                            <i className="fas fa-file-alt text-teal-600 text-sm"></i>
+                            <span className="text-xs text-slate-700 truncate max-w-[120px]" title={pd.resumeFileName}>
+                              {pd.resumeFileName || 'Resume'}
+                            </span>
+                            <a
+                              href={pd.resumeFileData}
+                              download={pd.resumeFileName || 'resume'}
+                              className="px-2 py-0.5 text-xs font-semibold bg-teal-600 text-white rounded hover:bg-teal-700"
+                            >
+                              <i className="fas fa-download mr-1"></i>Download
+                            </a>
+                            <a
+                              href={pd.resumeFileData}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-2 py-0.5 text-xs font-semibold bg-slate-200 text-slate-700 rounded hover:bg-slate-300"
+                            >
+                              <i className="fas fa-eye mr-1"></i>View
+                            </a>
+                          </div>
+                        ) : (
+                          <p className="text-slate-400 text-xs mt-1">No resume uploaded</p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* ── Payment History (Clients) ── */}
                 {(() => {
                   const isClient = selectedProfile.role === 'client';
                   const hasPayments = selectedProfile.payments && selectedProfile.payments.length > 0;
                   return isClient && hasPayments && (
-                  <div className="pt-4 border-t border-slate-200">
-                    <h3 className="text-lg font-bold mb-3 text-slate-900">
+                  <div className="pt-2 border-t border-slate-200">
+                    <h3 className="text-sm font-bold mb-3 text-slate-900">
                       Payment History ({selectedProfile.payments.length})
                     </h3>
-                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                    <div className="space-y-3 max-h-72 overflow-y-auto">
                       {selectedProfile.payments.map((payment, index) => (
-                        <div 
+                        <div
                           key={payment.razorpayPaymentId || index}
                           className={`p-3 rounded-lg border ${
                             payment.status === 'success'
@@ -284,9 +434,7 @@ export const AdminDashboard: React.FC = () => {
                             )}
                           </div>
                           {payment.paidAt && (
-                            <p className="text-xs text-slate-500 mt-1">
-                              {new Date(payment.paidAt).toLocaleString()}
-                            </p>
+                            <p className="text-xs text-slate-500 mt-1">{new Date(payment.paidAt).toLocaleString()}</p>
                           )}
                           {payment.razorpayPaymentId && (
                             <p className="text-xs text-slate-500 font-mono mt-1 truncate" title={payment.razorpayPaymentId}>
@@ -296,19 +444,18 @@ export const AdminDashboard: React.FC = () => {
                         </div>
                       ))}
                     </div>
-                    <div className="mt-3 pt-3 border-t border-slate-200">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-bold text-slate-700">Total Paid:</span>
-                        <span className="text-lg font-bold text-teal-600">
-                          ₹{selectedProfile.payments.reduce((sum, p) => p.status === 'success' ? sum + p.amount : sum, 0)}
-                        </span>
-                      </div>
+                    <div className="mt-3 pt-3 border-t border-slate-200 flex justify-between items-center">
+                      <span className="text-sm font-bold text-slate-700">Total Paid:</span>
+                      <span className="text-lg font-bold text-teal-600">
+                        ₹{selectedProfile.payments.reduce((sum, p) => p.status === 'success' ? sum + p.amount : sum, 0)}
+                      </span>
                     </div>
                   </div>
                   );
                 })()}
 
-                <div className="pt-4 space-y-2">
+                {/* ── Actions ── */}
+                <div className="pt-4 space-y-2 border-t border-slate-100">
                   <Button
                     onClick={() => handleApprove(selectedProfile._id)}
                     className="w-full bg-green-600 hover:bg-green-700"
