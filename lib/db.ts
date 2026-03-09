@@ -87,18 +87,34 @@ async function ensureIndexes(db: Db) {
   if (indexesEnsured) return;
   try {
     console.log('[DB] Ensuring indexes...');
-    // Profiles: unique index on phone, status and role for queries
-    await db.collection('profiles').createIndex({ 'basicInfo.phone': 1 }, { unique: true, sparse: true });
-    await db.collection('profiles').createIndex({ role: 1, status: 1 });
-    await db.collection('profiles').createIndex({ createdAt: -1 });
+    
+    // Helper function to safely create indexes, ignoring duplicate key errors
+    const safeCreateIndex = async (collection: string, spec: any, options?: any) => {
+      try {
+        await db.collection(collection).createIndex(spec, options);
+      } catch (err: any) {
+        // Ignore E11000 errors (duplicate key) - data integrity issue to be handled separately
+        if (err.code === 11000) {
+          console.warn(`[DB] Index creation skipped (duplicate data exists): ${JSON.stringify(spec)}`);
+        } else {
+          throw err;
+        }
+      }
+    };
+
+    // Profiles: index on phone (not unique due to existing duplicates), status and role for queries
+    await safeCreateIndex('profiles', { 'basicInfo.phone': 1 }, { sparse: true });
+    await safeCreateIndex('profiles', { role: 1, status: 1 });
+    await safeCreateIndex('profiles', { createdAt: -1 });
 
     // Snapshots: primary key is _id (snapshotUrl), plus userId and createdAt
-    await db.collection('snapshots').createIndex({ _id: 1 }, { unique: true });
-    await db.collection('snapshots').createIndex({ userId: 1, createdAt: -1 });
+    await safeCreateIndex('snapshots', { _id: 1 }, { unique: true });
+    await safeCreateIndex('snapshots', { userId: 1, createdAt: -1 });
 
     indexesEnsured = true;
     console.log('[DB] Indexes ensured');
   } catch (err) {
     console.error('[DB] Failed to ensure indexes:', err);
+    // Don't throw - allow the app to continue without indexes rather than crashing
   }
 }
