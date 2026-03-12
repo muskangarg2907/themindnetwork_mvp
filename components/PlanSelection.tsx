@@ -258,6 +258,9 @@ export const PlanSelection: React.FC = () => {
 
                 {/* Plan Name */}
                 <h3 className="text-2xl font-bold text-slate-900 mb-2">{plan.name}</h3>
+                <p className="text-sm font-semibold mb-3" style={{ color: 'var(--color-primary)' }}>
+                  Worth ₹249/- only
+                </p>
 
 
 
@@ -319,6 +322,31 @@ export const PlanSelection: React.FC = () => {
           >
             Continue to Payment <i className="fas fa-arrow-right ml-2"></i>
           </Button>
+        </div>
+
+        {/* Last Updated Info */}
+        <div className="text-center mt-8 mb-4 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+          <i className="fas fa-info-circle mr-1"></i>
+          Last updated: March 12, 2026
+        </div>
+
+        {/* AEO Content - Plan Price Transparency */}
+        <div className="mt-16 max-w-4xl mx-auto bg-white rounded-2xl shadow-md p-8">
+          <h2 className="text-3xl font-bold text-slate-900 mb-4">About Our Plans & Pricing</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">Explore Plan - Worth ₹249/- only</h3>
+              <p className="text-slate-600 leading-relaxed">
+                Start with confidence. Our Explore plan offers an initial consultation call to discuss your mental health goals, concerns, and find the right therapist match. You'll get 10% off your first 3 sessions and the freedom to try different therapists until you find the perfect fit.
+              </p>
+            </div>
+
+          </div>
+          <div className="mt-6 p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
+            <p className="text-slate-700 text-sm">
+              <strong>Money-Back Guarantee:</strong> Not satisfied with your first session? We offer a full refund with no questions asked. Your mental wellness is our priority.
+            </p>
+          </div>
         </div>
 
         {/* Back Button */}

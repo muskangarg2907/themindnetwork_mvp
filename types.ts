@@ -88,3 +88,51 @@ export interface ChatMessage {
   timestamp: number;
   isThinking?: boolean;
 }
+
+// REFERRAL SYSTEM TYPES
+export interface ReferralRequest {
+  _id?: string;
+  requestId: string; // 8-char random ID for public sharing
+  userId: string; // Phone number of the client creating the request
+  clientInitials?: string;
+  clientType: 'individual' | 'couple' | 'group';
+  clientAge?: number;
+  concerns: string;
+  genderPreference: string[]; // ["Female", "Male", "Non-Binary", "Any"]
+  languages: string;
+  mode: string[]; // ["Online", "Offline", "Hybrid"]
+  location?: string; // Required if offline/hybrid
+  budgetRange: string;
+  urgency: 'Low' | 'Medium' | 'High';
+  notes?: string;
+  status: 'active' | 'closed';
+  applicantCount?: number;
+  selectedProviderId?: string;
+  selectedAt?: string;
+  createdAt: string;
+  updatedAt?: string;
+  closedAt?: string;
+}
+
+export interface ReferralApplication {
+  _id?: string;
+  requestId: string;
+  applicantId: string; // Provider phone number
+  applicantName?: string;
+  applicantExp?: string;
+  applicantDegrees?: string;
+  applicantModalities?: string[];
+  applicantFee?: string;
+  applicantLanguages?: string[];
+  applicantLocation?: string;
+  appliedAt: string;
+}
+
+export interface ReferralShortlist {
+  _id?: string;
+  requestId: string;
+  userId: string; // Client phone number
+  applicantId: string; // Provider phone number
+  rank: number; // 1-4 (user can save up to 4)
+  addedAt: string;
+}

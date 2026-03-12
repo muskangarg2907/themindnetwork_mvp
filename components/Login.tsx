@@ -232,7 +232,21 @@ export const Login: React.FC = () => {
       
       // Check if profile exists via API client
       console.log('[LOGIN] Checking if profile exists');
-      const profile = await apiClient.lookupProfileByPhone(normalizedPhone);
+      let profile = null;
+      try {
+        profile = await apiClient.lookupProfileByPhone(normalizedPhone);
+      } catch (err: any) {
+        // For local dev: if backend API isn't available, check localStorage instead
+        if (err.message?.includes('ECONNREFUSED') || err.message?.includes('Network') || import.meta.env.DEV) {
+          console.log('[LOGIN] Backend unavailable (local dev mode), checking localStorage');
+          const stored = localStorage.getItem('userProfile');
+          if (stored) {
+            profile = JSON.parse(stored);
+          }
+        } else {
+          throw err;
+        }
+      }
       
       if (profile) {
         // EXISTING USER - Profile found
@@ -256,7 +270,13 @@ export const Login: React.FC = () => {
         setIsLoading(false);
         // Small delay to ensure localStorage is written before navigation
         setTimeout(() => {
-          navigate('/profile');
+          const pendingRedirect = localStorage.getItem('referral_page_redirect');
+          if (pendingRedirect) {
+            localStorage.removeItem('referral_page_redirect');
+            navigate(pendingRedirect);
+          } else {
+            navigate('/profile');
+          }
         }, 100);
         return;
       } else {

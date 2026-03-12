@@ -210,6 +210,10 @@ app.get('/api/health', async (req, res) => {
 
 // Consolidated ADMIN endpoint (matches /api/admin.ts)
 app.all('/api/admin', async (req, res) => {
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+
   const { action, id } = req.query;
 
   try {
@@ -289,6 +293,10 @@ app.all('/api/admin', async (req, res) => {
 
 // Consolidated PROFILES endpoint (matches /api/profiles.ts)
 app.all('/api/profiles', async (req, res) => {
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+
   const action = Array.isArray(req.query.action) ? req.query.action[0] : req.query.action;
   const phone = Array.isArray(req.query.phone) ? req.query.phone[0] : req.query.phone;
   
@@ -440,6 +448,10 @@ app.post('/api/generate', async (req, res) => {
 
 // Consolidated UTILS endpoint (matches /api/utils.ts)
 app.all('/api/utils', async (req, res) => {
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+
   const { action } = req.query;
   
   console.log('[UTILS] Request:', req.method, 'action:', action);
@@ -553,6 +565,579 @@ app.post('/api/razorpay', async (req, res) => {
       error: 'Failed to create payment order', 
       details: err?.message 
     });
+  }
+});
+
+// File-based storage for referrals during development
+const REFERRALS_FILE = path.join(DATA_DIR, 'referrals.json');
+const REFERRAL_APPS_FILE = path.join(DATA_DIR, 'referral_applications.json');
+const REFERRAL_SHORTLISTS_FILE = path.join(DATA_DIR, 'referral_shortlists.json');
+
+async function readReferralsFile() {
+  try {
+    const txt = await fs.readFile(REFERRALS_FILE, 'utf8');
+    return JSON.parse(txt || '[]');
+  } catch (err) {
+    if (err.code === 'ENOENT') return [];
+    throw err;
+  }
+}
+
+async function writeReferralsFile(data) {
+  await fs.mkdir(DATA_DIR, { recursive: true });
+  const tmp = REFERRALS_FILE + '.tmp';
+  await fs.writeFile(tmp, JSON.stringify(data, null, 2), 'utf8');
+  await fs.rename(tmp, REFERRALS_FILE);
+}
+
+async function readApplicationsFile() {
+  try {
+    const txt = await fs.readFile(REFERRAL_APPS_FILE, 'utf8');
+    return JSON.parse(txt || '[]');
+  } catch (err) {
+    if (err.code === 'ENOENT') return [];
+    throw err;
+  }
+}
+
+async function writeApplicationsFile(data) {
+  await fs.mkdir(DATA_DIR, { recursive: true });
+  const tmp = REFERRAL_APPS_FILE + '.tmp';
+  await fs.writeFile(tmp, JSON.stringify(data, null, 2), 'utf8');
+  await fs.rename(tmp, REFERRAL_APPS_FILE);
+}
+
+async function readShortlistsFile() {
+  try {
+    const txt = await fs.readFile(REFERRAL_SHORTLISTS_FILE, 'utf8');
+    return JSON.parse(txt || '[]');
+  } catch (err) {
+    if (err.code === 'ENOENT') return [];
+    throw err;
+  }
+}
+
+async function writeShortlistsFile(data) {
+  await fs.mkdir(DATA_DIR, { recursive: true });
+  const tmp = REFERRAL_SHORTLISTS_FILE + '.tmp';
+  await fs.writeFile(tmp, JSON.stringify(data, null, 2), 'utf8');
+  await fs.rename(tmp, REFERRAL_SHORTLISTS_FILE);
+}
+
+function generateRequestId() {
+  return Math.random().toString(36).substring(2, 10);
+}
+
+// REFERRALS endpoint
+app.all('/api/referrals', async (req, res) => {
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+
+  const rawAction = req.query.action;
+  const action = String(Array.isArray(rawAction) ? rawAction[0] : (rawAction || '')).trim();
+  const userPhone = req.headers['x-user-phone'] || req.query.phone;
+  const normalizedPhone = normalizePhone(userPhone || '');
+
+  console.log('[REFERRALS]', req.method, 'action:', action, 'phone:', normalizedPhone ? '****' + normalizedPhone.slice(-4) : 'none');
+
+  try {
+    // CREATE new referral request
+    if (action === 'create' && req.method === 'POST') {
+      if (!normalizedPhone) {
+        return res.status(401).json({ error: 'User phone required' });
+      }
+
+      const { clientInitials, clientType, clientAge, concerns, genderPreference, languages, mode, location, budgetRange, urgency, notes } = req.body;
+
+      if (!clientType || !concerns || !mode || !budgetRange || !urgency) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      const requestId = generateRequestId();
+      const newRequest = {
+        requestId,
+        userId: normalizedPhone,
+        clientInitials: clientInitials ? String(clientInitials).trim().toUpperCase().substring(0, 12) : '',
+        clientType,
+        clientAge: clientAge ? parseInt(clientAge) : undefined,
+        concerns: String(concerns || ''),
+        genderPreference: Array.isArray(genderPreference) ? genderPreference : [],
+        languages: String(languages || ''),
+        mode: Array.isArray(mode) ? mode : [],
+        location: String(location || ''),
+        budgetRange: String(budgetRange || ''),
+        urgency: String(urgency || ''),
+        notes: String(notes || '').substring(0, 200),
+        status: 'active',
+        applicantCount: 0,
+        createdAt: new Date().toISOString()
+      };
+
+      const referrals = await readReferralsFile();
+      referrals.push(newRequest);
+      await writeReferralsFile(referrals);
+
+      console.log('[REFERRALS] Created request:', requestId);
+      return res.status(201).json(newRequest);
+    }
+
+    // UPDATE referral request (owner only)
+    if (action === 'update' && req.method === 'PUT') {
+      if (!normalizedPhone) {
+        return res.status(401).json({ error: 'User phone required' });
+      }
+
+      const {
+        requestId,
+        referralId,
+        id,
+        clientInitials,
+        clientType,
+        clientAge,
+        concerns,
+        genderPreference,
+        languages,
+        mode,
+        location,
+        budgetRange,
+        urgency,
+        notes
+      } = req.body;
+
+      const resolvedId = requestId || referralId || id;
+      if (!resolvedId || !clientType || !String(concerns || '').trim() || !Array.isArray(mode) || mode.length === 0 || !String(budgetRange || '').trim() || !String(urgency || '').trim()) {
+        return res.status(400).json({
+          error: 'Missing required fields',
+          required: ['requestId/referralId', 'clientType', 'concerns', 'mode[]', 'budgetRange', 'urgency']
+        });
+      }
+
+      const referrals = await readReferralsFile();
+      const referral = referrals.find(r => r.requestId === resolvedId || r._id === resolvedId || r.id === resolvedId);
+
+      if (!referral || referral.userId !== normalizedPhone) {
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
+
+      referral.clientInitials = clientInitials ? String(clientInitials).trim().toUpperCase().substring(0, 12) : '';
+      referral.clientType = clientType;
+      referral.clientAge = clientAge ? parseInt(clientAge) : undefined;
+      referral.concerns = String(concerns || '');
+      referral.genderPreference = Array.isArray(genderPreference) ? genderPreference : [];
+      referral.languages = String(languages || '');
+      referral.mode = Array.isArray(mode) ? mode : [];
+      referral.location = String(location || '');
+      referral.budgetRange = String(budgetRange || '');
+      referral.urgency = String(urgency || '');
+      referral.notes = String(notes || '').substring(0, 200);
+      referral.updatedAt = new Date().toISOString();
+
+      await writeReferralsFile(referrals);
+
+      console.log('[REFERRALS] Updated request:', requestId);
+      return res.json(referral);
+    }
+
+    // GET user's referral requests
+    if (action === 'my-requests' && req.method === 'GET') {
+      if (!normalizedPhone) {
+        return res.status(401).json({ error: 'User phone required' });
+      }
+
+      const referrals = await readReferralsFile();
+      const userRequests = referrals.filter(r => r.userId === normalizedPhone);
+      userRequests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      return res.json(userRequests);
+    }
+
+    // GET discoverable open referrals for providers (excluding own requests)
+    if (action === 'discover' && req.method === 'GET') {
+      if (!normalizedPhone) {
+        return res.status(401).json({ error: 'User phone required' });
+      }
+
+      let requesterRole = '';
+      if (usePostgres) {
+        const q = await pool.query('SELECT data FROM profiles');
+        const matched = q.rows
+          .map(r => r.data)
+          .find(p => normalizePhone(p?.basicInfo?.phone || '') === normalizedPhone);
+        requesterRole = matched?.role || '';
+      } else {
+        const profiles = await readProfilesFile();
+        const matched = profiles.find(p => normalizePhone(p?.basicInfo?.phone || '') === normalizedPhone);
+        requesterRole = matched?.role || '';
+      }
+
+      if (requesterRole !== 'provider') {
+        return res.status(403).json({ error: 'Only providers can discover referrals' });
+      }
+
+      const referrals = await readReferralsFile();
+      const applications = await readApplicationsFile();
+
+      const openRequests = referrals
+        .filter(r => r.status === 'active' && r.userId !== normalizedPhone)
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      const appliedSet = new Set(
+        applications
+          .filter(a => a.applicantId === normalizedPhone)
+          .map(a => a.requestId)
+      );
+
+      const countByRequest = applications.reduce((acc, app) => {
+        acc[app.requestId] = (acc[app.requestId] || 0) + 1;
+        return acc;
+      }, {});
+
+      const discoverable = openRequests.map(r => ({
+        ...r,
+        hasApplied: appliedSet.has(r.requestId),
+        applicantCount: countByRequest[r.requestId] || 0,
+      }));
+
+      return res.json(discoverable);
+    }
+
+    // GET single referral (public view)
+    if (action === 'view' && req.method === 'GET') {
+      const { id } = req.query;
+      if (!id) {
+        return res.status(400).json({ error: 'Referral ID required' });
+      }
+
+      const referrals = await readReferralsFile();
+      const referral = referrals.find(r => r.requestId === id);
+
+      if (!referral) {
+        return res.status(404).json({ error: 'Referral not found' });
+      }
+
+      return res.json(referral);
+    }
+
+    // APPLY to referral
+    if (action === 'apply' && req.method === 'POST') {
+      if (!normalizedPhone) {
+        return res.status(401).json({ error: 'User phone required' });
+      }
+
+      // Only registered providers can apply to referral requests.
+      let requesterRole = '';
+      if (usePostgres) {
+        const q = await pool.query('SELECT data FROM profiles');
+        const matched = q.rows
+          .map(r => r.data)
+          .find(p => normalizePhone(p?.basicInfo?.phone || '') === normalizedPhone);
+        requesterRole = matched?.role || '';
+      } else {
+        const profiles = await readProfilesFile();
+        const matched = profiles.find(p => normalizePhone(p?.basicInfo?.phone || '') === normalizedPhone);
+        requesterRole = matched?.role || '';
+      }
+
+      if (requesterRole !== 'provider') {
+        return res.status(403).json({ error: 'Only registered providers can apply to referral requests' });
+      }
+
+      const { requestId, name, exp, degrees, modalities, fee, languages, location } = req.body;
+
+      if (!requestId) {
+        return res.status(400).json({ error: 'Referral ID required' });
+      }
+
+      const referrals = await readReferralsFile();
+      const referral = referrals.find(r => r.requestId === requestId);
+      if (!referral) {
+        return res.status(404).json({ error: 'Referral not found' });
+      }
+      if (referral.userId === normalizedPhone) {
+        return res.status(400).json({ error: 'You cannot apply to your own referral request' });
+      }
+
+      const applications = await readApplicationsFile();
+      const existingApp = applications.find(a => a.requestId === requestId && a.applicantId === normalizedPhone);
+      if (existingApp) {
+        return res.status(400).json({ error: 'Already applied to this request' });
+      }
+
+      const newApp = {
+        requestId,
+        applicantId: normalizedPhone,
+        applicantName: String(name || ''),
+        applicantExp: String(exp || ''),
+        applicantDegrees: String(degrees || ''),
+        applicantModalities: Array.isArray(modalities) ? modalities : [],
+        applicantFee: String(fee || ''),
+        applicantLanguages: String(languages || ''),
+        applicantLocation: String(location || ''),
+        appliedAt: new Date().toISOString()
+      };
+
+      applications.push(newApp);
+      await writeApplicationsFile(applications);
+
+      // Update applicant count on referral
+      referral.applicantCount = (referral.applicantCount || 0) + 1;
+      await writeReferralsFile(referrals);
+
+      console.log('[REFERRALS] New application for:', requestId);
+      return res.status(201).json(newApp);
+    }
+
+    // GET applicants for a referral
+    if (action === 'applicants' && req.method === 'GET') {
+      if (!normalizedPhone) {
+        return res.status(401).json({ error: 'User phone required' });
+      }
+
+      const { requestId } = req.query;
+      if (!requestId) {
+        return res.status(400).json({ error: 'Referral ID required' });
+      }
+
+      const referrals = await readReferralsFile();
+      const referral = referrals.find(r => r.requestId === requestId);
+      if (!referral || referral.userId !== normalizedPhone) {
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
+
+      const applications = await readApplicationsFile();
+      const applicants = applications.filter(a => a.requestId === requestId);
+
+      return res.json(applicants);
+    }
+
+    // GET/POST shortlist
+    if (action === 'shortlist') {
+      if (req.method === 'GET') {
+        if (!normalizedPhone) {
+          return res.status(401).json({ error: 'User phone required' });
+        }
+
+        const { requestId } = req.query;
+        if (!requestId) {
+          return res.status(400).json({ error: 'Referral ID required' });
+        }
+
+        const shortlists = await readShortlistsFile();
+        const userShortlist = shortlists.filter(s => s.requestId === requestId && s.userId === normalizedPhone);
+        userShortlist.sort((a, b) => a.rank - b.rank);
+
+        return res.json(userShortlist);
+      }
+
+      if (req.method === 'POST') {
+        if (!normalizedPhone) {
+          return res.status(401).json({ error: 'User phone required' });
+        }
+
+        const { requestId, applicantId, rank } = req.body;
+
+        if (!requestId || !applicantId || !rank) {
+          return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        if (rank < 1 || rank > 4) {
+          return res.status(400).json({ error: 'Rank must be between 1 and 4' });
+        }
+
+        const referrals = await readReferralsFile();
+        const referral = referrals.find(r => r.requestId === requestId);
+        if (!referral || referral.userId !== normalizedPhone) {
+          return res.status(403).json({ error: 'Unauthorized' });
+        }
+
+        const shortlists = await readShortlistsFile();
+        const existing = shortlists.find(s => s.requestId === requestId && s.userId === normalizedPhone && s.applicantId === applicantId);
+
+        if (existing) {
+          existing.rank = rank;
+          existing.addedAt = new Date().toISOString();
+        } else {
+          const userShortlistCount = shortlists.filter(s => s.requestId === requestId && s.userId === normalizedPhone).length;
+          if (userShortlistCount >= 4) {
+            return res.status(400).json({ error: 'Maximum 4 applicants can be shortlisted' });
+          }
+
+          shortlists.push({
+            requestId,
+            userId: normalizedPhone,
+            applicantId,
+            rank,
+            addedAt: new Date().toISOString()
+          });
+        }
+
+        await writeShortlistsFile(shortlists);
+        console.log('[REFERRALS] Shortlisted:', applicantId, 'rank:', rank);
+        return res.json({ success: true });
+      }
+    }
+
+    // DELETE shortlist entry
+    if (action === 'shortlist-remove' && req.method === 'DELETE') {
+      if (!normalizedPhone) {
+        return res.status(401).json({ error: 'User phone required' });
+      }
+
+      const { requestId, applicantId } = req.body;
+
+      if (!requestId || !applicantId) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      const shortlists = await readShortlistsFile();
+      const index = shortlists.findIndex(s => s.requestId === requestId && s.userId === normalizedPhone && s.applicantId === applicantId);
+
+      if (index === -1) {
+        return res.status(404).json({ error: 'Shortlist entry not found' });
+      }
+
+      shortlists.splice(index, 1);
+      await writeShortlistsFile(shortlists);
+
+      console.log('[REFERRALS] Removed from shortlist:', applicantId);
+      return res.json({ success: true });
+    }
+
+    // UPDATE referral status
+    if (action === 'update-status' && req.method === 'PUT') {
+      if (!normalizedPhone) {
+        return res.status(401).json({ error: 'User phone required' });
+      }
+
+      const { requestId, status } = req.body;
+
+      if (!requestId || !status) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      if (!['active', 'closed'].includes(status)) {
+        return res.status(400).json({ error: 'Invalid status' });
+      }
+
+      const referrals = await readReferralsFile();
+      const referral = referrals.find(r => r.requestId === requestId);
+
+      if (!referral || referral.userId !== normalizedPhone) {
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
+
+      referral.status = status;
+      referral.closedAt = status === 'closed' ? new Date().toISOString() : undefined;
+      await writeReferralsFile(referrals);
+
+      console.log('[REFERRALS] Updated status:', requestId, status);
+      return res.json(referral);
+    }
+
+    // DELETE referral
+    if (action === 'delete' && req.method === 'DELETE') {
+      if (!normalizedPhone) {
+        return res.status(401).json({ error: 'User phone required' });
+      }
+
+      const { requestId } = req.body;
+
+      if (!requestId) {
+        return res.status(400).json({ error: 'Referral ID required' });
+      }
+
+      const referrals = await readReferralsFile();
+      const index = referrals.findIndex(r => r.requestId === requestId);
+
+      if (index === -1 || referrals[index].userId !== normalizedPhone) {
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
+
+      referrals.splice(index, 1);
+      await writeReferralsFile(referrals);
+
+      // Also delete related applications and shortlists
+      let applications = await readApplicationsFile();
+      applications = applications.filter(a => a.requestId !== requestId);
+      await writeApplicationsFile(applications);
+
+      let shortlists = await readShortlistsFile();
+      shortlists = shortlists.filter(s => s.requestId !== requestId);
+      await writeShortlistsFile(shortlists);
+
+      console.log('[REFERRALS] Deleted request:', requestId);
+      return res.json({ success: true });
+    }
+
+    // SELECT a provider for a referral request
+    if (action === 'select-provider' && req.method === 'POST') {
+      if (!normalizedPhone) {
+        return res.status(401).json({ error: 'User phone required' });
+      }
+
+      const { requestId, applicantId } = req.body;
+      if (!requestId || !applicantId) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      const referrals = await readReferralsFile();
+      const referral = referrals.find(r => r.requestId === requestId);
+      if (!referral || referral.userId !== normalizedPhone) {
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
+
+      referral.selectedProviderId = applicantId;
+      referral.selectedAt = new Date().toISOString();
+      await writeReferralsFile(referrals);
+
+      console.log('[REFERRALS] Selected provider:', applicantId, 'for request:', requestId);
+      return res.json({ success: true });
+    }
+
+    // GET provider profile (public view)
+    if (action === 'provider-profile' && req.method === 'GET') {
+      const { phone } = req.query;
+      if (!phone) {
+        return res.status(400).json({ error: 'Provider phone required' });
+      }
+
+      const providerPhone = normalizePhone(String(phone));
+      const profiles = await readProfilesFile();
+      const profile = profiles.find(p => normalizePhone(p.basicInfo?.phone) === providerPhone && p.role === 'provider');
+
+      if (!profile) {
+        return res.status(404).json({ error: 'Provider not found' });
+      }
+
+      // Return only public-safe fields
+      return res.json({
+        fullName: profile.basicInfo?.fullName || '',
+        email: profile.basicInfo?.email || '',
+        qualification: profile.providerDetails?.qualification || '',
+        yearsExperience: profile.providerDetails?.yearsExperience || '',
+        specializations: profile.providerDetails?.specializations || [],
+        languages: profile.providerDetails?.languages || [],
+        mode: profile.providerDetails?.mode || '',
+        budgetRange: profile.providerDetails?.budgetRange || '',
+        therapeuticFocus: profile.providerDetails?.therapeuticFocus || '',
+        therapyStyle: profile.providerDetails?.therapyStyle || '',
+        licenses: profile.providerDetails?.licenses || '',
+        website: profile.providerDetails?.website || '',
+        clientType: profile.providerDetails?.clientType || [],
+        offlineLocation: profile.providerDetails?.offlineLocation || '',
+        resumeFileName: profile.providerDetails?.resumeFileName || '',
+      });
+    }
+
+    return res.status(400).json({
+      error: 'Invalid action parameter',
+      method: req.method,
+      action: action || null
+    });
+  } catch (err) {
+    console.error('[REFERRALS] Error:', err);
+    res.status(500).json({ error: err.message || 'Internal server error' });
   }
 });
 

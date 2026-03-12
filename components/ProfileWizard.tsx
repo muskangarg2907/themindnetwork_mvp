@@ -273,8 +273,15 @@ export const ProfileWizard: React.FC = () => {
                             console.warn('Failed to notify admin:', e);
                         }
                         setIsGenerating(false);
-                        // Pass flag to ProfileView to disable polling briefly after creation
-                        navigate('/profile', { state: { isNewlyCreated: true } });
+                        // Check for pending referral redirect
+                        const pendingRedirect = localStorage.getItem('referral_page_redirect');
+                        if (pendingRedirect) {
+                            localStorage.removeItem('referral_page_redirect');
+                            navigate(pendingRedirect);
+                        } else {
+                            // Pass flag to ProfileView to disable polling briefly after creation
+                            navigate('/profile', { state: { isNewlyCreated: true } });
+                        }
         } catch (err: any) {
             console.error('Save profile failed:', err);
             const msg = err?.message || 'Failed to save profile. Please try again later.';

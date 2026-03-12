@@ -2,6 +2,7 @@
 import React from 'react';
 import { UserProfile } from '../../types';
 import { Input, TextArea } from '../ui/Input';
+import { TagInput } from '../ui/TagInput';
 
 interface StepProps {
   data: UserProfile;
@@ -71,13 +72,12 @@ export const StepProviderProfessional: React.FC<StepProps> = ({ data, updateData
         onChange={handleChange}
       />
 
-      <TextArea
+      <TagInput
         label="Specializations *"
-        name="specializations"
-        placeholder="e.g. Trauma, Anxiety, Depression, CBT"
-        value={details.specializations.join(', ')}
-        onChange={(e) => handleArrayChange('specializations', e.target.value)}
-        className="h-24"
+        tags={details.specializations}
+        onChange={(tags) => updateDetails('specializations', tags)}
+        placeholder="e.g. Trauma, Anxiety, Depression…"
+        hint="Press Enter or comma to add each specialization"
       />
     </div>
   );

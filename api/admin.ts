@@ -5,6 +5,7 @@ import { getProfilesCollection } from '../lib/db.js';
 
 const NOTIFY_FILE = '/tmp/themindnetwork_admin_notify.json';
 const DATA_FILE = '/tmp/themindnetwork_profiles.json';
+const REFERRALS_FILE = '/tmp/themindnetwork_referrals.json';
 
 function checkAdminAuth(req: VercelRequest): boolean {
   const token = req.headers['x-admin-token'];
@@ -178,7 +179,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    return res.status(400).json({ error: 'Invalid action parameter. Use: profiles, notify, reset, or resume' });
+    // REFERRALS — fetch all referrals
+    if (action === 'referrals') {
+      if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+      try {
+        const txt = await fs.readFile(REFERRALS_FILE, 'utf8');
+        const referrals = JSON.parse(txt || '[]');
+        return res.status(200).json({ referrals });
+      } catch (err: any) {
+        if (err.code === 'ENOENT') {
+          return res.status(200).json({ referrals: [] });
+        }
+        throw err;
+      }
+    }
+
+    return res.status(400).json({ error: 'Invalid action parameter. Use: profiles, notify, reset, resume, or referrals' });
 
   } catch (err: any) {
     console.error('[ADMIN] Error:', err);

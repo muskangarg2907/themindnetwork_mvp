@@ -81,29 +81,35 @@ export const StepBasicInfo: React.FC<StepProps> = ({ data, updateData }) => {
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Input 
-          label="Date of Birth *" 
-          name="dob" 
-          type="date"
-          value={data.basicInfo.dob || ''} 
-          onChange={handleChange}
-          error={errors.dob}
-          max={new Date().toISOString().split('T')[0]}
-        />
+        <div className="flex flex-col gap-1.5 w-full">
+          <label className="text-sm font-semibold text-slate-700 ml-1">Date of Birth *</label>
+          <input
+            type="date"
+            name="dob"
+            value={data.basicInfo.dob || ''}
+            onChange={handleChange}
+            max={new Date().toISOString().split('T')[0]}
+            className="bg-white border border-slate-300 text-slate-900 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all shadow-sm"
+          />
+          {errors.dob && <span className="text-xs font-medium text-red-600 ml-1">{errors.dob}</span>}
+        </div>
         <div className="flex flex-col gap-1.5 w-full">
             <label className="text-sm font-semibold text-slate-700 ml-1">Gender</label>
+          <div className="relative">
             <select
-                name="gender"
-                value={data.basicInfo.gender || ''}
-                onChange={handleChange}
-                className="bg-white border border-slate-300 text-slate-900 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all shadow-sm"
+              name="gender"
+              value={data.basicInfo.gender || ''}
+              onChange={handleChange}
+              className="w-full appearance-none bg-white border border-slate-300 text-slate-900 rounded-lg px-4 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all shadow-sm"
             >
-                <option value="">Select Gender</option>
-                <option value="Female">Female</option>
-                <option value="Male">Male</option>
-                <option value="Non-binary">Non-binary</option>
-                <option value="Prefer not to say">Prefer not to say</option>
+              <option value="">Select Gender</option>
+              <option value="Female">Female</option>
+              <option value="Male">Male</option>
+              <option value="Non-binary">Non-binary</option>
+              <option value="Prefer not to say">Prefer not to say</option>
             </select>
+            <i className="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" aria-hidden="true"></i>
+          </div>
         </div>
       </div>
 

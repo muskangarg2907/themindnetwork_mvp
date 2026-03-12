@@ -30,20 +30,23 @@ export function useProfile(phoneNumber: string | null): UseProfileResult {
       setIsLoading(true);
       setError(null);
 
+      // Normalize phone for comparison
+      const normalizedPhone = phoneNumber.replace(/\D/g, '').slice(-10);
+
       // Try localStorage first
       const cached = localStorage.getItem('userProfile');
       if (cached) {
         const parsedProfile = JSON.parse(cached);
-        // Verify it matches current user
-        if (parsedProfile.basicInfo?.phone === phoneNumber) {
+        // Verify it matches current user (normalize both for comparison)
+        const cachedPhone = (parsedProfile.basicInfo?.phone || '').replace(/\D/g, '').slice(-10);
+        if (cachedPhone === normalizedPhone) {
           setProfile(parsedProfile);
           setIsLoading(false);
           return;
         }
       }
 
-      // Fetch from backend
-      const normalizedPhone = phoneNumber.replace(/\s+/g, '');
+      // Fetch from backend only if not in cache
       const response = await fetch(`/api/profiles?action=lookup&phone=${encodeURIComponent(normalizedPhone)}`);
       
       if (response.ok) {
@@ -56,10 +59,28 @@ export function useProfile(phoneNumber: string | null): UseProfileResult {
         // Profile doesn't exist yet
         setProfile(null);
       } else {
-        throw new Error('Failed to fetch profile');
+        throw new Error(`Failed to fetch profile (${response.status})`);
       }
     } catch (err) {
       console.error('[useProfile] Error loading profile:', err);
+
+      // Fallback for local/dev instability: if cache belongs to current number, use it.
+      try {
+        const cached = localStorage.getItem('userProfile');
+        if (cached) {
+          const parsedProfile = JSON.parse(cached);
+          const cachedPhone = (parsedProfile.basicInfo?.phone || '').replace(/\D/g, '').slice(-10);
+          const normalizedPhone = (phoneNumber || '').replace(/\D/g, '').slice(-10);
+          if (cachedPhone && cachedPhone === normalizedPhone) {
+            setProfile(parsedProfile);
+            setError(null);
+            return;
+          }
+        }
+      } catch (fallbackErr) {
+        console.error('[useProfile] Cache fallback failed:', fallbackErr);
+      }
+
       setError('Failed to load profile');
     } finally {
       setIsLoading(false);

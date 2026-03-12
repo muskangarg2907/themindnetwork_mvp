@@ -11,6 +11,8 @@
   "dependencies": {
     "@google/genai": "^1.31.0",
     "@vercel/node": "^3.0.0",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
     "firebase": "^12.6.0",
     "mongodb": "^6.21.0",
     "razorpay": "^2.9.6",

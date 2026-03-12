@@ -13,6 +13,31 @@ interface Plan {
   features?: string[];
 }
 
+const RAZORPAY_SCRIPT_ID = 'razorpay-checkout-sdk';
+
+async function loadRazorpaySDK(): Promise<void> {
+  if ((window as any).Razorpay) return;
+
+  const existingScript = document.getElementById(RAZORPAY_SCRIPT_ID) as HTMLScriptElement | null;
+  if (existingScript) {
+    await new Promise<void>((resolve, reject) => {
+      existingScript.addEventListener('load', () => resolve(), { once: true });
+      existingScript.addEventListener('error', () => reject(new Error('Failed to load Razorpay SDK')), { once: true });
+    });
+    return;
+  }
+
+  await new Promise<void>((resolve, reject) => {
+    const script = document.createElement('script');
+    script.id = RAZORPAY_SCRIPT_ID;
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Failed to load Razorpay SDK'));
+    document.body.appendChild(script);
+  });
+}
+
 export const Payment: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -36,6 +61,8 @@ export const Payment: React.FC = () => {
     setIsProcessing(true);
 
     try {
+      await loadRazorpaySDK();
+
       // Get user profile for customer details
       const storedProfile = localStorage.getItem('userProfile');
       const userProfile = storedProfile ? JSON.parse(storedProfile) : null;
@@ -127,6 +154,9 @@ export const Payment: React.FC = () => {
       };
 
       // Open Razorpay checkout
+      if (!(window as any).Razorpay) {
+        throw new Error('Payment gateway failed to initialize');
+      }
       const razorpay = new (window as any).Razorpay(options);
       razorpay.open();
     } catch (err) {

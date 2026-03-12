@@ -9,6 +9,7 @@ export const Landing: React.FC = () => {
   const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
   const [contactStatus, setContactStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [expandedFAQs, setExpandedFAQs] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -59,16 +60,53 @@ export const Landing: React.FC = () => {
     }
   ];
 
+  const toggleFAQ = (index: number) => {
+    const newExpanded = new Set(expandedFAQs);
+    if (newExpanded.has(index)) {
+      newExpanded.delete(index);
+    } else {
+      newExpanded.add(index);
+    }
+    setExpandedFAQs(newExpanded);
+  };
+
+  const faqs = [
+    {
+      question: 'What is TheMindNetwork?',
+      answer: 'TheMindNetwork is a digital platform connecting clients with verified mental health professionals for online and offline therapy sessions. We offer personalized matching based on specializations, location, and client preferences across major Indian cities.'
+    },
+    {
+      question: 'How much does therapy cost?',
+      answer: 'Individual therapy sessions range from ₹1,249 to ₹1,999 depending on the therapist\'s expertise and session type. We also offer a ₹249 exploration call to help you find the right therapist before committing to a full session.'
+    },
+    {
+      question: 'Are the therapists verified and qualified?',
+      answer: 'Yes. All therapists on TheMindNetwork are verified mental health professionals with relevant credentials in psychology, psychiatry, or counseling.'
+    },
+    {
+      question: 'How do I book a therapy session?',
+      answer: 'Sign up, complete your profile and our team will get in touch. Chose a plan, schedule your first session and start therapy. Try different therapists until you find the right one.'
+    },
+    {
+      question: 'Is my information confidential?',
+      answer: 'Absolutely. We maintain strict confidentiality and follow Indian mental health privacy regulations. All therapists are bound by professional confidentiality agreements and ethical codes. Your personal information and session details are encrypted and secure.'
+    },
+    {
+      question: 'What therapy modalities are offered?',
+      answer: 'Our network of therapists specializes in multiple approaches including Cognitive Behavioral Therapy (CBT), psychodynamic therapy, mindfulness-based therapy, couples counseling, and specialized treatments for anxiety, depression, trauma, and relationship issues.'
+    }
+  ];
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--color-background)' }}>
       {/* Navigation Bar */}
       <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl border-b shadow-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', borderBottomColor: 'var(--color-secondary)' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg" style={{ backgroundColor: 'var(--color-primary)' }}>
               <i className="fas fa-brain text-white text-xl"></i>
             </div>
-            <span className="text-lg sm:text-xl md:text-2xl font-bold" style={{ color: 'var(--color-primary)' }}>TheMindNetwork</span>
+            <span className="text-base sm:text-xl md:text-2xl font-bold" style={{ color: 'var(--color-primary)' }}>TheMindNetwork</span>
           </div>
           
           {/* Desktop Menu */}
@@ -110,7 +148,7 @@ export const Landing: React.FC = () => {
             {isLoggedIn ? (
               <button
                 onClick={() => navigate('/profile')}
-                className="px-4 py-2 text-sm font-medium rounded-lg transition-all text-white"
+                className="px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all text-white"
                 style={{ backgroundColor: 'var(--color-primary)' }}
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary-hover)'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary)'}
@@ -120,7 +158,7 @@ export const Landing: React.FC = () => {
             ) : (
               <button
                 onClick={() => navigate('/login')}
-                className="px-4 py-2 text-sm font-medium rounded-lg transition-all text-white"
+                className="px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all text-white"
                 style={{ backgroundColor: 'var(--color-primary)' }}
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary-hover)'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary)'}
@@ -133,26 +171,26 @@ export const Landing: React.FC = () => {
       </nav>
 
       {/* Hero Section */}
-      <div className="pt-32 pb-20 px-6">
+      <div className="pt-28 sm:pt-32 pb-16 sm:pb-20 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm mb-8 shadow-sm" style={{ backgroundColor: 'var(--color-secondary)', borderWidth: '1px', borderColor: 'var(--color-accent)', color: 'var(--color-primary)' }}>
+          <div className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 rounded-full text-xs sm:text-sm mb-8 shadow-sm" style={{ backgroundColor: 'var(--color-secondary)', borderWidth: '1px', borderColor: 'var(--color-accent)', color: 'var(--color-primary)' }}>
             <i className="fas fa-shield-heart" style={{ color: 'var(--color-primary)' }}></i>
             <span className="font-semibold">Trusted by thousands across India</span>
           </div>
           
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight" style={{ color: 'var(--color-text-primary)' }}>
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight" style={{ color: 'var(--color-text-primary)' }}>
             <span style={{ color: 'var(--color-primary)' }}>Find the therapist</span><br/>
             <span style={{ color: 'var(--color-text-primary)' }}>meant for you</span>
           </h1>
           
-          <p className="text-xl md:text-2xl mb-12 max-w-3xl mx-auto leading-relaxed font-light" style={{ color: 'var(--color-text-muted)' }}>
+          <p className="text-lg sm:text-xl md:text-2xl mb-10 sm:mb-12 max-w-3xl mx-auto leading-relaxed font-light" style={{ color: 'var(--color-text-muted)' }}>
             Personalized matching with trained professionals who understand your unique needs.
           </p>
 
           <div className="flex flex-col items-center gap-6 mb-12">
             <button 
               onClick={() => navigate(isLoggedIn ? '/profile' : '/login', { state: { role: 'client' } })}
-              className="text-lg px-14 py-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 text-white font-semibold"
+              className="w-full sm:w-auto text-base sm:text-lg px-8 sm:px-14 py-4 sm:py-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 text-white font-semibold"
               style={{ backgroundColor: 'var(--color-primary)' }}
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary-hover)'}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary)'}
@@ -194,78 +232,47 @@ export const Landing: React.FC = () => {
         </div>
       </div>
 
-      {/* Plans Section */}
-      <section id="plans" className="py-24 px-6 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-20">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>
-              Your <span style={{ color: 'var(--color-primary)' }}>Care Plan</span>
-            </h2>
-            <p className="text-xl max-w-2xl mx-auto" style={{ color: 'var(--color-text-muted)' }}>
-              Everything you need to start your mental health journey — with flexibility and peace of mind.
-            </p>
+      {/* Provider CTA Section */}
+      <div className="py-16 sm:py-24 px-4 sm:px-6 relative overflow-hidden" style={{ backgroundColor: 'var(--color-primary)' }}>
+        <div className="absolute inset-0" style={{ backgroundColor: 'rgba(163, 177, 138, 0.05)' }}></div>
+        <div className="max-w-4xl mx-auto text-center relative z-10">
+          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm mb-6 shadow-lg" style={{ backgroundColor: 'rgba(163, 177, 138, 0.2)', borderWidth: '1px', borderColor: 'var(--color-accent)', color: 'var(--color-secondary)' }}>
+            <i className="fas fa-star"></i>
+            <span className="font-semibold">Join Our Professional Network</span>
           </div>
-
-          <div className="flex justify-center">
-            {plans.map((plan, index) => (
-              <div 
-                key={index}
-                className="relative bg-white border-2 rounded-3xl p-8 transition-all duration-300 shadow-lg hover:shadow-xl flex flex-col w-full max-w-md"
-                style={{ 
-                  borderColor: plan.highlight ? 'var(--color-primary)' : 'var(--color-secondary)',
-                  boxShadow: plan.highlight ? '0 20px 25px -5px rgba(46, 58, 47, 0.1), 0 10px 10px -5px rgba(46, 58, 47, 0.04)' : undefined
-                }}
-              >
-
-
-                <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-lg" style={{ backgroundColor: plan.highlight ? 'var(--color-primary)' : 'var(--color-secondary)' }}>
-                  <i className={`fas ${plan.icon} text-2xl ${plan.highlight ? 'text-white' : ''}`} style={{ color: plan.highlight ? '#fff' : 'var(--color-primary)' }}></i>
-                </div>
-
-                <h3 className="text-2xl font-bold mb-3" style={{ color: 'var(--color-text-primary)' }}>{plan.name}</h3>
-                <p className="mb-6 leading-relaxed" style={{ color: 'var(--color-text-muted)' }}>{plan.description}</p>
-
-
-
-                <ul className="space-y-4 mb-8 flex-grow">
-                  {plan.features.map((feature, i) => (
-                    <li key={i} className="flex items-start gap-3" style={{ color: 'var(--color-text-primary)' }}>
-                      <i className="fas fa-check-circle mt-1 flex-shrink-0" style={{ color: 'var(--color-accent)' }}></i>
-                      <span className="text-sm">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <button
-                  onClick={() => {
-                    // Always navigate to plans page to ensure proper auth flow
-                    navigate('/plans');
-                  }}
-                  className="w-full py-4 rounded-xl text-lg font-semibold shadow-lg transition-all hover:shadow-xl text-white"
-                  style={{ backgroundColor: plan.highlight ? 'var(--color-primary)' : 'var(--color-accent)' }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = plan.highlight ? 'var(--color-primary-hover)' : 'var(--color-accent-hover)'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = plan.highlight ? 'var(--color-primary)' : 'var(--color-accent)'}
-                >
-                  {plan.cta} <i className="fas fa-arrow-right ml-2"></i>
-                </button>
-              </div>
-            ))}
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6">
+            Are you a provider who wants to join us?
+          </h2>
+          <p className="text-lg sm:text-xl mb-10 font-light" style={{ color: 'var(--color-secondary)' }}>
+            Connect with clients who need your expertise. Grow your practice with TheMindNetwork.
+          </p>
+          <div className="flex flex-row gap-3 sm:gap-4 justify-center">
+            <button 
+              onClick={() => navigate('/provider')}
+              className="text-base sm:text-lg px-8 sm:px-14 py-4 sm:py-5 rounded-2xl shadow-xl hover:shadow-2xl transition-all w-full sm:w-auto text-white font-semibold transform hover:scale-105"
+              style={{ backgroundColor: 'var(--color-accent)' }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-accent-hover)'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-accent)'}
+            >
+              Start Now <i className="fas fa-arrow-right ml-2"></i>
+            </button>
           </div>
+          <p className="text-sm mt-6 font-medium" style={{ color: 'var(--color-accent)' }}>✨ Expand your reach and help more people</p>
         </div>
-      </section>
+      </div>
 
-      {/* CTA Section */}
-      <section id="testimonials" className="py-24 px-6" style={{ backgroundColor: 'var(--color-secondary)' }}>
+      {/* Testimonials Section */}
+      <section id="testimonials" className="py-16 sm:py-24 px-4 sm:px-6" style={{ backgroundColor: 'var(--color-secondary)' }}>
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6" style={{ color: 'var(--color-text-primary)' }}>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6" style={{ color: 'var(--color-text-primary)' }}>
             What our customers say
           </h2>
-          <p className="text-xl mb-10" style={{ color: 'var(--color-text-muted)' }}>
+          <p className="text-base sm:text-xl mb-10" style={{ color: 'var(--color-text-muted)' }}>
             Join thousands who found their perfect therapist match through TheMindNetwork
           </p>
 
           {/* Testimonials */}
-          <div className="grid md:grid-cols-3 gap-6 mb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
             <div className="bg-white rounded-2xl p-6 shadow-md">
               <div className="flex items-center gap-2 mb-3">
                 <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Client testimonial avatar" className="w-10 h-10 rounded-full blur-md" loading="lazy" />
@@ -324,53 +331,85 @@ export const Landing: React.FC = () => {
             </div>
           </div>
 
-          {/* CTA removed as requested */}
           <p className="text-sm text-slate-500 mt-6">🔒 Your privacy and data are 100% secure</p>
         </div>
       </section>
 
-      {/* Provider CTA Section */}
-      <div className="py-24 px-6 relative overflow-hidden" style={{ backgroundColor: 'var(--color-primary)' }}>
-        <div className="absolute inset-0" style={{ backgroundColor: 'rgba(163, 177, 138, 0.05)' }}></div>
-        <div className="max-w-4xl mx-auto text-center relative z-10">
-          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm mb-6 shadow-lg" style={{ backgroundColor: 'rgba(163, 177, 138, 0.2)', borderWidth: '1px', borderColor: 'var(--color-accent)', color: 'var(--color-secondary)' }}>
-            <i className="fas fa-star"></i>
-            <span className="font-semibold">Join Our Professional Network</span>
-          </div>
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Are you a provider who wants to join us?
+      {/* Answer Engine Optimization (AEO) - Collapsible FAQs */}
+      <section className="py-16 sm:py-20 px-4 sm:px-6" style={{ backgroundColor: 'var(--color-bg-secondary)' }}>
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl sm:text-4xl font-bold text-center mb-4" style={{ color: 'var(--color-text-primary)' }}>
+            FAQs
           </h2>
-          <p className="text-xl mb-10 font-light" style={{ color: 'var(--color-secondary)' }}>
-            Connect with clients who need your expertise. Grow your practice with TheMindNetwork.
+          <p className="text-center text-base sm:text-lg mb-10 sm:mb-16" style={{ color: 'var(--color-text-secondary)' }}>
+            Find direct answers to questions about our therapy platform, pricing, and how we work.
           </p>
-          <div className="flex flex-row gap-3 sm:gap-4 justify-center">
-            <button 
-              onClick={() => navigate('/provider')}
-              className="text-lg px-14 py-5 rounded-2xl shadow-xl hover:shadow-2xl transition-all w-full sm:w-auto text-white font-semibold transform hover:scale-105"
-              style={{ backgroundColor: 'var(--color-accent)' }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-accent-hover)'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-accent)'}
-            >
-              Start Now <i className="fas fa-arrow-right ml-2"></i>
-            </button>
+
+          <div className="space-y-4">
+            {faqs.map((faq, index) => (
+              <div key={index} className="rounded-2xl shadow-md overflow-hidden" style={{ backgroundColor: 'white' }}>
+                <button
+                  onClick={() => toggleFAQ(index)}
+                  className="w-full p-4 sm:p-6 flex items-center justify-between hover:bg-gray-50 transition-colors text-left"
+                  style={{ backgroundColor: expandedFAQs.has(index) ? 'rgba(163, 177, 138, 0.05)' : 'white' }}
+                >
+                  <h3 className="text-base sm:text-lg font-bold pr-4" style={{ color: 'var(--color-text-primary)' }}>
+                    {faq.question}
+                  </h3>
+                  <i 
+                    className={`fas fa-chevron-down transition-transform duration-300 flex-shrink-0`}
+                    style={{
+                      color: 'var(--color-accent)',
+                      transform: expandedFAQs.has(index) ? 'rotate(180deg)' : 'rotate(0deg)'
+                    }}
+                  ></i>
+                </button>
+
+                {expandedFAQs.has(index) && (
+                  <div className="px-4 pb-4 sm:px-6 sm:pb-6 border-t border-gray-200" style={{ borderTopColor: 'rgba(163, 177, 138, 0.2)' }}>
+                    <p style={{ color: 'var(--color-text-secondary)', lineHeight: '1.6' }}>
+                      {faq.answer}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
-          <p className="text-sm mt-6 font-medium" style={{ color: 'var(--color-accent)' }}>✨ Expand your reach and help more people</p>
+
+          <div className="mt-10 sm:mt-12 p-5 sm:p-8 rounded-2xl" style={{ backgroundColor: 'rgba(163, 177, 138, 0.1)', border: '2px solid var(--color-secondary)' }}>
+            <h3 className="text-xl font-bold mb-3" style={{ color: 'var(--color-text-primary)' }}>
+              <i className="fas fa-lightbulb mr-2" style={{ color: 'var(--color-accent)' }}></i>
+              For Therapists & Counselors
+            </h3>
+            <p style={{ color: 'var(--color-text-secondary)', marginBottom: '1rem', lineHeight: '1.6' }}>
+              TheMindNetwork helps mental health professionals expand their practice by connecting them with clients seeking specialized care. Create a profile, showcase your expertise, and manage your schedule. Join hundreds of verified therapists already on our platform.
+            </p>
+            <a 
+              href="#/provider" 
+              className="inline-block px-6 py-3 rounded-lg font-semibold text-white transition-all"
+              style={{ backgroundColor: 'var(--color-primary)' }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary-hover)'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary)'}
+            >
+              Become a Provider <i className="fas fa-arrow-right ml-2"></i>
+            </a>
+          </div>
         </div>
-      </div>
+      </section>
 
       {/* Contact Form Section */}
-      <section id="contact" className="py-24 px-6" style={{ backgroundColor: 'var(--color-background)' }}>
+      <section id="contact" className="py-16 sm:py-24 px-4 sm:px-6" style={{ backgroundColor: 'var(--color-background)' }}>
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>
               Get in <span style={{ color: 'var(--color-primary)' }}>Touch</span>
             </h2>
-            <p className="text-xl font-light" style={{ color: 'var(--color-text-muted)' }}>
+            <p className="text-base sm:text-xl font-light" style={{ color: 'var(--color-text-muted)' }}>
               Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
             </p>
           </div>
 
-          <form onSubmit={handleContactSubmit} className="bg-white rounded-3xl p-8 shadow-xl" style={{ borderWidth: '1px', borderColor: 'var(--color-secondary)' }}>
+          <form onSubmit={handleContactSubmit} className="bg-white rounded-3xl p-5 sm:p-8 shadow-xl" style={{ borderWidth: '1px', borderColor: 'var(--color-secondary)' }}>
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--color-text-primary)' }}>
@@ -459,7 +498,7 @@ export const Landing: React.FC = () => {
       </section>
 
       {/* Footer with Internal Links */}
-      <footer className="py-12 px-6" style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-secondary)' }}>
+      <footer className="py-10 sm:py-12 px-4 sm:px-6" style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-secondary)' }}>
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
             {/* Company Info */}
@@ -620,6 +659,9 @@ export const Landing: React.FC = () => {
           <div className="text-center">
             <p className="text-sm" style={{ color: 'var(--color-secondary)' }}>
               © {new Date().getFullYear()} TheMindNetwork. All rights reserved.
+            </p>
+            <p className="text-xs mt-2" style={{ color: 'rgba(163, 177, 138, 0.6)' }}>
+              Last updated: March 12, 2026
             </p>
           </div>
         </div>

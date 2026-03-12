@@ -16,6 +16,7 @@ import { SnapshotView } from './components/SnapshotView';
 import { SnapshotViewEnhanced } from './components/SnapshotViewEnhanced';
 import { ComingSoon } from './components/ComingSoon';
 import { Dashboard } from './components/Dashboard';
+import { ReferralPage } from './components/ReferralPage';
 import { auth } from './services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 
@@ -57,6 +58,7 @@ const App: React.FC = () => {
           <Route path="/provider" element={<ProviderPage />} />
           <Route path="/snapshot" element={<ComingSoon />} />
           <Route path="/snapshot/:snapshotId" element={<ComingSoon />} />
+          <Route path="/referral/:id" element={<ReferralPage />} />
         </Routes>
       </HashRouter>
     </ErrorBoundary>

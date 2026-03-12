@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { UserProfile } from '../../types';
 import { Input, TextArea } from '../ui/Input';
+import { TagInput } from '../ui/TagInput';
 
 interface StepProps {
   data: UserProfile;
@@ -92,16 +93,19 @@ export const StepProviderPractice: React.FC<StepProps> = ({ data, updateData }) 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="flex flex-col gap-1.5 w-full">
             <label className="text-sm font-semibold text-slate-700 ml-1">Preferred Mode *</label>
+          <div className="relative">
             <select
-                name="mode"
-                value={details.mode}
-                onChange={handleChange}
-                className="bg-white border border-slate-300 text-slate-900 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm"
+              name="mode"
+              value={details.mode}
+              onChange={handleChange}
+              className="w-full appearance-none bg-white border border-slate-300 text-slate-900 rounded-lg px-4 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all shadow-sm"
             >
-                <option value="online">Online Only</option>
-                <option value="offline">In-Person Only</option>
-                <option value="both">Hybrid (Both)</option>
+              <option value="online">Online Only</option>
+              <option value="offline">In-Person Only</option>
+              <option value="both">Hybrid (Both)</option>
             </select>
+            <i className="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" aria-hidden="true"></i>
+          </div>
         </div>
       </div>
 
@@ -129,12 +133,12 @@ export const StepProviderPractice: React.FC<StepProps> = ({ data, updateData }) 
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Input 
-          label="Languages Spoken" 
-          name="languages" 
-          placeholder="e.g. English, Hindi, Marathi" 
-          value={details.languages.join(', ')} 
-          onChange={(e) => handleArrayChange('languages', e.target.value)}
+        <TagInput
+          label="Languages Spoken"
+          tags={details.languages}
+          onChange={(tags) => updateDetails('languages', tags)}
+          placeholder="e.g. English, Hindi, Marathi…"
+          hint="Press Enter or comma to add"
         />
         <Input 
           label="Budget Range (per session) *" 

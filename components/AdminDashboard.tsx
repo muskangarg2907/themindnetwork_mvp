@@ -1,17 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/Button';
-import { UserProfile } from '../types';
+import { UserProfile, ReferralRequest } from '../types';
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
+  const [referrals, setReferrals] = useState<ReferralRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
   const [editStatus, setEditStatus] = useState('pending_verification');
   const [resumeData, setResumeData] = useState<{ fileData: string; fileName: string } | null>(null);
   const [resumeLoading, setResumeLoading] = useState(false);
   const [resumeError, setResumeError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'clients' | 'providers' | 'referrals'>('clients');
+  const [editingRefId, setEditingRefId] = useState<string | null>(null);
+  const [refNotes, setRefNotes] = useState<{ [key: string]: string }>({});
 
   // Check authentication
   useEffect(() => {
@@ -20,6 +24,7 @@ export const AdminDashboard: React.FC = () => {
       navigate('/admin-login');
     } else {
       fetchProfiles();
+      fetchReferrals();
     }
   }, [navigate]);
 
@@ -39,7 +44,6 @@ export const AdminDashboard: React.FC = () => {
         if (data.resumeFileData) {
           setResumeData({ fileData: data.resumeFileData, fileName: data.resumeFileName || 'resume' });
         } else {
-          // File name exists in DB but binary data was not saved (likely upload failed during signup)
           setResumeError(data.resumeFileName ? `File recorded ("${data.resumeFileName}") but file data was not saved — provider must re-upload.` : 'No resume data in database.');
         }
       } else {
@@ -56,7 +60,12 @@ export const AdminDashboard: React.FC = () => {
     setLoading(true);
     try {
       const res = await fetch('/api/admin?action=profiles', { headers: getAdminHeaders() });
-      if (!res.ok) { setProfiles([]); setLoading(false); return; }
+      if (!res.ok) {
+        console.error(`Error fetching profiles: ${res.status} ${res.statusText}`);
+        setProfiles([]);
+        setLoading(false);
+        return;
+      }
       const data = await res.json();
       const profileList = data.profiles || [];
       setProfiles(profileList);
@@ -66,8 +75,39 @@ export const AdminDashboard: React.FC = () => {
       }
     } catch (err) {
       console.error('Error fetching profiles:', err);
+      setProfiles([]);
     }
     setLoading(false);
+  };
+
+  const fetchReferrals = async () => {
+    try {
+      const res = await fetch('/api/admin?action=referrals', { headers: getAdminHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        // Handle both formats: direct array or wrapped in referrals key
+        const refList = Array.isArray(data) ? data : (data.referrals || []);
+        setReferrals(refList);
+        // Load notes if they exist
+        const savedNotes = localStorage.getItem('adminRefNotes');
+        if (savedNotes) {
+          setRefNotes(JSON.parse(savedNotes));
+        }
+      } else {
+        console.error(`Error fetching referrals: ${res.status} ${res.statusText}`);
+        setReferrals([]);
+      }
+    } catch (err) {
+      console.error('Error fetching referrals:', err);
+      setReferrals([]);
+    }
+  };
+
+  const saveRefNote = (refId: string, note: string) => {
+    const updated = { ...refNotes, [refId]: note };
+    setRefNotes(updated);
+    localStorage.setItem('adminRefNotes', JSON.stringify(updated));
+    setEditingRefId(null);
   };
 
   const handleApprove = async (id: string) => {
@@ -159,13 +199,13 @@ export const AdminDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 p-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-4">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-3xl font-bold text-slate-800">Admin Dashboard</h1>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={() => fetchProfiles()} className="bg-slate-100 text-slate-700 hover:bg-slate-200">
+            <Button variant="outline" onClick={() => { fetchProfiles(); fetchReferrals(); }} className="bg-slate-100 text-slate-700 hover:bg-slate-200">
               <i className="fas fa-sync-alt mr-2"></i> Refresh
             </Button>
             <Button variant="outline" onClick={() => {
@@ -178,70 +218,289 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Profiles List */}
-          <div className="lg:col-span-2 bg-white rounded-xl shadow p-6">
-            <h2 className="text-xl font-bold mb-4">Profiles ({profiles.length})</h2>
-            {loading && <p className="text-slate-500">Loading...</p>}
-            {!loading && profiles.length === 0 ? (
+        {/* Tabs */}
+        <div className="flex gap-2 mb-6 border-b border-slate-200">
+          <button
+            onClick={() => setActiveTab('clients')}
+            className={`px-4 py-2 font-medium transition-colors ${
+              activeTab === 'clients'
+                ? 'text-teal-600 border-b-2 border-teal-600'
+                : 'text-slate-600 hover:text-slate-800'
+            }`}
+          >
+            Clients ({profiles.filter(p => p.role === 'client').length})
+          </button>
+          <button
+            onClick={() => setActiveTab('providers')}
+            className={`px-4 py-2 font-medium transition-colors ${
+              activeTab === 'providers'
+                ? 'text-teal-600 border-b-2 border-teal-600'
+                : 'text-slate-600 hover:text-slate-800'
+            }`}
+          >
+            Providers ({profiles.filter(p => p.role === 'provider').length})
+          </button>
+          <button
+            onClick={() => setActiveTab('referrals')}
+            className={`px-4 py-2 font-medium transition-colors ${
+              activeTab === 'referrals'
+                ? 'text-teal-600 border-b-2 border-teal-600'
+                : 'text-slate-600 hover:text-slate-800'
+            }`}
+          >
+            Referrals ({referrals.length})
+          </button>
+        </div>
+
+        {/* Clients Tab */}
+        {activeTab === 'clients' && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 bg-white rounded-xl shadow p-6">
+              <h2 className="text-xl font-bold mb-4">Clients</h2>
+              {loading && <p className="text-slate-500">Loading...</p>}
+              {!loading && profiles.filter(p => p.role === 'client').length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <i className="fas fa-inbox text-4xl text-slate-300 mb-3"></i>
+                  <p className="text-slate-500 text-center">No clients to show!</p>
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {profiles.filter(p => p.role === 'client').map((p) => {
+                    const clientReferrals = referrals.filter(ref => ref.creatorPhone === p.basicInfo.phone);
+                    const topChoiceReferrals = clientReferrals.filter(ref => ref.selectedProviderId);
+                    return (
+                      <div
+                        key={p._id}
+                        onClick={() => setSelectedProfile(p)}
+                        className={`p-4 border rounded-lg cursor-pointer transition ${
+                          selectedProfile?._id === p._id
+                            ? 'bg-teal-50 border-teal-400'
+                            : 'bg-slate-50 border-slate-200 hover:border-teal-300'
+                        }`}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <p className="font-bold text-slate-800">{p.basicInfo.fullName}</p>
+                              {p.payments && p.payments.length > 0 && (
+                                <span className="text-xs bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full font-bold">
+                                  <i className="fas fa-coins mr-1"></i>{p.payments.length}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-slate-600">{p.basicInfo.email}</p>
+                            <p className="text-sm text-slate-600">{p.basicInfo.phone}</p>
+                            <div className="flex gap-4 mt-2 text-xs">
+                              <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded">
+                                Referrals Created: {clientReferrals.length}
+                              </span>
+                              <span className="bg-green-50 text-green-700 px-2 py-0.5 rounded">
+                                Top Choices: {topChoiceReferrals.length}
+                              </span>
+                            </div>
+                          </div>
+                          <span
+                            className={`text-xs px-2 py-1 rounded-full font-bold uppercase ${
+                              p.status === 'approved'
+                                ? 'bg-green-100 text-green-700'
+                                : p.status === 'rejected'
+                                ? 'bg-red-100 text-red-700'
+                                : 'bg-yellow-100 text-yellow-700'
+                            }`}
+                          >
+                            {p.status}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            {/* Profile Details - Clients */}
+            {renderProfileDetails()}
+          </div>
+        )}
+
+        {/* Providers Tab */}
+        {activeTab === 'providers' && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 bg-white rounded-xl shadow p-6">
+              <h2 className="text-xl font-bold mb-4">Providers</h2>
+              {loading && <p className="text-slate-500">Loading...</p>}
+              {!loading && profiles.filter(p => p.role === 'provider').length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <i className="fas fa-inbox text-4xl text-slate-300 mb-3"></i>
+                  <p className="text-slate-500 text-center">No providers to show!</p>
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {profiles.filter(p => p.role === 'provider').map((p) => {
+                    const providerApplications = referrals.reduce((count: number, ref: ReferralRequest) => {
+                      const applicantCount = ref.applicants?.filter(app => app.phoneNumber === p.basicInfo.phone).length || 0;
+                      return count + applicantCount;
+                    }, 0);
+                    return (
+                      <div
+                        key={p._id}
+                        onClick={() => { setSelectedProfile(p); setResumeData(null); setResumeError(null); if (p._id) fetchResume(p._id); }}
+                        className={`p-4 border rounded-lg cursor-pointer transition ${
+                          selectedProfile?._id === p._id
+                            ? 'bg-teal-50 border-teal-400'
+                            : 'bg-slate-50 border-slate-200 hover:border-teal-300'
+                        }`}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <p className="font-bold text-slate-800">{p.basicInfo.fullName}</p>
+                            </div>
+                            <p className="text-sm text-slate-600">{p.basicInfo.email}</p>
+                            <p className="text-sm text-slate-600">{p.basicInfo.phone}</p>
+                            <div className="flex gap-4 mt-2 text-xs">
+                              <span className="bg-purple-50 text-purple-700 px-2 py-0.5 rounded">
+                                Applied To: {providerApplications}
+                              </span>
+                            </div>
+                          </div>
+                          <span
+                            className={`text-xs px-2 py-1 rounded-full font-bold uppercase ${
+                              p.status === 'approved'
+                                ? 'bg-green-100 text-green-700'
+                                : p.status === 'rejected'
+                                ? 'bg-red-100 text-red-700'
+                                : 'bg-yellow-100 text-yellow-700'
+                            }`}
+                          >
+                            {p.status}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            {/* Profile Details - Providers */}
+            {renderProfileDetails()}
+          </div>
+        )}
+
+        {/* Referrals Tab */}
+        {activeTab === 'referrals' && (
+          <div className="bg-white rounded-xl shadow p-6">
+            <h2 className="text-xl font-bold mb-4">Referral Management</h2>
+            {referrals.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <i className="fas fa-inbox text-4xl text-slate-300 mb-3"></i>
-                <p className="text-slate-500 text-center">No profiles to show!</p>
-                <p className="text-xs text-slate-400 mt-1">Create a new profile or import data</p>
+                <p className="text-slate-500 text-center">No referrals to show!</p>
               </div>
             ) : (
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {profiles.map((p) => (
-                <div
-                  key={p._id}
-                  onClick={() => {
-                    setSelectedProfile(p);
-                    setResumeData(null);
-                    setResumeError(null);
-                    if (p.role === 'provider' && p._id) fetchResume(p._id);
-                  }}
-                  className={`p-4 border rounded-lg cursor-pointer transition ${
-                    selectedProfile?._id === p._id
-                      ? 'bg-teal-50 border-teal-400'
-                      : 'bg-slate-50 border-slate-200 hover:border-teal-300'
-                  }`}
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="font-bold text-slate-800">{p.basicInfo.fullName}</p>
-                        {p.role === 'client' && p.payments && p.payments.length > 0 && (
-                          <span className="text-xs bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full font-bold">
-                            <i className="fas fa-coins mr-1"></i>{p.payments.length}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-sm text-slate-600">{p.basicInfo.email}</p>
-                      <p className="text-sm text-slate-600">{p.basicInfo.phone}</p>
-                      <p className="text-xs text-slate-500 mt-1">
-                        <span className="font-semibold capitalize">{p.role}</span>
-                      </p>
-                    </div>
-                    <span
-                      className={`text-xs px-2 py-1 rounded-full font-bold uppercase ${
-                        p.status === 'approved'
-                          ? 'bg-green-100 text-green-700'
-                          : p.status === 'rejected'
-                          ? 'bg-red-100 text-red-700'
-                          : 'bg-yellow-100 text-yellow-700'
-                      }`}
-                    >
-                      {p.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm border-collapse">
+                  <thead className="bg-slate-100 border-b border-slate-300">
+                    <tr>
+                      <th className="px-4 py-2 text-left font-bold text-slate-700">Ref Details</th>
+                      <th className="px-4 py-2 text-left font-bold text-slate-700">Creator</th>
+                      <th className="px-4 py-2 text-left font-bold text-slate-700">Selected Provider</th>
+                      <th className="px-4 py-2 text-left font-bold text-slate-700">Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {referrals.map((ref, idx) => {
+                      const creator = profiles.find(p => p.basicInfo.phone === ref.creatorPhone);
+                      const selectedProvider = ref.selectedProviderId ? profiles.find(p => p._id === ref.selectedProviderId) : null;
+                      return (
+                        <tr key={ref.requestId || idx} className="border-b border-slate-200 hover:bg-slate-50">
+                          <td className="px-4 py-3">
+                            <div className="text-xs space-y-1">
+                              <p><strong>{ref.clientInitials}</strong> | {ref.clientType}</p>
+                              <p>{ref.clientAge ? `${ref.clientAge} yrs` : '—'} | {Array.isArray(ref.mode) ? ref.mode.join(', ') : ref.mode}</p>
+                              <p>₹{ref.budgetRange} | {ref.urgency}</p>
+                              <p className="text-slate-500">{ref.languages}</p>
+                              <p className="text-slate-500 max-w-xs truncate" title={ref.concerns}>{ref.concerns}</p>
+                              <p className="text-blue-600 font-mono text-xs">{new Date(ref.createdAt).toLocaleDateString('en-IN')}</p>
+                              <p className="text-slate-600">Applicants: {ref.applicants?.length || 0} | <a href={window.location.origin + '/#/referral/' + ref.requestId} target="_blank" rel="noreferrer" className="text-blue-600 underline">Link</a></p>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            {creator && (
+                              <div className="text-xs space-y-0.5">
+                                <p><strong>{creator.basicInfo.fullName}</strong></p>
+                                <p className="text-slate-600">{creator.basicInfo.phone}</p>
+                                <p className="text-slate-600 truncate">{creator.basicInfo.email}</p>
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            {selectedProvider ? (
+                              <div className="text-xs space-y-0.5">
+                                <p><strong>{selectedProvider.basicInfo.fullName}</strong></p>
+                                <p className="text-slate-600">{selectedProvider.basicInfo.phone}</p>
+                                <p className="text-slate-600 truncate">{selectedProvider.basicInfo.email}</p>
+                                {selectedProvider.providerDetails && (
+                                  <>
+                                    <p className="text-slate-600">{selectedProvider.providerDetails.specializations?.join(', ')}</p>
+                                    <p className="text-slate-600">{selectedProvider.providerDetails.offlineLocation || selectedProvider.providerDetails.mode}</p>
+                                    <p className="text-slate-600">₹{selectedProvider.providerDetails.budgetRange}</p>
+                                    <p className="text-slate-600 line-clamp-2">{selectedProvider.providerDetails.therapyStyle}</p>
+                                  </>
+                                )}
+                              </div>
+                            ) : (
+                              <p className="text-slate-400 text-xs italic">Not selected</p>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            {editingRefId === ref.requestId ? (
+                              <div className="space-y-2">
+                                <textarea
+                                  value={refNotes[ref.requestId] || ''}
+                                  onChange={(e) => setRefNotes({ ...refNotes, [ref.requestId]: e.target.value })}
+                                  className="w-full px-2 py-1 border border-slate-300 rounded text-xs resize-none"
+                                  rows={3}
+                                  placeholder="Add notes..."
+                                />
+                                <div className="flex gap-1">
+                                  <button
+                                    onClick={() => saveRefNote(ref.requestId, refNotes[ref.requestId] || '')}
+                                    className="px-2 py-1 bg-teal-600 text-white rounded text-xs font-medium hover:bg-teal-700"
+                                  >
+                                    Save
+                                  </button>
+                                  <button
+                                    onClick={() => setEditingRefId(null)}
+                                    className="px-2 py-1 bg-slate-300 text-slate-700 rounded text-xs font-medium hover:bg-slate-400"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div
+                                onClick={() => setEditingRefId(ref.requestId)}
+                                className="text-xs text-slate-600 p-2 bg-slate-50 rounded cursor-pointer hover:bg-slate-100 min-h-12 max-w-xs whitespace-pre-wrap"
+                              >
+                                {refNotes[ref.requestId] || <span className="text-slate-400 italic">Click to add notes...</span>}
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
+        )}
+      </div>
+    </div>
+  );
 
-          {/* Profile Details */}
-          <div className="bg-white rounded-xl shadow p-6 overflow-y-auto max-h-[85vh]">
+  function renderProfileDetails() {
+    return (
+      <div className="bg-white rounded-xl shadow p-6 overflow-y-auto max-h-[85vh]">
             <h2 className="text-xl font-bold mb-4">Details</h2>
             {selectedProfile ? (
               <div className="space-y-4">
@@ -524,8 +783,6 @@ export const AdminDashboard: React.FC = () => {
               <p className="text-slate-500 text-center py-8">Select a profile to view details</p>
             )}
           </div>
-        </div>
-      </div>
-    </div>
-  );
+      );
+    }
 };

@@ -122,6 +122,64 @@ const ProviderPage: React.FC = () => {
               </div>
             </div>
           </section>
+
+          {/* AEO Content - Provider Information */}
+          <section className="w-full max-w-4xl mt-16 mb-8">
+            <div className="bg-white rounded-2xl shadow-md p-8">
+              <h2 className="text-3xl font-bold mb-8 text-center" style={{ color: 'var(--color-primary)' }}>
+                Grow Your Therapy Practice with TheMindNetwork
+              </h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                  <h3 className="text-xl font-bold mb-3" style={{ color: 'var(--color-primary)' }}>
+                    How Much Can You Earn?
+                  </h3>
+                  <p style={{ color: 'var(--color-text-muted)', lineHeight: '1.6' }}>
+                    Your rate depends on your experience, specialization, and client outcomes. Scale your earnings by taking more clients from our platform.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold mb-3" style={{ color: 'var(--color-primary)' }}>
+                    Who Are Your Clients?
+                  </h3>
+                  <p style={{ color: 'var(--color-text-muted)', lineHeight: '1.6' }}>
+                    You work with pre-screened clients seeking mental health support in your area of expertise. Clients match based on your specialization (anxiety, depression, trauma, couples therapy, etc.) and can choose online or in-person sessions across major Indian cities.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold mb-3" style={{ color: 'var(--color-primary)' }}>
+                    What's the Onboarding Process?
+                  </h3>
+                  <p style={{ color: 'var(--color-text-muted)', lineHeight: '1.6' }}>
+                    Create a profile with your credentials, specializations, and availability. We verify your qualifications and background to ensure client safety.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold mb-3" style={{ color: 'var(--color-primary)' }}>
+                    Can You Choose Your Schedule?
+                  </h3>
+                  <p style={{ color: 'var(--color-text-muted)', lineHeight: '1.6' }}>
+                    Absolutely. Set your own availability, session duration, and location preferences. Whether you want full-time practice growth or part-time supplemental income, you control your schedule and client volume.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-8 p-6 rounded-xl" style={{ backgroundColor: 'rgba(163, 177, 138, 0.1)', borderLeft: '4px solid var(--color-primary)' }}>
+                <h4 className="font-bold mb-2" style={{ color: 'var(--color-primary)' }}>Quick Facts:</h4>
+                <ul className="text-sm space-y-1" style={{ color: 'var(--color-text-muted)' }}>
+                  <li>✓ Flexible working hours and client load</li>
+                  <li>✓ Transparent pricing with no hidden platform fees</li>
+                  <li>✓ Built-in marketing reach to find clients</li>
+                  <li>✓ Secure platform for online and offline sessions</li>
+                  <li>✓ Professional network to collaborate with peers</li>
+                </ul>
+              </div>
+            </div>
+          </section>
         </div>
       </main>
 
@@ -257,6 +315,9 @@ const ProviderPage: React.FC = () => {
           <div className="pt-8 text-center" style={{ borderTopWidth: '1px', borderTopColor: 'rgba(163, 177, 138, 0.3)' }}>
             <p className="text-sm" style={{ color: 'var(--color-secondary)' }}>
               © {new Date().getFullYear()} TheMindNetwork. All rights reserved.
+            </p>
+            <p className="text-xs mt-2" style={{ color: 'rgba(163, 177, 138, 0.6)' }}>
+              Last updated: March 12, 2026
             </p>
           </div>
         </div>
