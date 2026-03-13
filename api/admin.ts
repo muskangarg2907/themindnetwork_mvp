@@ -179,18 +179,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // REFERRALS — fetch all referrals
+    // REFERRALS — fetch all referrals from MongoDB
     if (action === 'referrals') {
       if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
       try {
-        const txt = await fs.readFile(REFERRALS_FILE, 'utf8');
-        const referrals = JSON.parse(txt || '[]');
-        return res.status(200).json({ referrals });
+        const profiles = await getProfilesCollection();
+        const referralsCollection = profiles.db.collection('referrals');
+        const applicationsCollection = profiles.db.collection('referral_applications');
+        
+        // Fetch all referrals from MongoDB
+        const referralsData = await referralsCollection.find({}).sort({ createdAt: -1 }).toArray();
+        
+        // For each referral, fetch associated applications
+        const referralsWithApplicants = await Promise.all(
+          referralsData.map(async (ref) => {
+            const applications = await applicationsCollection
+              .find({ requestId: ref.requestId })
+              .toArray();
+            
+            return {
+              ...ref,
+              creatorPhone: ref.userId, // Map userId to creatorPhone for compatibility
+              applicants: applications || []
+            };
+          })
+        );
+        
+        return res.status(200).json({ referrals: referralsWithApplicants });
       } catch (err: any) {
-        if (err.code === 'ENOENT') {
-          return res.status(200).json({ referrals: [] });
-        }
-        throw err;
+        console.error('[ADMIN] Error fetching referrals:', err);
+        return res.status(500).json({ error: 'Failed to fetch referrals', details: err?.message });
       }
     }
 
