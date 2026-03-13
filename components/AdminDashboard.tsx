@@ -16,6 +16,8 @@ export const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'clients' | 'providers' | 'referrals'>('clients');
   const [editingRefId, setEditingRefId] = useState<string | null>(null);
   const [refNotes, setRefNotes] = useState<{ [key: string]: string }>({});
+  const [refPage, setRefPage] = useState(1);
+  const [refPagination, setRefPagination] = useState<{ total: number; pages: number; hasMore: boolean }>({ total: 0, pages: 0, hasMore: false });
 
   // Check authentication
   useEffect(() => {
@@ -24,7 +26,7 @@ export const AdminDashboard: React.FC = () => {
       navigate('/admin-login');
     } else {
       fetchProfiles();
-      fetchReferrals();
+      fetchReferrals(1);
     }
   }, [navigate]);
 
@@ -80,14 +82,20 @@ export const AdminDashboard: React.FC = () => {
     setLoading(false);
   };
 
-  const fetchReferrals = async () => {
+  const fetchReferrals = async (page: number = 1) => {
     try {
-      const res = await fetch('/api/admin?action=referrals', { headers: getAdminHeaders() });
+      const res = await fetch(`/api/admin?action=referrals&page=${page}&limit=20`, { headers: getAdminHeaders() });
       if (res.ok) {
         const data = await res.json();
-        // Handle both formats: direct array or wrapped in referrals key
-        const refList = Array.isArray(data) ? data : (data.referrals || []);
-        setReferrals(refList);
+        // Handle both formats: direct array (legacy) or new paginated format
+        if (Array.isArray(data)) {
+          setReferrals(data);
+          setRefPagination({ total: data.length, pages: 1, hasMore: false });
+        } else {
+          const refList = data.referrals || [];
+          setReferrals(refList);
+          setRefPagination(data.pagination || { total: refList.length, pages: 1, hasMore: false });
+        }
         // Load notes if they exist
         const savedNotes = localStorage.getItem('adminRefNotes');
         if (savedNotes) {
@@ -96,10 +104,12 @@ export const AdminDashboard: React.FC = () => {
       } else {
         console.error(`Error fetching referrals: ${res.status} ${res.statusText}`);
         setReferrals([]);
+        setRefPagination({ total: 0, pages: 0, hasMore: false });
       }
     } catch (err) {
       console.error('Error fetching referrals:', err);
       setReferrals([]);
+      setRefPagination({ total: 0, pages: 0, hasMore: false });
     }
   };
 
@@ -205,7 +215,7 @@ export const AdminDashboard: React.FC = () => {
             <h1 className="text-3xl font-bold text-slate-800">Admin Dashboard</h1>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={() => { fetchProfiles(); fetchReferrals(); }} className="bg-slate-100 text-slate-700 hover:bg-slate-200">
+            <Button variant="outline" onClick={() => { fetchProfiles(); fetchReferrals(refPage); }} className="bg-slate-100 text-slate-700 hover:bg-slate-200">
               <i className="fas fa-sync-alt mr-2"></i> Refresh
             </Button>
             <Button variant="outline" onClick={() => {
@@ -241,14 +251,14 @@ export const AdminDashboard: React.FC = () => {
             Providers ({profiles.filter(p => p.role === 'provider').length})
           </button>
           <button
-            onClick={() => setActiveTab('referrals')}
+            onClick={() => { setActiveTab('referrals'); setRefPage(1); fetchReferrals(1); }}
             className={`px-4 py-2 font-medium transition-colors ${
               activeTab === 'referrals'
                 ? 'text-teal-600 border-b-2 border-teal-600'
                 : 'text-slate-600 hover:text-slate-800'
             }`}
           >
-            Referrals ({referrals.length})
+            Referrals ({refPagination.total})
           </button>
         </div>
 
@@ -490,6 +500,43 @@ export const AdminDashboard: React.FC = () => {
                     })}
                   </tbody>
                 </table>
+              </div>
+            )}
+            {/* Pagination Controls */}
+            {refPagination.total > 0 && refPagination.pages > 1 && (
+              <div className="flex justify-between items-center mt-6 pt-4 border-t border-slate-200">
+                <div className="text-sm text-slate-600">
+                  Page <span className="font-bold">{refPage}</span> of <span className="font-bold">{refPagination.pages}</span> • Showing {referrals.length} of {refPagination.total} referrals
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => { setRefPage(Math.max(1, refPage - 1)); fetchReferrals(Math.max(1, refPage - 1)); }}
+                    disabled={refPage === 1}
+                    className="px-3 py-1 text-sm font-medium bg-slate-100 text-slate-700 rounded hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <i className="fas fa-chevron-left mr-1"></i> Previous
+                  </button>
+                  {Array.from({ length: refPagination.pages }, (_, i) => i + 1).map((p) => (
+                    <button
+                      key={p}
+                      onClick={() => { setRefPage(p); fetchReferrals(p); }}
+                      className={`px-2 py-1 text-sm font-medium rounded ${
+                        refPage === p
+                          ? 'bg-teal-600 text-white'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => { setRefPage(Math.min(refPagination.pages, refPage + 1)); fetchReferrals(Math.min(refPagination.pages, refPage + 1)); }}
+                    disabled={!refPagination.hasMore}
+                    className="px-3 py-1 text-sm font-medium bg-slate-100 text-slate-700 rounded hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next <i className="fas fa-chevron-right ml-1"></i>
+                  </button>
+                </div>
               </div>
             )}
           </div>

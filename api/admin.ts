@@ -179,33 +179,80 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // REFERRALS — fetch all referrals from MongoDB
+    // REFERRALS — fetch paginated referrals with aggregation
     if (action === 'referrals') {
       if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
       try {
         const profiles = await getProfilesCollection();
         const referralsCollection = profiles.db.collection('referrals');
-        const applicationsCollection = profiles.db.collection('referral_applications');
         
-        // Fetch all referrals from MongoDB
-        const referralsData = await referralsCollection.find({}).sort({ createdAt: -1 }).toArray();
+        // Parse pagination params
+        const page = Math.max(1, parseInt(req.query.page as string) || 1);
+        const limit = Math.min(50, Math.max(10, parseInt(req.query.limit as string) || 20));
+        const skip = (page - 1) * limit;
         
-        // For each referral, fetch associated applications
-        const referralsWithApplicants = await Promise.all(
-          referralsData.map(async (ref) => {
-            const applications = await applicationsCollection
-              .find({ requestId: ref.requestId })
-              .toArray();
-            
-            return {
-              ...ref,
-              creatorPhone: ref.userId, // Map userId to creatorPhone for compatibility
-              applicants: applications || []
-            };
-          })
-        );
+        // Single aggregation query: fetch referrals + join applications + count
+        const referralsWithCounts = await referralsCollection.aggregate([
+          { $sort: { createdAt: -1 } },
+          { $facet: {
+              metadata: [{ $count: 'total' }],
+              records: [
+                { $skip: skip },
+                { $limit: limit },
+                { $lookup: {
+                    from: 'referral_applications',
+                    localField: 'requestId',
+                    foreignField: 'requestId',
+                    as: 'applicants'
+                  }
+                },
+                { $project: {
+                    requestId: 1,
+                    userId: 1,
+                    clientInitials: 1,
+                    clientType: 1,
+                    clientAge: 1,
+                    concerns: 1,
+                    genderPreference: 1,
+                    languages: 1,
+                    mode: 1,
+                    location: 1,
+                    budgetRange: 1,
+                    urgency: 1,
+                    notes: 1,
+                    status: 1,
+                    createdAt: 1,
+                    'applicants._id': 1,
+                    'applicants.phoneNumber': 1,
+                    'applicants.name': 1,
+                    'applicants.createdAt': 1
+                  }
+                }
+              ]
+            }
+          }
+        ]).toArray();
         
-        return res.status(200).json({ referrals: referralsWithApplicants });
+        const metadata = referralsWithCounts[0]?.metadata[0] || { total: 0 };
+        const records = referralsWithCounts[0]?.records || [];
+        
+        // Map userId to creatorPhone for compatibility
+        const referrals = records.map((ref: any) => ({
+          ...ref,
+          creatorPhone: ref.userId,
+          applicants: ref.applicants || []
+        }));
+        
+        return res.status(200).json({
+          referrals,
+          pagination: {
+            page,
+            limit,
+            total: metadata.total,
+            pages: Math.ceil(metadata.total / limit),
+            hasMore: page < Math.ceil(metadata.total / limit)
+          }
+        });
       } catch (err: any) {
         console.error('[ADMIN] Error fetching referrals:', err);
         return res.status(500).json({ error: 'Failed to fetch referrals', details: err?.message });
