@@ -77,7 +77,7 @@ export const Landing: React.FC = () => {
     },
     {
       question: 'How much does therapy cost?',
-      answer: 'Individual therapy sessions range from ₹1,249 to ₹1,999 depending on the therapist\'s expertise and session type. We also offer a ₹249 exploration call to help you find the right therapist before committing to a full session.'
+      answer: 'Individual therapy sessions range from ₹1,000 to ₹4,000 depending on the therapist\'s expertise and session type. We also offer a ₹249 exploration call to help you find the right therapist before committing to a full session.'
     },
     {
       question: 'Are the therapists verified and qualified?',
@@ -112,14 +112,25 @@ export const Landing: React.FC = () => {
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-6 justify-end w-full">
             <button
-              onClick={() => navigate('/provider')}
+              onClick={() => window.open(`${window.location.origin}/#/referrals`, '_blank', 'noopener,noreferrer')}
+              className="px-4 py-1.5 text-sm font-medium rounded-lg transition-all"
+              style={{ backgroundColor: 'transparent', color: 'var(--color-text-primary)', borderWidth: '1px', borderColor: 'var(--color-secondary)' }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--color-secondary)'; e.currentTarget.style.borderColor = 'var(--color-accent)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.borderColor = 'var(--color-secondary)'; }}
+            >
+              Referrals
+            </button>
+            <a
+              href={`${window.location.origin}/#/provider`}
+              target="_blank"
+              rel="noopener noreferrer"
               className="px-4 py-1.5 text-sm font-medium rounded-lg transition-all"
               style={{ backgroundColor: 'transparent', color: 'var(--color-text-primary)', borderWidth: '1px', borderColor: 'var(--color-secondary)' }}
               onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--color-secondary)'; e.currentTarget.style.borderColor = 'var(--color-accent)'; }}
               onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.borderColor = 'var(--color-secondary)'; }}
             >
               For Providers
-            </button>
+            </a>
             {isLoggedIn ? (
               <button
                 onClick={() => navigate('/profile')}
@@ -145,27 +156,36 @@ export const Landing: React.FC = () => {
 
           {/* Mobile Button */}
           <div className="md:hidden">
-            {isLoggedIn ? (
+            <div className="flex items-center gap-2">
               <button
-                onClick={() => navigate('/profile')}
-                className="px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all text-white"
-                style={{ backgroundColor: 'var(--color-primary)' }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary-hover)'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary)'}
+                onClick={() => window.open(`${window.location.origin}/#/referrals`, '_blank', 'noopener,noreferrer')}
+                className="px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all"
+                style={{ backgroundColor: 'white', color: 'var(--color-primary)', borderWidth: '1px', borderColor: 'var(--color-secondary)' }}
               >
-                Profile <i className="fas fa-user-circle ml-1"></i>
+                Referrals
               </button>
-            ) : (
-              <button
-                onClick={() => navigate('/login')}
-                className="px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all text-white"
-                style={{ backgroundColor: 'var(--color-primary)' }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary-hover)'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary)'}
-              >
-                Login <i className="fas fa-sign-in-alt ml-1"></i>
-              </button>
-            )}
+              {isLoggedIn ? (
+                <button
+                  onClick={() => navigate('/profile')}
+                  className="px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all text-white"
+                  style={{ backgroundColor: 'var(--color-primary)' }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary-hover)'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary)'}
+                >
+                  Profile <i className="fas fa-user-circle ml-1"></i>
+                </button>
+              ) : (
+                <button
+                  onClick={() => navigate('/login')}
+                  className="px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all text-white"
+                  style={{ backgroundColor: 'var(--color-primary)' }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary-hover)'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary)'}
+                >
+                  Login <i className="fas fa-sign-in-alt ml-1"></i>
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </nav>
@@ -593,6 +613,19 @@ export const Landing: React.FC = () => {
                     onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-secondary)'}
                   >
                     Login
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href={`${window.location.origin}/#/referrals`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm transition-colors"
+                    style={{ color: 'var(--color-secondary)' }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-accent)'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-secondary)'}
+                  >
+                    Referrals
                   </a>
                 </li>
                 <li>

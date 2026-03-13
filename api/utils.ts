@@ -1,6 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { MongoClient } from 'mongodb';
 
+const CONTACT_RECEIVER = process.env.CONTACT_TO_EMAIL || 'muskangarg.official@gmail.com';
+
 let cachedClient: MongoClient | null = null;
 
 async function connectToMongoDB() {
@@ -95,7 +97,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         try {
           const emailData = {
             from: 'TheMindNetwork <noreply@themindnetwork.com>',
-            to: 'muskangarg.official@gmail.com',
+            to: CONTACT_RECEIVER,
             subject: `New Contact Form Submission from ${name}`,
             html: `
               <h2>New Contact Form Submission</h2>

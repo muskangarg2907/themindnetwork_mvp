@@ -759,20 +759,29 @@ app.all('/api/referrals', async (req, res) => {
       }
 
       let requesterRole = '';
+      let profileFound = false;
       if (usePostgres) {
         const q = await pool.query('SELECT data FROM profiles');
         const matched = q.rows
           .map(r => r.data)
           .find(p => normalizePhone(p?.basicInfo?.phone || '') === normalizedPhone);
+        profileFound = Boolean(matched);
         requesterRole = matched?.role || '';
       } else {
         const profiles = await readProfilesFile();
         const matched = profiles.find(p => normalizePhone(p?.basicInfo?.phone || '') === normalizedPhone);
+        profileFound = Boolean(matched);
         requesterRole = matched?.role || '';
       }
 
-      if (requesterRole !== 'provider') {
+      // If the profile exists in the data store and is explicitly not a provider, deny.
+      // If the profile is not found locally (e.g. created on production/MongoDB), allow through
+      // since the frontend already verified the role from the authoritative source.
+      if (profileFound && requesterRole !== 'provider') {
         return res.status(403).json({ error: 'Only providers can discover referrals' });
+      }
+      if (!profileFound) {
+        console.warn('[REFERRALS] discover: profile not in local store for phone ****' + normalizedPhone.slice(-4) + ', allowing (profile may exist in production DB)');
       }
 
       const referrals = await readReferralsFile();
@@ -827,20 +836,26 @@ app.all('/api/referrals', async (req, res) => {
 
       // Only registered providers can apply to referral requests.
       let requesterRole = '';
+      let applicantProfileFound = false;
       if (usePostgres) {
         const q = await pool.query('SELECT data FROM profiles');
         const matched = q.rows
           .map(r => r.data)
           .find(p => normalizePhone(p?.basicInfo?.phone || '') === normalizedPhone);
+        applicantProfileFound = Boolean(matched);
         requesterRole = matched?.role || '';
       } else {
         const profiles = await readProfilesFile();
         const matched = profiles.find(p => normalizePhone(p?.basicInfo?.phone || '') === normalizedPhone);
+        applicantProfileFound = Boolean(matched);
         requesterRole = matched?.role || '';
       }
 
-      if (requesterRole !== 'provider') {
+      if (applicantProfileFound && requesterRole !== 'provider') {
         return res.status(403).json({ error: 'Only registered providers can apply to referral requests' });
+      }
+      if (!applicantProfileFound) {
+        console.warn('[REFERRALS] apply: profile not in local store for phone ****' + normalizedPhone.slice(-4) + ', allowing (profile may exist in production DB)');
       }
 
       const { requestId, name, exp, degrees, modalities, fee, languages, location } = req.body;

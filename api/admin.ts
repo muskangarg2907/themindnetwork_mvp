@@ -5,7 +5,6 @@ import { getProfilesCollection } from '../lib/db.js';
 
 const NOTIFY_FILE = '/tmp/themindnetwork_admin_notify.json';
 const DATA_FILE = '/tmp/themindnetwork_profiles.json';
-const REFERRALS_FILE = '/tmp/themindnetwork_referrals.json';
 
 function checkAdminAuth(req: VercelRequest): boolean {
   const token = req.headers['x-admin-token'];
@@ -259,7 +258,133 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    return res.status(400).json({ error: 'Invalid action parameter. Use: profiles, notify, reset, resume, or referrals' });
+    // CONTACT QUERIES — fetch landing-page contact submissions
+    if (action === 'contact-queries') {
+      if (req.method !== 'GET' && req.method !== 'PUT' && req.method !== 'DELETE') {
+        return res.status(405).json({ error: 'Method not allowed' });
+      }
+
+      const profiles = await getProfilesCollection();
+      const contactCollection = profiles.db.collection('contact_submissions');
+
+      // Update a query (read status, close/open status, admin notes)
+      if (req.method === 'PUT') {
+        const { id } = req.query;
+        if (!id) {
+          return res.status(400).json({ error: 'id query parameter required' });
+        }
+
+        const { read, status, notes } = req.body || {};
+        const updates: any = {
+          updatedAt: new Date().toISOString(),
+        };
+
+        if (typeof read === 'boolean') {
+          updates.read = read;
+          if (read) {
+            updates.readAt = new Date().toISOString();
+          }
+        }
+
+        if (typeof status === 'string') {
+          const normalizedStatus = status.trim().toLowerCase();
+          if (normalizedStatus !== 'open' && normalizedStatus !== 'closed') {
+            return res.status(400).json({ error: 'Invalid status. Use open or closed' });
+          }
+          updates.status = normalizedStatus;
+          if (normalizedStatus === 'closed') {
+            updates.closedAt = new Date().toISOString();
+          }
+        }
+
+        if (typeof notes === 'string') {
+          updates.notes = notes.substring(0, 2000);
+        }
+
+        let query: any;
+        try {
+          query = { _id: new ObjectId(id as string) };
+        } catch {
+          return res.status(400).json({ error: 'Invalid id format' });
+        }
+
+        const result = await contactCollection.findOneAndUpdate(
+          query,
+          { $set: updates },
+          { returnDocument: 'after' }
+        );
+
+        if (!result) {
+          return res.status(404).json({ error: 'Query not found' });
+        }
+
+        return res.status(200).json({ success: true, query: result });
+      }
+
+      if (req.method === 'DELETE') {
+        const { id } = req.query;
+        if (!id) {
+          return res.status(400).json({ error: 'id query parameter required' });
+        }
+
+        let query: any;
+        try {
+          query = { _id: new ObjectId(id as string) };
+        } catch {
+          return res.status(400).json({ error: 'Invalid id format' });
+        }
+
+        const result = await contactCollection.deleteOne(query);
+        if (!result.deletedCount) {
+          return res.status(404).json({ error: 'Query not found' });
+        }
+
+        return res.status(200).json({ success: true, message: 'Query deleted' });
+      }
+
+      const page = Math.max(1, parseInt(req.query.page as string) || 1);
+      const limit = Math.min(100, Math.max(10, parseInt(req.query.limit as string) || 25));
+      const skip = (page - 1) * limit;
+
+      const [queries, total] = await Promise.all([
+        contactCollection
+          .find(
+            {},
+            {
+              projection: {
+                name: 1,
+                email: 1,
+                message: 1,
+                timestamp: 1,
+                read: 1,
+                readAt: 1,
+                status: 1,
+                notes: 1,
+                closedAt: 1,
+                updatedAt: 1,
+              },
+            }
+          )
+          .sort({ timestamp: -1 })
+          .skip(skip)
+          .limit(limit)
+          .toArray(),
+        contactCollection.countDocuments({}),
+      ]);
+
+      return res.status(200).json({
+        queries,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit),
+          hasMore: page < Math.ceil(total / limit),
+        },
+      });
+    }
+
+    return res.status(400).json({ error: 'Invalid action parameter. Use: profiles, notify, reset, resume, referrals, or contact-queries' });
 
   } catch (err: any) {
     console.error('[ADMIN] Error:', err);

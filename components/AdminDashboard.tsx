@@ -3,6 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/Button';
 import { UserProfile, ReferralRequest } from '../types';
 
+interface ContactQuery {
+  _id: string;
+  name: string;
+  email: string;
+  message: string;
+  timestamp: string;
+  read?: boolean;
+  readAt?: string;
+  status?: 'open' | 'closed';
+  notes?: string;
+  updatedAt?: string;
+  closedAt?: string;
+}
+
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
@@ -13,11 +27,18 @@ export const AdminDashboard: React.FC = () => {
   const [resumeData, setResumeData] = useState<{ fileData: string; fileName: string } | null>(null);
   const [resumeLoading, setResumeLoading] = useState(false);
   const [resumeError, setResumeError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'clients' | 'providers' | 'referrals'>('clients');
+  const [activeTab, setActiveTab] = useState<'clients' | 'providers' | 'referrals' | 'queries'>('clients');
   const [editingRefId, setEditingRefId] = useState<string | null>(null);
   const [refNotes, setRefNotes] = useState<{ [key: string]: string }>({});
   const [refPage, setRefPage] = useState(1);
   const [refPagination, setRefPagination] = useState<{ total: number; pages: number; hasMore: boolean }>({ total: 0, pages: 0, hasMore: false });
+  const [contactQueries, setContactQueries] = useState<ContactQuery[]>([]);
+  const [queryPage, setQueryPage] = useState(1);
+  const [queryPagination, setQueryPagination] = useState<{ total: number; pages: number; hasMore: boolean }>({ total: 0, pages: 0, hasMore: false });
+  const [selectedQuery, setSelectedQuery] = useState<ContactQuery | null>(null);
+  const [queryLoading, setQueryLoading] = useState(false);
+  const [queryNotesDraft, setQueryNotesDraft] = useState('');
+  const [queryActionLoading, setQueryActionLoading] = useState(false);
 
   // Check authentication
   useEffect(() => {
@@ -27,6 +48,7 @@ export const AdminDashboard: React.FC = () => {
     } else {
       fetchProfiles();
       fetchReferrals(1);
+      fetchContactQueries(1);
     }
   }, [navigate]);
 
@@ -110,6 +132,108 @@ export const AdminDashboard: React.FC = () => {
       console.error('Error fetching referrals:', err);
       setReferrals([]);
       setRefPagination({ total: 0, pages: 0, hasMore: false });
+    }
+  };
+
+  const fetchContactQueries = async (page: number = 1) => {
+    setQueryLoading(true);
+    try {
+      const res = await fetch(`/api/admin?action=contact-queries&page=${page}&limit=25`, { headers: getAdminHeaders() });
+      if (!res.ok) {
+        console.error(`Error fetching contact queries: ${res.status} ${res.statusText}`);
+        setContactQueries([]);
+        setQueryPagination({ total: 0, pages: 0, hasMore: false });
+        setSelectedQuery(null);
+        return;
+      }
+
+      const data = await res.json();
+      const list = (data.queries || []).map((q: ContactQuery) => ({ ...q, status: q.status || 'open' }));
+      setContactQueries(list);
+      setQueryPagination(data.pagination || { total: list.length, pages: 1, hasMore: false });
+
+      // Keep selected query in sync with refreshed list.
+      if (selectedQuery?._id) {
+        const updated = list.find((q: ContactQuery) => q._id === selectedQuery._id);
+        if (updated) {
+          setSelectedQuery(updated);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching contact queries:', err);
+      setContactQueries([]);
+      setQueryPagination({ total: 0, pages: 0, hasMore: false });
+      setSelectedQuery(null);
+    } finally {
+      setQueryLoading(false);
+    }
+  };
+
+  const markQueryRead = async (queryId: string) => {
+    try {
+      await fetch(`/api/admin?action=contact-queries&id=${queryId}`, {
+        method: 'PUT',
+        headers: getAdminHeaders(),
+        body: JSON.stringify({ read: true }),
+      });
+      setContactQueries((prev) => prev.map((q) => (q._id === queryId ? { ...q, read: true } : q)));
+      setSelectedQuery((prev) => (prev && prev._id === queryId ? { ...prev, read: true } : prev));
+    } catch (err) {
+      console.error('Error marking query as read:', err);
+    }
+  };
+
+  const updateQuery = async (queryId: string, updates: { read?: boolean; status?: 'open' | 'closed'; notes?: string }) => {
+    setQueryActionLoading(true);
+    try {
+      const res = await fetch(`/api/admin?action=contact-queries&id=${queryId}`, {
+        method: 'PUT',
+        headers: getAdminHeaders(),
+        body: JSON.stringify(updates),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to update query');
+      }
+
+      const payload = await res.json();
+      const updated = payload.query as ContactQuery;
+      const normalized = { ...updated, status: updated.status || 'open' };
+      setContactQueries((prev) => prev.map((q) => (q._id === queryId ? normalized : q)));
+      setSelectedQuery((prev) => (prev && prev._id === queryId ? normalized : prev));
+      if (typeof updates.notes === 'string') {
+        setQueryNotesDraft(updates.notes);
+      }
+    } catch (err: any) {
+      alert(err?.message || 'Failed to update query');
+    } finally {
+      setQueryActionLoading(false);
+    }
+  };
+
+  const deleteQuery = async (queryId: string) => {
+    if (!window.confirm('Delete this query permanently?')) return;
+    setQueryActionLoading(true);
+    try {
+      const res = await fetch(`/api/admin?action=contact-queries&id=${queryId}`, {
+        method: 'DELETE',
+        headers: getAdminHeaders(),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to delete query');
+      }
+
+      setContactQueries((prev) => prev.filter((q) => q._id !== queryId));
+      setSelectedQuery((prev) => (prev && prev._id === queryId ? null : prev));
+      setQueryNotesDraft('');
+      fetchContactQueries(queryPage);
+    } catch (err: any) {
+      alert(err?.message || 'Failed to delete query');
+    } finally {
+      setQueryActionLoading(false);
     }
   };
 
@@ -215,7 +339,7 @@ export const AdminDashboard: React.FC = () => {
             <h1 className="text-3xl font-bold text-slate-800">Admin Dashboard</h1>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={() => { fetchProfiles(); fetchReferrals(refPage); }} className="bg-slate-100 text-slate-700 hover:bg-slate-200">
+            <Button variant="outline" onClick={() => { fetchProfiles(); fetchReferrals(refPage); fetchContactQueries(queryPage); }} className="bg-slate-100 text-slate-700 hover:bg-slate-200">
               <i className="fas fa-sync-alt mr-2"></i> Refresh
             </Button>
             <Button variant="outline" onClick={() => {
@@ -259,6 +383,16 @@ export const AdminDashboard: React.FC = () => {
             }`}
           >
             Referrals ({refPagination.total})
+          </button>
+          <button
+            onClick={() => { setActiveTab('queries'); setQueryPage(1); fetchContactQueries(1); }}
+            className={`px-4 py-2 font-medium transition-colors ${
+              activeTab === 'queries'
+                ? 'text-teal-600 border-b-2 border-teal-600'
+                : 'text-slate-600 hover:text-slate-800'
+            }`}
+          >
+            Queries ({queryPagination.total})
           </button>
         </div>
 
@@ -393,6 +527,159 @@ export const AdminDashboard: React.FC = () => {
             </div>
             {/* Profile Details - Providers */}
             {renderProfileDetails()}
+          </div>
+        )}
+
+        {/* Queries Tab */}
+        {activeTab === 'queries' && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 bg-white rounded-xl shadow p-6">
+              <h2 className="text-xl font-bold mb-4">Contact Queries</h2>
+              {queryLoading ? (
+                <p className="text-slate-500">Loading queries...</p>
+              ) : contactQueries.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <i className="fas fa-inbox text-4xl text-slate-300 mb-3"></i>
+                  <p className="text-slate-500 text-center">No queries to show!</p>
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-[70vh] overflow-y-auto">
+                  {contactQueries.map((query) => (
+                    <div
+                      key={query._id}
+                      onClick={() => {
+                        setSelectedQuery(query);
+                        setQueryNotesDraft(query.notes || '');
+                        if (!query.read) markQueryRead(query._id);
+                      }}
+                      className={`p-4 border rounded-lg cursor-pointer transition ${
+                        selectedQuery?._id === query._id
+                          ? 'bg-teal-50 border-teal-400'
+                          : 'bg-slate-50 border-slate-200 hover:border-teal-300'
+                      }`}
+                    >
+                      <div className="flex justify-between items-start gap-3">
+                        <div className="min-w-0">
+                          <p className="font-bold text-slate-800 truncate">{query.name}</p>
+                          <p className="text-sm text-slate-600 truncate">{query.email}</p>
+                          <p className="text-xs text-slate-500 mt-1 line-clamp-2">{query.message}</p>
+                          <p className="text-xs text-slate-400 mt-1">
+                            {new Date(query.timestamp).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
+                          </p>
+                        </div>
+                        <div className="flex flex-col gap-1 items-end">
+                          <span className={`text-[10px] px-2 py-1 rounded-full font-bold uppercase ${query.read ? 'bg-slate-200 text-slate-700' : 'bg-blue-100 text-blue-700'}`}>
+                            {query.read ? 'Read' : 'New'}
+                          </span>
+                          <span className={`text-[10px] px-2 py-1 rounded-full font-bold uppercase ${query.status === 'closed' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                            {query.status === 'closed' ? 'Closed' : 'Open'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {queryPagination.total > 0 && queryPagination.pages > 1 && (
+                <div className="flex justify-between items-center mt-6 pt-4 border-t border-slate-200">
+                  <div className="text-sm text-slate-600">
+                    Page <span className="font-bold">{queryPage}</span> of <span className="font-bold">{queryPagination.pages}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        const next = Math.max(1, queryPage - 1);
+                        setQueryPage(next);
+                        fetchContactQueries(next);
+                      }}
+                      disabled={queryPage === 1}
+                      className="px-3 py-1 text-sm font-medium bg-slate-100 text-slate-700 rounded hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <i className="fas fa-chevron-left mr-1"></i> Previous
+                    </button>
+                    <button
+                      onClick={() => {
+                        const next = Math.min(queryPagination.pages, queryPage + 1);
+                        setQueryPage(next);
+                        fetchContactQueries(next);
+                      }}
+                      disabled={!queryPagination.hasMore}
+                      className="px-3 py-1 text-sm font-medium bg-slate-100 text-slate-700 rounded hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next <i className="fas fa-chevron-right ml-1"></i>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="bg-white rounded-xl shadow p-6 overflow-y-auto max-h-[85vh]">
+              <h2 className="text-xl font-bold mb-4">Query Details</h2>
+              {selectedQuery ? (
+                <div className="space-y-4">
+                  <div className="bg-slate-50 rounded-lg p-3 space-y-2">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Contact Info</p>
+                    <div>
+                      <label className="text-xs text-slate-500 font-bold">Name</label>
+                      <p className="text-slate-800 text-sm">{selectedQuery.name}</p>
+                    </div>
+                    <div>
+                      <label className="text-xs text-slate-500 font-bold">Email</label>
+                      <p className="text-slate-800 text-sm break-all">{selectedQuery.email}</p>
+                    </div>
+                    <div>
+                      <label className="text-xs text-slate-500 font-bold">Submitted At</label>
+                      <p className="text-slate-800 text-sm">{new Date(selectedQuery.timestamp).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-50 rounded-lg p-3">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Query</p>
+                    <p className="text-slate-800 text-sm whitespace-pre-wrap">{selectedQuery.message}</p>
+                  </div>
+
+                  <div className="bg-slate-50 rounded-lg p-3 space-y-2">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Admin Notes</p>
+                    <textarea
+                      value={queryNotesDraft}
+                      onChange={(e) => setQueryNotesDraft(e.target.value)}
+                      rows={4}
+                      className="w-full px-3 py-2 border border-slate-300 rounded text-sm resize-none"
+                      placeholder="Add manual notes for this query..."
+                    />
+                    <Button
+                      onClick={() => updateQuery(selectedQuery._id, { notes: queryNotesDraft })}
+                      disabled={queryActionLoading}
+                      className="w-full"
+                    >
+                      Save Notes
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => updateQuery(selectedQuery._id, { status: selectedQuery.status === 'closed' ? 'open' : 'closed' })}
+                      disabled={queryActionLoading}
+                      className={selectedQuery.status === 'closed' ? 'border-green-300 text-green-700 hover:bg-green-50' : 'border-amber-300 text-amber-700 hover:bg-amber-50'}
+                    >
+                      {selectedQuery.status === 'closed' ? 'Reopen Query' : 'Close Query'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => deleteQuery(selectedQuery._id)}
+                      disabled={queryActionLoading}
+                      className="border-red-400 text-red-700 hover:bg-red-50"
+                    >
+                      Delete Query
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-slate-500 text-center py-8">Select a query to view details</p>
+              )}
+            </div>
           </div>
         )}
 

@@ -1,6 +1,29 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from './ui/Button';
 import { useNavigate } from 'react-router-dom';
+
+const providerFAQs = [
+  {
+    question: 'How much can you earn?',
+    answer: 'Your rate depends on your experience, specialization, and client outcomes. Scale your earnings by taking more clients from our platform.',
+  },
+  {
+    question: 'Who are your clients?',
+    answer: 'You work with pre-screened clients seeking mental health support in your area of expertise. Clients match based on your specialization (anxiety, depression, trauma, couples therapy, etc.) and can choose online or in-person sessions across major Indian cities.',
+  },
+  {
+    question: "What's the onboarding process?",
+    answer: 'Create a profile with your credentials, specializations, and availability. We verify your qualifications and background to ensure client safety.',
+  },
+  {
+    question: 'Can you choose your schedule?',
+    answer: 'Absolutely. Set your own availability, session duration, and location preferences. Whether you want full-time practice growth or part-time supplemental income, you control your schedule and client volume.',
+  },
+  {
+    question: 'Are there any hidden platform fees?',
+    answer: 'No hidden fees. We operate with transparent pricing — what you see is what you get. Your earnings are clearly outlined before you accept any client.',
+  },
+];
 
 const benefits = [
   {
@@ -27,6 +50,13 @@ const benefits = [
 
 const ProviderPage: React.FC = () => {
   const navigate = useNavigate();
+  const [expandedFAQs, setExpandedFAQs] = useState<Set<number>>(new Set());
+
+  const toggleFAQ = (index: number) => {
+    const next = new Set(expandedFAQs);
+    if (next.has(index)) { next.delete(index); } else { next.add(index); }
+    setExpandedFAQs(next);
+  };
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--color-background)' }}>
       {/* Navigation Bar (copied from Landing) */}
@@ -41,13 +71,13 @@ const ProviderPage: React.FC = () => {
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-6 justify-end w-full">
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/referrals')}
               className="px-4 py-1.5 text-sm font-medium rounded-lg transition-all"
               style={{ backgroundColor: 'transparent', color: 'var(--color-text-primary)', borderWidth: '1px', borderColor: 'var(--color-secondary)' }}
               onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--color-secondary)'; e.currentTarget.style.borderColor = 'var(--color-accent)'; }}
               onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.borderColor = 'var(--color-secondary)'; }}
             >
-              For Seekers
+              Referrals
             </button>
             <button
               onClick={() => navigate('/login')}
@@ -61,15 +91,24 @@ const ProviderPage: React.FC = () => {
           </div>
           {/* Mobile Login Button */}
           <div className="md:hidden">
-            <button
-              onClick={() => navigate('/login')}
-              className="px-4 py-2 text-sm font-medium rounded-lg transition-all text-white"
-              style={{ backgroundColor: 'var(--color-primary)' }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary-hover)'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary)'}
-            >
-              Login <i className="fas fa-sign-in-alt ml-1"></i>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => navigate('/referrals')}
+                className="px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all"
+                style={{ backgroundColor: 'white', color: 'var(--color-primary)', borderWidth: '1px', borderColor: 'var(--color-secondary)' }}
+              >
+                Referrals
+              </button>
+              <button
+                onClick={() => navigate('/login')}
+                className="px-4 py-2 text-sm font-medium rounded-lg transition-all text-white"
+                style={{ backgroundColor: 'var(--color-primary)' }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary-hover)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary)'}
+              >
+                Login <i className="fas fa-sign-in-alt ml-1"></i>
+              </button>
+            </div>
           </div>
         </div>
       </nav>
@@ -123,60 +162,39 @@ const ProviderPage: React.FC = () => {
             </div>
           </section>
 
-          {/* AEO Content - Provider Information */}
+          {/* FAQs */}
           <section className="w-full max-w-4xl mt-16 mb-8">
             <div className="bg-white rounded-2xl shadow-md p-8">
               <h2 className="text-3xl font-bold mb-8 text-center" style={{ color: 'var(--color-primary)' }}>
-                Grow Your Therapy Practice with TheMindNetwork
+                FAQs
               </h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <h3 className="text-xl font-bold mb-3" style={{ color: 'var(--color-primary)' }}>
-                    How Much Can You Earn?
-                  </h3>
-                  <p style={{ color: 'var(--color-text-muted)', lineHeight: '1.6' }}>
-                    Your rate depends on your experience, specialization, and client outcomes. Scale your earnings by taking more clients from our platform.
-                  </p>
-                </div>
 
-                <div>
-                  <h3 className="text-xl font-bold mb-3" style={{ color: 'var(--color-primary)' }}>
-                    Who Are Your Clients?
-                  </h3>
-                  <p style={{ color: 'var(--color-text-muted)', lineHeight: '1.6' }}>
-                    You work with pre-screened clients seeking mental health support in your area of expertise. Clients match based on your specialization (anxiety, depression, trauma, couples therapy, etc.) and can choose online or in-person sessions across major Indian cities.
-                  </p>
-                </div>
+              <div className="space-y-4">
+                {providerFAQs.map((faq, index) => (
+                  <div key={index} className="rounded-2xl shadow-sm overflow-hidden" style={{ border: '1px solid var(--color-secondary)' }}>
+                    <button
+                      onClick={() => toggleFAQ(index)}
+                      className="w-full p-5 flex items-center justify-between text-left transition-colors"
+                      style={{ backgroundColor: expandedFAQs.has(index) ? 'rgba(163, 177, 138, 0.05)' : 'white' }}
+                    >
+                      <h3 className="text-base font-bold pr-4" style={{ color: 'var(--color-text-primary)' }}>
+                        {faq.question}
+                      </h3>
+                      <i
+                        className="fas fa-chevron-down flex-shrink-0 transition-transform duration-300"
+                        style={{ color: 'var(--color-accent)', transform: expandedFAQs.has(index) ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                      ></i>
+                    </button>
 
-                <div>
-                  <h3 className="text-xl font-bold mb-3" style={{ color: 'var(--color-primary)' }}>
-                    What's the Onboarding Process?
-                  </h3>
-                  <p style={{ color: 'var(--color-text-muted)', lineHeight: '1.6' }}>
-                    Create a profile with your credentials, specializations, and availability. We verify your qualifications and background to ensure client safety.
-                  </p>
-                </div>
-
-                <div>
-                  <h3 className="text-xl font-bold mb-3" style={{ color: 'var(--color-primary)' }}>
-                    Can You Choose Your Schedule?
-                  </h3>
-                  <p style={{ color: 'var(--color-text-muted)', lineHeight: '1.6' }}>
-                    Absolutely. Set your own availability, session duration, and location preferences. Whether you want full-time practice growth or part-time supplemental income, you control your schedule and client volume.
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-8 p-6 rounded-xl" style={{ backgroundColor: 'rgba(163, 177, 138, 0.1)', borderLeft: '4px solid var(--color-primary)' }}>
-                <h4 className="font-bold mb-2" style={{ color: 'var(--color-primary)' }}>Quick Facts:</h4>
-                <ul className="text-sm space-y-1" style={{ color: 'var(--color-text-muted)' }}>
-                  <li>✓ Flexible working hours and client load</li>
-                  <li>✓ Transparent pricing with no hidden platform fees</li>
-                  <li>✓ Built-in marketing reach to find clients</li>
-                  <li>✓ Secure platform for online and offline sessions</li>
-                  <li>✓ Professional network to collaborate with peers</li>
-                </ul>
+                    {expandedFAQs.has(index) && (
+                      <div className="px-5 pb-5 border-t" style={{ borderTopColor: 'rgba(163, 177, 138, 0.2)' }}>
+                        <p className="pt-4 text-sm leading-relaxed" style={{ color: 'var(--color-text-muted)' }}>
+                          {faq.answer}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           </section>
@@ -246,6 +264,19 @@ const ProviderPage: React.FC = () => {
                     onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-secondary)'}
                   >
                     Login
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href={`${window.location.origin}/#/referrals`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm transition-colors"
+                    style={{ color: 'var(--color-secondary)' }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-accent)'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-secondary)'}
+                  >
+                    Referrals
                   </a>
                 </li>
                 <li>
