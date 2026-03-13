@@ -511,7 +511,7 @@ export const Login: React.FC = () => {
               </p>
             </div>
             )
-          )}}
+          )}
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
