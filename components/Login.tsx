@@ -384,7 +384,7 @@ export const Login: React.FC = () => {
                 <label className="text-sm font-semibold text-slate-700 ml-1">Enter 6-Digit OTP</label>
                 <input
                   ref={otpInputRef}
-                  type="text"
+                  type="password"
                   inputMode="numeric"
                   maxLength={6}
                   className={`w-full bg-white border ${error ? 'border-red-500' : 'border-slate-300'} text-slate-900 rounded-lg px-4 py-3 text-center text-2xl font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all shadow-sm`}
@@ -477,7 +477,7 @@ export const Login: React.FC = () => {
                 <label className="text-sm font-semibold text-slate-700 ml-1">Enter 6-Digit OTP</label>
                 <input
                   ref={otpInputRef}
-                  type="text"
+                  type="password"
                   inputMode="numeric"
                   maxLength={6}
                   className={`w-full bg-white border ${error ? 'border-red-500' : 'border-slate-300'} text-slate-900 rounded-lg px-4 py-3 text-center text-2xl font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all shadow-sm`}
@@ -511,7 +511,7 @@ export const Login: React.FC = () => {
               </p>
             </div>
             )
-          )}
+          )}}
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
