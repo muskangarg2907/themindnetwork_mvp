@@ -24,6 +24,9 @@ export const ProfileView: React.FC = () => {
   const [selectedPlanName, setSelectedPlanName] = useState<string>('');
   const [paymentWarning, setPaymentWarning] = useState<string>('');
     const [resumeDownloading, setResumeDownloading] = useState(false);
+  const [resumeError, setResumeError] = useState('');
+  const [saveError, setSaveError] = useState('');
+  const [uploadError, setUploadError] = useState('');
   const [isPaymentsExpanded, setIsPaymentsExpanded] = useState(false);
   const [snapshots, setSnapshots] = useState<any[]>([]);
   const [showSensitiveInfo, setShowSensitiveInfo] = useState(false);
@@ -193,12 +196,13 @@ export const ProfileView: React.FC = () => {
         try {
             console.log('[PROFILE] Saving profile');
             if (!editData) return;
+            setSaveError('');
             await updateProfile(editData);
             secureLog('[PROFILE] Save successful');
             setIsEditing(false);
         } catch (err) {
             console.error('Error saving profile:', err);
-            alert('Failed to save profile. Please try again.');
+            setSaveError('Failed to save your profile. Please check your connection and try again.');
         }
     };
 
@@ -256,7 +260,8 @@ export const ProfileView: React.FC = () => {
                 return;
             }
 
-            alert('No resume uploaded yet.');
+            setResumeError('No resume has been uploaded yet.');
+            setTimeout(() => setResumeError(''), 4000);
         } finally {
             setResumeDownloading(false);
         }
@@ -267,7 +272,8 @@ export const ProfileView: React.FC = () => {
     if (file) {
       // Max 2MB — Vercel has a 4.5MB request body limit; base64 adds ~33% overhead
       if (file.size > 2 * 1024 * 1024) {
-        alert('File size must be less than 2MB. Please compress your PDF before uploading.');
+        setUploadError('File is too large. Please keep it under 2MB (compress the PDF if needed).');
+        setTimeout(() => setUploadError(''), 5000);
         return;
       }
       
@@ -294,21 +300,26 @@ export const ProfileView: React.FC = () => {
       <div className="max-w-4xl mx-auto space-y-6">
         
         {/* Header Actions */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center animate-fade-in gap-4">
-            <div className="flex items-center gap-3">
-                 <div className="w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold text-2xl shadow-lg" style={{ backgroundColor: isProvider ? 'var(--color-accent)' : 'var(--color-primary)' }}>
-                    {profile.basicInfo.fullName.charAt(0)}
+        <div className="flex flex-row items-center justify-between animate-fade-in gap-2">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+                 <div className="w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold text-base shadow-lg shrink-0" style={{ backgroundColor: isProvider ? 'var(--color-accent)' : 'var(--color-primary)' }}>
+                    {(() => {
+                      const parts = profile.basicInfo.fullName.trim().split(/\s+/);
+                      return parts.length >= 2
+                        ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+                        : parts[0][0].toUpperCase();
+                    })()}
                  </div>
-                 <div>
-                                        <h1 className="text-2xl font-bold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
-                                            {profile.basicInfo.fullName}
-                                            {/* Status badge for provider/client */}
-                                            <span className="ml-2">
-                                                <StatusBadge status={profile.status} />
-                                            </span>
-                                        </h1>
-                    <div className="flex items-center gap-2">
-                         <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>TheMindNetwork ID: {profile._id?.slice(0,8)}</span>
+                 <div className="min-w-0 flex-1">
+                    <h1 className="text-xl font-bold flex items-center gap-2 min-w-0" style={{ color: 'var(--color-text-primary)' }}>
+                        <span className="truncate">{profile.basicInfo.fullName}</span>
+                        {/* Status badge for provider/client */}
+                        <span className="shrink-0">
+                            <StatusBadge status={profile.status} />
+                        </span>
+                    </h1>
+                    <div className="flex items-center gap-2 flex-wrap">
+                         <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>ID: {profile._id?.slice(0,8)}</span>
                          <span className="text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wide" style={{ 
                             backgroundColor: isProvider ? 'var(--color-accent)' : 'var(--color-primary)', 
                             color: '#fff'
@@ -318,8 +329,8 @@ export const ProfileView: React.FC = () => {
                     </div>
                  </div>
             </div>
-            <div className="flex gap-2 w-full md:w-auto">
-                {/* Logout button: visible on desktop, hidden on mobile for providers/clients (shown in hamburger) */}
+            <div className="flex gap-2 shrink-0">
+                {/* Logout button: visible on desktop, hidden on mobile (shown in hamburger) */}
                 <Button variant="outline" onClick={async () => {
                     try {
                         await signOutUser();
@@ -327,7 +338,7 @@ export const ProfileView: React.FC = () => {
                     } catch (error) {
                         console.error('[PROFILE] Logout error:', error);
                     }
-                }} className="flex-1 md:flex-none hidden md:flex">
+                }} className="hidden md:flex">
                     <i className="fas fa-sign-out-alt mr-2"></i> Log Out
                 </Button>
                 {/* Hamburger toggle for mobile */}
@@ -523,13 +534,18 @@ export const ProfileView: React.FC = () => {
                                                 <i className="fas fa-edit mr-1.5"></i>Edit
                                             </button>
                                         ) : (
-                                            <div className="flex items-center gap-2">
-                                                <button onClick={() => setIsEditing(false)} className="text-xs px-3 py-1 bg-slate-100 text-slate-700 rounded hover:bg-slate-200 font-medium">
-                                                    Cancel
-                                                </button>
-                                                <button onClick={handleSave} className="text-xs px-3 py-1 bg-teal-600 text-white rounded hover:bg-teal-700 font-medium">
-                                                    Save
-                                                </button>
+                                            <div className="flex flex-col items-end gap-2">
+                                                {saveError && (
+                                                    <p className="text-xs text-red-600 text-right">{saveError}</p>
+                                                )}
+                                                <div className="flex items-center gap-2">
+                                                    <button onClick={() => { setIsEditing(false); setSaveError(''); }} className="text-xs px-3 py-1 bg-slate-100 text-slate-700 rounded hover:bg-slate-200 font-medium">
+                                                        Cancel
+                                                    </button>
+                                                    <button onClick={handleSave} className="text-xs px-3 py-1 bg-teal-600 text-white rounded hover:bg-teal-700 font-medium">
+                                                        Save
+                                                    </button>
+                                                </div>
                                             </div>
                                         )}
                                     </div>
@@ -658,6 +674,9 @@ export const ProfileView: React.FC = () => {
                                                                 )}
                                                             </label>
                                                         </div>
+                                                        {uploadError && (
+                                                            <p className="text-xs text-red-600 mt-1">{uploadError}</p>
+                                                        )}
                                                     </div>
                                                 </div>
                                                 <div>
@@ -740,6 +759,9 @@ export const ProfileView: React.FC = () => {
                                                                         ? <><i className="fas fa-spinner fa-spin mr-1"></i> Loading resume...</>
                                                                         : <><i className="fas fa-file-pdf mr-1"></i> Download Resume ({profile.providerDetails.resumeFileName})</>}
                                                                 </button>
+                                                                {resumeError && (
+                                                                    <p className="text-xs text-red-600 mt-1">{resumeError}</p>
+                                                                )}
                                                             </div>
                                                         )}
 
@@ -887,13 +909,18 @@ export const ProfileView: React.FC = () => {
                                                 <i className="fas fa-edit mr-1.5"></i>Edit
                                             </button>
                                         ) : (
-                                            <div className="flex items-center gap-2">
-                                                <button onClick={() => { setIsEditing(false); setEditData(profile); }} className="text-xs px-3 py-1 bg-slate-100 text-slate-700 rounded hover:bg-slate-200 font-medium">
-                                                    Cancel
-                                                </button>
-                                                <button onClick={handleSave} className="text-xs px-3 py-1 bg-teal-600 text-white rounded hover:bg-teal-700 font-medium">
-                                                    Save
-                                                </button>
+                                            <div className="flex flex-col items-end gap-2">
+                                                {saveError && (
+                                                    <p className="text-xs text-red-600 text-right">{saveError}</p>
+                                                )}
+                                                <div className="flex items-center gap-2">
+                                                    <button onClick={() => { setIsEditing(false); setEditData(profile); setSaveError(''); }} className="text-xs px-3 py-1 bg-slate-100 text-slate-700 rounded hover:bg-slate-200 font-medium">
+                                                        Cancel
+                                                    </button>
+                                                    <button onClick={handleSave} className="text-xs px-3 py-1 bg-teal-600 text-white rounded hover:bg-teal-700 font-medium">
+                                                        Save
+                                                    </button>
+                                                </div>
                                             </div>
                                         )}
                                     </div>

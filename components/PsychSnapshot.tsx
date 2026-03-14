@@ -58,7 +58,9 @@ export const PsychSnapshot: React.FC = () => {
   const [snapshotUrl, setSnapshotUrl] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userPhone, setUserPhone] = useState('');
-  const [authLoading, setAuthLoading] = useState(true); // Track if auth is still loading
+  const [authLoading, setAuthLoading] = useState(true);
+  const [snapshotCopied, setSnapshotCopied] = useState(false);
+  const [confirmStartFresh, setConfirmStartFresh] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -319,28 +321,31 @@ export const PsychSnapshot: React.FC = () => {
   const copySnapshotUrl = () => {
     const fullUrl = `${window.location.origin}/#/snapshot/${snapshotUrl}`;
     navigator.clipboard.writeText(fullUrl);
-    alert('Snapshot URL copied to clipboard!');
+    setSnapshotCopied(true);
+    setTimeout(() => setSnapshotCopied(false), 2000);
   };
 
   const startFresh = () => {
-    if (confirm('Are you sure you want to start fresh? This will clear your current conversation and snapshot.')) {
-      localStorage.removeItem('psychSnapshot_messages');
-      localStorage.removeItem('psychSnapshot_messages_phone');
-      localStorage.removeItem('psychSnapshot_url');
-      localStorage.removeItem('psychSnapshot_phone');
-      localStorage.removeItem('psychSnapshot_generated');
-      localStorage.removeItem('psychSnapshot_data');
-      
-      const greeting: Message = {
-        id: 'init',
-        role: 'assistant',
-        text: "This space is for reflection, not evaluation. You can go slowly, skip questions, or stop at any time. Nothing here needs to be finished today. How are you feeling right now?",
-        timestamp: Date.now()
-      };
-      setMessages([greeting]);
-      setSnapshotGenerated(false);
-      setSnapshotUrl('');
+    if (!confirmStartFresh) {
+      setConfirmStartFresh(true);
+      return;
     }
+    setConfirmStartFresh(false);
+    localStorage.removeItem('psychSnapshot_messages');
+    localStorage.removeItem('psychSnapshot_messages_phone');
+    localStorage.removeItem('psychSnapshot_url');
+    localStorage.removeItem('psychSnapshot_phone');
+    localStorage.removeItem('psychSnapshot_generated');
+    localStorage.removeItem('psychSnapshot_data');
+    const greeting: Message = {
+      id: 'init',
+      role: 'assistant',
+      text: "This space is for reflection, not evaluation. You can go slowly, skip questions, or stop at any time. Nothing here needs to be finished today. How are you feeling right now?",
+      timestamp: Date.now()
+    };
+    setMessages([greeting]);
+    setSnapshotGenerated(false);
+    setSnapshotUrl('');
   };
 
   // Chat Interface

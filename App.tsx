@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { OfflineBanner } from './components/OfflineBanner';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { Landing } from './components/Landing';
 import { Login } from './components/Login';
@@ -44,6 +45,7 @@ const App: React.FC = () => {
 
   return (
     <ErrorBoundary>
+      <OfflineBanner />
       <HashRouter>
         <Routes>
           <Route path="/" element={<Landing />} />

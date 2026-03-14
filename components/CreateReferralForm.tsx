@@ -32,6 +32,7 @@ export const CreateReferralForm: React.FC<CreateReferralFormProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successLink, setSuccessLink] = useState('');
+  const [linkCopied, setLinkCopied] = useState(false);
   const isEditMode = Boolean(initialData?.requestId);
 
   useEffect(() => {
@@ -162,11 +163,14 @@ export const CreateReferralForm: React.FC<CreateReferralFormProps> = ({
           <button
             onClick={() => {
               navigator.clipboard.writeText(successLink);
-              alert('Link copied!');
+              setLinkCopied(true);
+              setTimeout(() => setLinkCopied(false), 2000);
             }}
-            className="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-xs whitespace-nowrap"
+            className={`px-3 py-2 rounded text-xs whitespace-nowrap transition-colors ${
+              linkCopied ? 'bg-green-700 text-white' : 'bg-green-600 text-white hover:bg-green-700'
+            }`}
           >
-            Copy Link
+            {linkCopied ? <><i className="fas fa-check mr-1"></i>Copied!</> : 'Copy Link'}
           </button>
         </div>
         <button

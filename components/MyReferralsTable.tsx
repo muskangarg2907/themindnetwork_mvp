@@ -46,6 +46,9 @@ export const MyReferralsTable: React.FC<MyReferralsTableProps> = ({
   const [loadingProfileId, setLoadingProfileId] = useState<string | null>(null);
   const [selectingProvider, setSelectingProvider] = useState<string | null>(null);
   const [selectedSuccess, setSelectedSuccess] = useState<Record<string, string>>({});
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState('');
+  const [formError, setFormError] = useState('');
   const [inlineForm, setInlineForm] = useState({
     clientInitials: '',
     clientType: 'individual' as 'individual' | 'couple' | 'group',
@@ -150,14 +153,16 @@ export const MyReferralsTable: React.FC<MyReferralsTableProps> = ({
 
       if (!response.ok) {
         const err = await response.json().catch(() => ({}));
-        alert(err.error || 'Failed to shortlist applicant');
+        setActionError(err.error || 'Could not shortlist this applicant. Please try again.');
+        setTimeout(() => setActionError(''), 4000);
         return;
       }
 
       await fetchApplicantsForRequest(requestId);
     } catch (err) {
       console.error('Error shortlisting applicant:', err);
-      alert('Failed to shortlist applicant');
+      setActionError('Could not shortlist this applicant. Please try again.');
+      setTimeout(() => setActionError(''), 4000);
     } finally {
       setShortlisting(prev => ({ ...prev, [key]: false }));
     }
@@ -176,14 +181,16 @@ export const MyReferralsTable: React.FC<MyReferralsTableProps> = ({
 
       if (!response.ok) {
         const err = await response.json().catch(() => ({}));
-        alert(err.error || 'Failed to remove from shortlist');
+        setActionError(err.error || 'Could not remove from shortlist. Please try again.');
+        setTimeout(() => setActionError(''), 4000);
         return;
       }
 
       await fetchApplicantsForRequest(requestId);
     } catch (err) {
       console.error('Error removing shortlist:', err);
-      alert('Failed to remove from shortlist');
+      setActionError('Could not remove from shortlist. Please try again.');
+      setTimeout(() => setActionError(''), 4000);
     }
   };
 
@@ -203,7 +210,8 @@ export const MyReferralsTable: React.FC<MyReferralsTableProps> = ({
       setExpandedProfileId(applicantId);
     } catch (err) {
       console.error('Error fetching provider profile:', err);
-      alert('Could not load provider profile');
+      setActionError('Could not load this provider profile. Please try again.');
+      setTimeout(() => setActionError(''), 4000);
     } finally {
       setLoadingProfileId(null);
     }
@@ -231,7 +239,8 @@ export const MyReferralsTable: React.FC<MyReferralsTableProps> = ({
         r.requestId === requestId ? { ...r, selectedProviderId: applicantId, selectedAt: new Date().toISOString() } : r
       ));
     } catch (err: any) {
-      alert(err.message || 'Failed to select provider');
+      setActionError(err.message || 'Could not select this provider. Please try again.');
+      setTimeout(() => setActionError(''), 4000);
     } finally {
       setSelectingProvider(null);
     }
@@ -289,8 +298,6 @@ export const MyReferralsTable: React.FC<MyReferralsTableProps> = ({
   };
 
   const handleDelete = async (requestId: string) => {
-    if (!confirm(`Are you sure you want to delete referral request ${requestId}? This action cannot be undone.`)) return;
-
     try {
       const response = await fetch('/api/referrals?action=delete', {
         method: 'DELETE',
@@ -302,14 +309,19 @@ export const MyReferralsTable: React.FC<MyReferralsTableProps> = ({
       });
 
       if (response.ok) {
+        setDeleteConfirmId(null);
         fetchRequests();
       } else {
         const err = await response.json();
-        alert(err.error || 'Failed to delete request');
+        setDeleteConfirmId(null);
+        setActionError(err.error || 'Could not delete this request. Please try again.');
+        setTimeout(() => setActionError(''), 4000);
       }
     } catch (err) {
       console.error('Failed to delete:', err);
-      alert('Failed to delete request');
+      setDeleteConfirmId(null);
+      setActionError('Could not delete this request. Please try again.');
+      setTimeout(() => setActionError(''), 4000);
     }
   };
 
@@ -353,26 +365,27 @@ export const MyReferralsTable: React.FC<MyReferralsTableProps> = ({
     const referralId = req?._id || req?.id || '';
 
     if (!requestId && !referralId) {
-      alert('Unable to edit this request: missing request identifier. Please create a new referral request.');
+      setFormError('Unable to edit this request. Please refresh and try again.');
       return;
     }
 
     if (!inlineForm.concerns.trim()) {
-      alert('Please describe the client concerns');
+      setFormError('Please describe the client concerns.');
       return;
     }
     if (inlineForm.mode.length === 0) {
-      alert('Please select at least one mode');
+      setFormError('Please select at least one session mode.');
       return;
     }
     if ((inlineForm.mode.includes('Offline') || inlineForm.mode.includes('Hybrid')) && !inlineForm.location.trim()) {
-      alert('Please specify location for offline/hybrid sessions');
+      setFormError('Please specify a location for offline/hybrid sessions.');
       return;
     }
     if (!inlineForm.budgetRange.trim()) {
-      alert('Please specify budget range');
+      setFormError('Please specify a budget range.');
       return;
     }
+    setFormError('');
 
     setSavingEdit(true);
     try {
@@ -404,15 +417,16 @@ export const MyReferralsTable: React.FC<MyReferralsTableProps> = ({
         const msg = err?.required
           ? `${err.error}: ${Array.isArray(err.required) ? err.required.join(', ') : ''}`
           : (err?.error || 'Failed to update request');
-        alert(msg);
+        setFormError(msg);
         return;
       }
 
+      setFormError('');
       setEditingRequestId(null);
       await fetchRequests();
     } catch (err) {
       console.error('Failed to update request:', err);
-      alert('Failed to update request');
+      setFormError('Could not save changes. Please try again.');
     } finally {
       setSavingEdit(false);
     }
@@ -436,15 +450,23 @@ export const MyReferralsTable: React.FC<MyReferralsTableProps> = ({
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
+    <div>
+      {/* Action-level error banner */}
+      {actionError && (
+        <div className="mb-3 flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-2.5">
+          <i className="fas fa-exclamation-circle shrink-0"></i>
+          <span>{actionError}</span>
+          <button onClick={() => setActionError('')} className="ml-auto text-red-500 hover:text-red-700"><i className="fas fa-times"></i></button>
+        </div>
+      )}
+      <table className="w-full text-xs sm:text-sm">
         <thead className="bg-gray-100 border-b border-gray-200">
           <tr>
-            <th className="px-4 py-3 text-left font-semibold text-gray-900">Request ID</th>
-            <th className="px-4 py-3 text-left font-semibold text-gray-900">Created</th>
-            <th className="px-4 py-3 text-left font-semibold text-gray-900">Applicants</th>
-            <th className="px-4 py-3 text-left font-semibold text-gray-900">Status</th>
-            <th className="px-4 py-3 text-left font-semibold text-gray-900">Actions</th>
+            <th className="px-2 sm:px-4 py-3 text-left font-semibold text-gray-900">Request ID</th>
+            <th className="hidden sm:table-cell px-4 py-3 text-left font-semibold text-gray-900">Created</th>
+            <th className="px-2 sm:px-4 py-3 text-left font-semibold text-gray-900">Apps</th>
+            <th className="px-2 sm:px-4 py-3 text-left font-semibold text-gray-900">Status</th>
+            <th className="px-2 sm:px-4 py-3 text-left font-semibold text-gray-900">Actions</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200">
@@ -463,13 +485,16 @@ export const MyReferralsTable: React.FC<MyReferralsTableProps> = ({
                 }}
                 title="Click to view request details and applicants"
               >
-                <td className="px-4 py-3 font-mono text-blue-600">{reqIdentifier || '-'}</td>
-                <td className="px-4 py-3 text-gray-600">
+                <td className="px-2 sm:px-4 py-3 font-mono text-blue-600">
+                  <span className="hidden sm:inline">{reqIdentifier || '-'}</span>
+                  <span className="sm:hidden">{reqIdentifier ? `#${reqIdentifier.slice(-8)}` : '-'}</span>
+                </td>
+                <td className="hidden sm:table-cell px-4 py-3 text-gray-600">
                   {new Date(req.createdAt).toLocaleDateString('en-IN')}
                 </td>
-                <td className="px-4 py-3 text-gray-900 font-semibold">{req.applicantCount ?? 0}</td>
-                <td className="px-4 py-3">
-                  <span className={`inline-block px-3 py-1 rounded text-xs font-semibold ${
+                <td className="px-2 sm:px-4 py-3 text-gray-900 font-semibold">{req.applicantCount ?? 0}</td>
+                <td className="px-2 sm:px-4 py-3">
+                  <span className={`inline-block px-2 sm:px-3 py-1 rounded text-xs font-semibold ${
                     req.status === 'active'
                       ? 'bg-green-100 text-green-800'
                       : 'bg-gray-100 text-gray-800'
@@ -477,7 +502,7 @@ export const MyReferralsTable: React.FC<MyReferralsTableProps> = ({
                     {req.status}
                   </span>
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-2 sm:px-4 py-3">
                   <div className="flex gap-2 items-center">
                     <button
                       onClick={(e) => {
@@ -501,26 +526,42 @@ export const MyReferralsTable: React.FC<MyReferralsTableProps> = ({
                           handleStatusChange(reqIdentifier, req.status);
                         }}
                         disabled={!reqIdentifier}
-                        className={`text-xs px-3 py-1 rounded ${
+                        title={req.status === 'active' ? 'Close request' : 'Reopen request'}
+                        className={`text-xs px-2 sm:px-3 py-1 rounded ${
                           req.status === 'active'
                             ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
                             : 'bg-green-100 text-green-800 hover:bg-green-200'
                         }`}
                       >
-                        {req.status === 'active' ? 'Close' : 'Reopen'}
+                        <span className="hidden sm:inline">{req.status === 'active' ? 'Close' : 'Reopen'}</span>
+                        <i className={`sm:hidden fas ${req.status === 'active' ? 'fa-lock' : 'fa-lock-open'}`}></i>
                       </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(reqIdentifier);
-                        }}
-                        disabled={!reqIdentifier}
-                        title="Delete request"
-                        aria-label={`Delete request ${reqIdentifier}`}
-                        className="p-1.5 rounded text-red-700 hover:bg-red-100"
-                      >
-                        <i className="fas fa-trash"></i>
-                      </button>
+                      {deleteConfirmId === reqIdentifier ? (
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs text-red-700">Delete?</span>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDelete(reqIdentifier); }}
+                            className="text-xs px-2 py-1 rounded bg-red-600 text-white hover:bg-red-700"
+                          >Yes</button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(null); }}
+                            className="text-xs px-2 py-1 rounded bg-slate-200 text-slate-700 hover:bg-slate-300"
+                          >No</button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteConfirmId(reqIdentifier);
+                          }}
+                          disabled={!reqIdentifier}
+                          title="Delete request"
+                          aria-label={`Delete request`}
+                          className="p-1.5 rounded text-red-700 hover:bg-red-100 disabled:opacity-50"
+                        >
+                          <i className="fas fa-trash"></i>
+                        </button>
+                      )}
                     </div>
                   </div>
                 </td>
@@ -528,7 +569,7 @@ export const MyReferralsTable: React.FC<MyReferralsTableProps> = ({
 
               {expandedRequestId === reqIdentifier && (
                 <tr className="bg-slate-50">
-                  <td colSpan={5} className="px-4 pb-4">
+                  <td colSpan={5} className="px-2 sm:px-4 pb-4">
                     <div className="mt-2 bg-white border border-slate-200 rounded-lg p-4">
                       <div className="flex items-start justify-between gap-3 mb-4">
                         <h4 className="text-sm font-semibold text-slate-900">Request Details</h4>
@@ -604,6 +645,12 @@ export const MyReferralsTable: React.FC<MyReferralsTableProps> = ({
                         </>
                       ) : (
                         <div className="space-y-4 text-sm">
+                          {formError && (
+                            <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-xs rounded px-3 py-2">
+                              <i className="fas fa-exclamation-circle"></i>
+                              <span>{formError}</span>
+                            </div>
+                          )}
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                             <div>
                               <label className="block text-xs font-semibold text-slate-700 mb-1">Client Initials</label>

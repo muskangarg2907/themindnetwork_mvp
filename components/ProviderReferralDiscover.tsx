@@ -16,6 +16,7 @@ export const ProviderReferralDiscover: React.FC<ProviderReferralDiscoverProps> =
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [applyingRequestId, setApplyingRequestId] = useState<string | null>(null);
+  const [applyErrors, setApplyErrors] = useState<Record<string, string>>({});
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const fetchOpenReferrals = async () => {
@@ -80,9 +81,9 @@ export const ProviderReferralDiscover: React.FC<ProviderReferralDiscoverProps> =
           ? { ...item, hasApplied: true, applicantCount: (item.applicantCount || 0) + 1 }
           : item
       ));
-      alert('Application submitted successfully.');
     } catch (e: any) {
-      alert(e.message || 'Failed to apply');
+      setApplyErrors(prev => ({ ...prev, [requestId]: e.message || 'Could not submit application. Please try again.' }));
+      setTimeout(() => setApplyErrors(prev => { const n = { ...prev }; delete n[requestId]; return n; }), 5000);
     } finally {
       setApplyingRequestId(null);
     }
@@ -165,10 +166,13 @@ export const ProviderReferralDiscover: React.FC<ProviderReferralDiscoverProps> =
                         {applyingRequestId === req.requestId
                           ? 'Applying...'
                           : req.hasApplied
-                          ? 'Applied'
+                          ? <><i className="fas fa-check mr-1"></i>Applied</>
                           : 'Apply'}
                       </button>
                     </div>
+                    {applyErrors[req.requestId] && (
+                      <p className="text-xs text-red-600 text-right">{applyErrors[req.requestId]}</p>
+                    )}
                   </div>
                 </div>
 
