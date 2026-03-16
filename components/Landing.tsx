@@ -680,6 +680,19 @@ export const Landing: React.FC = () => {
                     Contact Us
                   </a>
                 </li>
+                <li>
+                  <a
+                    href={`${window.location.origin}/#/therapy-guide`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm transition-colors"
+                    style={{ color: 'var(--color-secondary)' }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-accent)'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-secondary)'}
+                  >
+                    Which Therapy Is Right for Me?
+                  </a>
+                </li>
                 <li className="flex items-center gap-2 mt-4">
                   <i className="fas fa-shield-alt" style={{ color: 'var(--color-accent)' }} aria-hidden="true"></i>
                   <span className="text-sm">100% Confidential</span>

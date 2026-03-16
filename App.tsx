@@ -19,6 +19,7 @@ import { ComingSoon } from './components/ComingSoon';
 import { Dashboard } from './components/Dashboard';
 import { ReferralPage } from './components/ReferralPage';
 import { ReferralsHub } from './components/ReferralsHub';
+import { TherapyGuide } from './components/TherapyGuide';
 import { auth } from './services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 
@@ -63,6 +64,7 @@ const App: React.FC = () => {
           <Route path="/snapshot" element={<ComingSoon />} />
           <Route path="/snapshot/:snapshotId" element={<ComingSoon />} />
           <Route path="/referral/:id" element={<ReferralPage />} />
+          <Route path="/therapy-guide" element={<TherapyGuide />} />
         </Routes>
       </HashRouter>
     </ErrorBoundary>
