@@ -717,7 +717,7 @@ export const AdminDashboard: React.FC = () => {
                               <p className="text-slate-500">{ref.languages}</p>
                               <p className="text-slate-500 max-w-xs truncate" title={ref.concerns}>{ref.concerns}</p>
                               <p className="text-blue-600 font-mono text-xs">{new Date(ref.createdAt).toLocaleDateString('en-IN')}</p>
-                              <p className="text-slate-600">Applicants: {ref.applicants?.length || 0} | <a href={window.location.origin + '/#/referral/' + ref.requestId} target="_blank" rel="noreferrer" className="text-blue-600 underline">Link</a></p>
+                              <p className="text-slate-600">Applicants: {ref.applicants?.length || 0} | <a href={window.location.origin + '/referral/' + ref.requestId} target="_blank" rel="noreferrer" className="text-blue-600 underline">Link</a></p>
                             </div>
                           </td>
                           <td className="px-4 py-3">

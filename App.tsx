@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { OfflineBanner } from './components/OfflineBanner';
-import { HashRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Landing } from './components/Landing';
 import { Login } from './components/Login';
 import { ProfileWizard } from './components/ProfileWizard';
@@ -47,7 +47,7 @@ const App: React.FC = () => {
   return (
     <ErrorBoundary>
       <OfflineBanner />
-      <HashRouter>
+      <BrowserRouter>
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
@@ -66,7 +66,7 @@ const App: React.FC = () => {
           <Route path="/referral/:id" element={<ReferralPage />} />
           <Route path="/therapy-guide" element={<TherapyGuide />} />
         </Routes>
-      </HashRouter>
+      </BrowserRouter>
     </ErrorBoundary>
   );
 };

@@ -268,7 +268,7 @@ const ProviderPage: React.FC = () => {
                 </li>
                 <li>
                   <a
-                    href={`${window.location.origin}/#/referrals`}
+                    href="/referrals"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm transition-colors"

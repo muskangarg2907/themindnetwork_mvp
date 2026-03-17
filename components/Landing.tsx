@@ -112,7 +112,7 @@ export const Landing: React.FC = () => {
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-6 justify-end w-full">
             <button
-              onClick={() => window.open(`${window.location.origin}/#/referrals`, '_blank', 'noopener,noreferrer')}
+              onClick={() => window.open('/referrals', '_blank', 'noopener,noreferrer')}
               className="px-4 py-1.5 text-sm font-medium rounded-lg transition-all"
               style={{ backgroundColor: 'transparent', color: 'var(--color-text-primary)', borderWidth: '1px', borderColor: 'var(--color-secondary)' }}
               onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--color-secondary)'; e.currentTarget.style.borderColor = 'var(--color-accent)'; }}
@@ -121,7 +121,7 @@ export const Landing: React.FC = () => {
               Referrals
             </button>
             <a
-              href={`${window.location.origin}/#/provider`}
+              href="/provider"
               target="_blank"
               rel="noopener noreferrer"
               className="px-4 py-1.5 text-sm font-medium rounded-lg transition-all"
@@ -158,7 +158,7 @@ export const Landing: React.FC = () => {
           <div className="md:hidden">
             <div className="flex items-center gap-2">
               <button
-                onClick={() => window.open(`${window.location.origin}/#/referrals`, '_blank', 'noopener,noreferrer')}
+                onClick={() => window.open('/referrals', '_blank', 'noopener,noreferrer')}
                 className="px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all"
                 style={{ backgroundColor: 'white', color: 'var(--color-primary)', borderWidth: '1px', borderColor: 'var(--color-secondary)' }}
               >
@@ -617,7 +617,7 @@ export const Landing: React.FC = () => {
                 </li>
                 <li>
                   <a
-                    href={`${window.location.origin}/#/referrals`}
+                    href="/referrals"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm transition-colors"
@@ -682,7 +682,7 @@ export const Landing: React.FC = () => {
                 </li>
                 <li>
                   <a
-                    href={`${window.location.origin}/#/therapy-guide`}
+                    href="/therapy-guide"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm transition-colors"

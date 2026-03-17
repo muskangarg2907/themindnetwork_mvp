@@ -319,7 +319,7 @@ export const PsychSnapshot: React.FC = () => {
   };
 
   const copySnapshotUrl = () => {
-    const fullUrl = `${window.location.origin}/#/snapshot/${snapshotUrl}`;
+    const fullUrl = `${window.location.origin}/snapshot/${snapshotUrl}`;
     navigator.clipboard.writeText(fullUrl);
     setSnapshotCopied(true);
     setTimeout(() => setSnapshotCopied(false), 2000);

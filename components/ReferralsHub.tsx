@@ -85,7 +85,7 @@ export const ReferralsHub: React.FC = () => {
 
           <div className="flex items-center gap-3">
             <a
-              href={`${window.location.origin}/#/provider`}
+              href="/provider"
               target="_blank"
               rel="noopener noreferrer"
               className="hidden sm:inline px-4 py-1.5 text-sm font-medium rounded-lg transition-all"

@@ -81,7 +81,7 @@ export const MyReferralsTable: React.FC<MyReferralsTableProps> = ({
 
   const buildReferralLink = (requestId: string) => {
     if (!requestId) return '';
-    return `${window.location.origin}/#/referral/${requestId}`;
+    return `${window.location.origin}/referral/${requestId}`;
   };
 
   const handleShareLink = async (requestId: string) => {

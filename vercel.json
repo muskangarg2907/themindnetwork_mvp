@@ -19,6 +19,7 @@
     "api/admin.ts": { "maxDuration": 10 },
     "api/contact.ts": { "maxDuration": 10 },
     "api/generate.ts": { "maxDuration": 10 },
+    "api/og-image.ts": { "maxDuration": 5 },
     "api/profiles.ts": { "maxDuration": 10 },
     "api/razorpay.ts": { "maxDuration": 10 },
     "api/snapshot.ts": { "maxDuration": 30 },
@@ -28,6 +29,10 @@
     {
       "source": "/api/(.*)",
       "destination": "/api/$1"
+    },
+    {
+      "source": "/therapy-guide",
+      "destination": "/therapy-guide.html"
     },
     {
       "source": "/((?!api).*)",

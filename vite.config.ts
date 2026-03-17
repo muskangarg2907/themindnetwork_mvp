@@ -37,6 +37,10 @@ export default defineConfig(({ mode }) => {
       },
       build: {
         rollupOptions: {
+          input: {
+            main: path.resolve(__dirname, 'index.html'),
+            therapyGuide: path.resolve(__dirname, 'therapy-guide.html'),
+          },
           output: {
             manualChunks: {
               'react-vendor': ['react', 'react-dom', 'react-router-dom'],
