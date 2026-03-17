@@ -365,47 +365,47 @@ const FAQ_SCHEMA = {
       name: 'Which therapy is right for me?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'The right therapy depends on your goals, personality, and the nature of your concerns. CBT is ideal for structured, goal-driven individuals dealing with anxiety or depression. ACT suits those who overthink. DBT helps with intense emotions. Psychodynamic therapy is best for long-term self-exploration. Use our free interactive guide to find your personalised match.',
+        text: 'The right therapy depends on your goals, personality, and the nature of your concerns. CBT is ideal for structured, goal-driven individuals dealing with anxiety or depression. ACT suits those who overthink or get stuck in mental loops. DBT helps with intense emotions. Psychodynamic therapy is best for long-term self-exploration and understanding recurring patterns. There is no single right answer — the best fit is the one that aligns with how you think, what you need, and what you are ready to explore.',
       },
     },
     {
       '@type': 'Question',
-      name: 'What therapy should I choose?',
+      name: 'How to choose the right therapy for me?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Choosing therapy depends on whether you want short-term practical tools (CBT, ACT, DBT, SFT) or long-term exploration (Psychodynamic, Person-Centred). It also depends on whether you have a specific concern such as trauma (EMDR, Trauma-Focused CBT), relationships (Couples/Attachment therapy), or identity (Queer-Affirmative therapy). Our free guide walks you through the right questions to help you decide.',
+        text: 'The best way is to reflect on three things: your goal (short-term practical tools vs. deeper long-term exploration), your personality (structured and analytical, or reflective and emotional), and any specific concern you are bringing — such as trauma, relationship difficulties, or identity. Use our free interactive therapy matching guide on this page, which walks you through exactly these questions and points you to the approach most likely to work for you.',
       },
     },
     {
       '@type': 'Question',
-      name: 'What is the difference between CBT and ACT?',
+      name: 'What is CBT and ACT?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'CBT (Cognitive Behavioural Therapy) focuses on identifying and changing unhelpful thought patterns. ACT (Acceptance and Commitment Therapy) instead teaches you to accept difficult thoughts without letting them control you, and commit to actions aligned with your values. Both are evidence-based; CBT is more structured while ACT is more mindfulness-oriented.',
+        text: 'CBT (Cognitive Behavioural Therapy) is a structured, evidence-based approach that helps you identify and change unhelpful thought patterns and behaviours. It is goal-oriented, typically short-term, and highly effective for anxiety, depression, and stress. ACT (Acceptance and Commitment Therapy) is an evolution of CBT that takes a different angle — instead of changing thoughts, it teaches you to accept difficult thoughts without letting them control you, and commit to actions aligned with your core values. Both are evidence-based; CBT focuses on restructuring thoughts while ACT focuses on changing your relationship with them.',
       },
     },
     {
       '@type': 'Question',
-      name: 'How do I know which type of therapy I need?',
+      name: 'What is the difference between DBT and Psychodynamic therapy?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Consider three things: (1) your goal — practical tools vs. deeper exploration; (2) your personality — analytical and action-oriented, or reflective and emotional; and (3) your specific concern — trauma, relationships, identity, etc. TheMindNetwork offers a free interactive therapy matching guide to help you navigate these questions step by step.',
+        text: 'DBT (Dialectical Behaviour Therapy) is a practical, skills-based approach designed for people who experience emotions very intensely. It teaches concrete tools — mindfulness, distress tolerance, emotional regulation, and interpersonal effectiveness — and is typically structured and short-to-medium term. Psychodynamic therapy, by contrast, is open-ended and exploratory. It focuses on how unconscious patterns, early relationships, and past experiences shape your current thoughts and behaviour. DBT gives you skills to cope now; psychodynamic therapy gives you insight into why certain patterns keep repeating.',
       },
     },
     {
       '@type': 'Question',
-      name: 'What is DBT therapy used for?',
+      name: 'What is the difference between CBT and SFT therapy?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'DBT (Dialectical Behaviour Therapy) is used for people who experience emotions very intensely. It teaches four core skills: mindfulness, distress tolerance, emotional regulation, and interpersonal effectiveness. It is particularly effective for borderline personality disorder, self-harm, emotional dysregulation, and intense mood swings.',
+        text: 'CBT (Cognitive Behavioural Therapy) focuses on identifying and changing unhelpful thought patterns and behaviours — it looks at what is going wrong and works to correct it. SFT (Solution-Focused Therapy) takes the opposite angle: rather than examining problems, it focuses on your existing strengths, past successes, and what is already working — then builds on those. CBT is better suited for people who want to understand and shift deep-seated patterns; SFT is ideal for those who want fast, actionable results without spending much time analysing the problem.',
       },
     },
     {
       '@type': 'Question',
-      name: 'How is psychodynamic therapy different from CBT?',
+      name: 'How is ACT therapy different from Mindfulness therapy?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'CBT is short-term, structured, and focuses on changing current thought patterns and behaviours. Psychodynamic therapy is longer-term, open-ended, and focuses on how unconscious patterns from past experiences — especially childhood — shape present functioning. CBT suits those who want practical tools; psychodynamic therapy suits those who want deep self-understanding.',
+        text: 'ACT (Acceptance and Commitment Therapy) incorporates mindfulness as one of its core tools, but extends beyond it. Mindfulness-based therapy focuses primarily on cultivating present-moment awareness and breaking automatic cycles of stress or low mood through meditation and body-based practices. ACT adds two further elements: psychological flexibility (learning to accept difficult thoughts and feelings without being controlled by them) and values-based committed action (using clarity about what matters to you to guide behaviour change). Mindfulness therapy teaches you to be present; ACT teaches you to be present and then act intentionally.',
       },
     },
   ],
@@ -442,6 +442,59 @@ export const TherapyGuide: React.FC = () => {
       return next;
     });
   }, []);
+
+  const FAQS: { question: string; answer: React.ReactNode }[] = [
+    {
+      question: 'Which therapy is right for me?',
+      answer: (
+        <>
+          It depends on your goals, personality, and what you are bringing to therapy. CBT works well for anxiety and depression. ACT suits chronic overthinkers. DBT is built for intense emotions. Psychodynamic therapy is for those who want to understand deep-rooted patterns. No single approach fits everyone; the right one is the one that matches how you think and what you need.{' '}
+          <button
+            onClick={() => { setPhase('quiz'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            className="inline-flex items-center gap-1 font-semibold underline underline-offset-2 transition-colors"
+            style={{ color: 'var(--color-primary)' }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-accent)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-primary)')}
+          >
+            Try our free therapy matching guide →
+          </button>
+        </>
+      ),
+    },
+    {
+      question: 'How to choose the right therapy for me?',
+      answer: (
+        <>
+          Ask yourself three things: What is my goal (practical tools now, or deeper exploration over time)? How do I process things (structured and logical, or reflective and emotional)? Do I have a specific concern like trauma, relationships, or identity? Your answers point clearly to an approach.{' '}
+          <button
+            onClick={() => { setPhase('quiz'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            className="inline-flex items-center gap-1 font-semibold underline underline-offset-2 transition-colors"
+            style={{ color: 'var(--color-primary)' }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-accent)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-primary)')}
+          >
+            Try our free therapy matching guide →
+          </button>
+        </>
+      ),
+    },
+    {
+      question: 'What is CBT and ACT?',
+      answer: 'CBT (Cognitive Behavioural Therapy) helps you identify and change unhelpful thought patterns. It is structured, goal-oriented, and typically short-term. ACT (Acceptance and Commitment Therapy) takes a different approach: rather than changing thoughts, it teaches you to accept them without letting them drive your behaviour, and to act in line with your values instead. CBT restructures thinking; ACT changes your relationship with it.',
+    },
+    {
+      question: 'What is the difference between DBT and Psychodynamic therapy?',
+      answer: 'DBT (Dialectical Behaviour Therapy) is skills-focused and practical. It teaches four concrete tools: mindfulness, distress tolerance, emotional regulation, and interpersonal effectiveness. It is structured and works well for intense, fast-moving emotions. Psychodynamic therapy is the opposite: open-ended and exploratory, it looks at how unconscious patterns and past relationships shape the present. DBT gives you tools to cope now; psychodynamic therapy helps you understand why the same patterns keep repeating.',
+    },
+    {
+      question: 'What is the difference between CBT and SFT therapy?',
+      answer: 'CBT examines what is going wrong and works to change it, targeting unhelpful thoughts and behaviours directly. SFT (Solution-Focused Therapy) ignores the problem and instead asks: what is already working? It builds on your existing strengths and past successes. CBT suits people who want to understand and shift ingrained patterns; SFT suits those who want fast, targeted results without deep analysis.',
+    },
+    {
+      question: 'How is ACT therapy different from Mindfulness therapy?',
+      answer: 'Mindfulness-based therapy teaches present-moment awareness through meditation and body-based practices to interrupt stress or low mood cycles. ACT uses mindfulness as a foundation but goes further: it adds psychological flexibility (accepting difficult thoughts without being controlled by them) and values-based action (using clarity on what matters to drive real behaviour change). Mindfulness teaches you to be present; ACT teaches you to be present and then move forward with intention.',
+    },
+  ];
 
   // ── SEO ──────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -653,10 +706,7 @@ export const TherapyGuide: React.FC = () => {
             </p>
 
             <div className="space-y-4">
-              {[{
-                question: 'What therapy should I choose?',
-                answer: 'Choosing therapy depends on whether you want short-term practical tools (CBT, ACT, DBT, SFT) or long-term exploration (Psychodynamic, Person-Centred). It also depends on whether you have a specific concern such as trauma (EMDR, Trauma-Focused CBT), relationships (Couples or Attachment therapy), or identity (Queer-Affirmative therapy). Use the interactive guide above — it walks you through the right questions step by step to find your match.'
-              }, ...FAQ_SCHEMA.mainEntity.map(f => ({ question: f.name, answer: f.acceptedAnswer.text }))].map((faq, index) => (
+              {FAQS.map((faq, index) => (
                 <div key={index} className="rounded-2xl shadow-md overflow-hidden" style={{ backgroundColor: 'white' }}>
                   <button
                     onClick={() => toggleFAQ(index)}
