@@ -4,6 +4,12 @@ import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { auth } from '../services/firebase';
 
+const trackEvent = (name: string, params?: Record<string, string>) => {
+  try {
+    if (typeof (window as any).gtag === 'function') (window as any).gtag('event', name, params);
+  } catch (_) {}
+};
+
 export const Landing: React.FC = () => {
   const navigate = useNavigate();
   const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
@@ -12,6 +18,7 @@ export const Landing: React.FC = () => {
   const [expandedFAQs, setExpandedFAQs] = useState<Set<number>>(new Set());
 
   useEffect(() => {
+    trackEvent('homepage_viewed');
     const unsubscribe = auth.onAuthStateChanged((user) => {
       setIsLoggedIn(!!user);
     });

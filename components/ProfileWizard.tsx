@@ -12,6 +12,12 @@ import { sanitizeForStorage, secureLog } from '../services/security';
 import { Button } from './ui/Button';
 import { generateProfileSummary, generateProviderBio } from '../services/geminiService';
 import { saveProfile } from '../services/api';
+
+const trackEvent = (name: string, params?: Record<string, string>) => {
+  try {
+    if (typeof (window as any).gtag === 'function') (window as any).gtag('event', name, params);
+  } catch (_) {}
+};
 import { auth } from '../services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { apiClient } from '../services/apiClient';
@@ -261,6 +267,7 @@ export const ProfileWizard: React.FC = () => {
                         }
                         
                         secureLog('[WIZARD] Profile created successfully');
+                        trackEvent('profile_created', { role: finalProfile.role ?? 'unknown' });
                         
                         // Notify admin interface that a new profile was created
                         try {

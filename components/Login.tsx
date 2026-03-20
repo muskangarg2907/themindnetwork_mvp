@@ -7,6 +7,12 @@ import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'fi
 import { sanitizeForStorage, secureLog } from '../services/security';
 import { apiClient } from '../services/apiClient';
 
+const trackEvent = (name: string, params?: Record<string, string>) => {
+  try {
+    if (typeof (window as any).gtag === 'function') (window as any).gtag('event', name, params);
+  } catch (_) {}
+};
+
 const COUNTRY_CODES = [
   { code: '+91', country: 'IN' },
   { code: '+1', country: 'US/CA' },
@@ -42,6 +48,7 @@ export const Login: React.FC = () => {
 
   // Cleanup on unmount
   useEffect(() => {
+    trackEvent('login_page_viewed');
     return () => {
       if (window.recaptchaVerifier) {
         try {
@@ -95,7 +102,7 @@ export const Login: React.FC = () => {
     }
     setError('');
     setIsLoading(true);
-    
+    trackEvent('phone_submitted', { country_code: countryCode });
     const fullPhone = `${countryCode}${phoneNumber}`;
     console.log('[LOGIN] Attempting to send OTP');
     
@@ -213,6 +220,7 @@ export const Login: React.FC = () => {
     
     setError('');
     setIsLoading(true);
+    trackEvent('otp_submitted');
 
     const fullPhone = `${countryCode} ${phoneNumber}`;
 
@@ -221,7 +229,7 @@ export const Login: React.FC = () => {
       console.log('[LOGIN] Attempting to verify OTP...');
       const result = await confirmationResult.confirm(otp);
       console.log('[LOGIN] OTP verified successfully', result);
-      
+      trackEvent('phone_verification_successful');
 
       // Set auth tokens
       // Normalize phone number - remove spaces for consistent storage and API lookups
