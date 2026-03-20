@@ -62,12 +62,12 @@ const ProviderPage: React.FC = () => {
       {/* Navigation Bar (copied from Landing) */}
       <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl border-b shadow-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', borderBottomColor: 'var(--color-secondary)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <button onClick={() => navigate('/')} className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg" style={{ backgroundColor: 'var(--color-primary)' }}>
               <i className="fas fa-brain text-white text-xl"></i>
             </div>
             <span className="text-lg sm:text-xl md:text-2xl font-bold" style={{ color: 'var(--color-primary)' }}>TheMindNetwork</span>
-          </div>
+          </button>
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-6 justify-end w-full">
             <button

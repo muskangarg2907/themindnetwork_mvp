@@ -1126,13 +1126,41 @@ export const ProfileView: React.FC = () => {
                             {clientSection === 'assessments' && (
                                 <div className="bg-white border border-slate-200 md:border-l-0 p-6 rounded-2xl md:rounded-l-none shadow-sm">
                                     <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-5">Assessments</h3>
-                                    <div className="text-center py-8">
-                                        <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
-                                            <i className="fas fa-lock text-slate-400 text-xl"></i>
+                                    <div className="space-y-4">
+                                        {/* Therapy Guide Card */}
+                                        <div className="flex items-start gap-4 p-5 rounded-xl border border-slate-200 hover:border-primary/40 hover:shadow-md transition-all cursor-pointer group" onClick={() => window.open('/therapy-guide', '_blank', 'noopener,noreferrer')}>
+                                            <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(163, 177, 138, 0.15)' }}>
+                                                <i className="fas fa-brain text-xl" style={{ color: 'var(--color-primary)' }}></i>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="font-semibold text-slate-800 mb-1 group-hover:text-primary transition-colors" style={{ color: 'var(--color-text-primary)' }}>
+                                                    What kind of therapy should you use?
+                                                </h4>
+                                                <p className="text-sm text-slate-500 leading-relaxed">
+                                                    Answer a few quick questions to find which therapy approach fits your needs — CBT, ACT, DBT, psychodynamic, and more.
+                                                </p>
+                                                <span className="inline-flex items-center gap-1 mt-3 text-xs font-semibold" style={{ color: 'var(--color-primary)' }}>
+                                                    Take the questionnaire
+                                                    <i className="fas fa-arrow-right text-xs"></i>
+                                                </span>
+                                            </div>
                                         </div>
-                                        <h4 className="font-semibold text-slate-700 mb-1">Snapshot Feature</h4>
-                                        <p className="text-sm text-slate-500">Coming Soon</p>
-                                        <p className="text-xs text-slate-400 mt-1">We're improving this feature</p>
+
+                                        {/* Snapshot Feature Card */}
+                                        <div className="flex items-start gap-4 p-5 rounded-xl border border-slate-200 bg-slate-50 opacity-75">
+                                            <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-slate-100">
+                                                <i className="fas fa-camera text-xl text-slate-400"></i>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <h4 className="font-semibold text-slate-600">Psychological Snapshot</h4>
+                                                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-200 text-slate-500">Coming Soon</span>
+                                                </div>
+                                                <p className="text-sm text-slate-400 leading-relaxed">
+                                                    Get an AI-generated snapshot of your psychological profile and personality patterns.
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             )}

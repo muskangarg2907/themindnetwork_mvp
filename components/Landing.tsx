@@ -94,6 +94,11 @@ export const Landing: React.FC = () => {
     {
       question: 'What therapy modalities are offered?',
       answer: 'Our network of therapists specializes in multiple approaches including Cognitive Behavioral Therapy (CBT), psychodynamic therapy, mindfulness-based therapy, couples counseling, and specialized treatments for anxiety, depression, trauma, and relationship issues.'
+    },
+    {
+      question: 'Which kind of therapy is right for me?',
+      answer: 'It depends on what you\'re dealing with — anxiety and negative thought patterns often respond well to CBT, while deeper emotional wounds may need a psychodynamic or trauma-focused approach. Relationship or life transitions? Humanistic or integrative therapy tends to fit better. Our therapists assess your needs in the first session and recommend the best fit.',
+      link: { href: '/therapy-guide', label: 'Explore our full therapy guide →' }
     }
   ];
 
@@ -102,12 +107,12 @@ export const Landing: React.FC = () => {
       {/* Navigation Bar */}
       <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl border-b shadow-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', borderBottomColor: 'var(--color-secondary)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <button onClick={() => navigate('/')} className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg" style={{ backgroundColor: 'var(--color-primary)' }}>
               <i className="fas fa-brain text-white text-xl"></i>
             </div>
             <span className="text-base sm:text-xl md:text-2xl font-bold" style={{ color: 'var(--color-primary)' }}>TheMindNetwork</span>
-          </div>
+          </button>
           
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-6 justify-end w-full">
@@ -390,6 +395,17 @@ export const Landing: React.FC = () => {
                     <p style={{ color: 'var(--color-text-secondary)', lineHeight: '1.6' }}>
                       {faq.answer}
                     </p>
+                    {faq.link && (
+                      <a
+                        href={faq.link.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block mt-3 text-sm font-semibold hover:underline"
+                        style={{ color: 'var(--color-accent)' }}
+                      >
+                        {faq.link.label}
+                      </a>
+                    )}
                   </div>
                 )}
               </div>
