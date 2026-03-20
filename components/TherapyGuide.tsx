@@ -415,6 +415,14 @@ const FAQ_SCHEMA = {
 // COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 
+const trackEvent = (name: string, params?: Record<string, string>) => {
+  try {
+    if (typeof window !== 'undefined' && typeof (window as any).gtag === 'function') {
+      (window as any).gtag('event', name, params);
+    }
+  } catch (_) {}
+};
+
 export const TherapyGuide: React.FC = () => {
   const navigate = useNavigate();
   const [phase, setPhase] = useState<'intro' | 'quiz'>('intro');
@@ -450,7 +458,7 @@ export const TherapyGuide: React.FC = () => {
         <>
           It depends on your goals, personality, and what you are bringing to therapy. CBT works well for anxiety and depression. ACT suits chronic overthinkers. DBT is built for intense emotions. Psychodynamic therapy is for those who want to understand deep-rooted patterns. No single approach fits everyone; the right one is the one that matches how you think and what you need.{' '}
           <button
-            onClick={() => { setPhase('quiz'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            onClick={() => { trackEvent('therapy_guide_started', { source: 'faq_1' }); setPhase('quiz'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
             className="inline-flex items-center gap-1 font-semibold underline underline-offset-2 transition-colors"
             style={{ color: 'var(--color-primary)' }}
             onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-accent)')}
@@ -467,7 +475,7 @@ export const TherapyGuide: React.FC = () => {
         <>
           Ask yourself three things: What is my goal (practical tools now, or deeper exploration over time)? How do I process things (structured and logical, or reflective and emotional)? Do I have a specific concern like trauma, relationships, or identity? Your answers point clearly to an approach.{' '}
           <button
-            onClick={() => { setPhase('quiz'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            onClick={() => { trackEvent('therapy_guide_started', { source: 'faq_2' }); setPhase('quiz'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
             className="inline-flex items-center gap-1 font-semibold underline underline-offset-2 transition-colors"
             style={{ color: 'var(--color-primary)' }}
             onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-accent)')}
@@ -577,6 +585,18 @@ export const TherapyGuide: React.FC = () => {
 
   const isResult = currentNode?.type === 'result';
 
+  // ── GA4: fire completed event once when result is first reached ──────────
+  const firedCompletionRef = React.useRef(false);
+  useEffect(() => {
+    if (isResult && !firedCompletionRef.current) {
+      firedCompletionRef.current = true;
+      trackEvent('therapy_guide_completed', { therapy_type: (currentNode as TherapyResult).badge });
+    }
+    if (!isResult) {
+      firedCompletionRef.current = false;
+    }
+  }, [isResult, currentNode]);
+
   // ─────────────────────────────────────────────────────────────────────────
   // RENDER
   // ─────────────────────────────────────────────────────────────────────────
@@ -683,7 +703,7 @@ export const TherapyGuide: React.FC = () => {
           {/* CTA */}
           <div className="text-center">
             <button
-              onClick={() => { setPhase('quiz'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+              onClick={() => { trackEvent('therapy_guide_started', { source: 'intro_cta' }); setPhase('quiz'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
               className="inline-flex items-center gap-2 bg-[#2E3A2F] hover:bg-[#3d4d3e] text-white font-bold text-base px-8 py-4 rounded-xl transition-colors shadow-sm"
             >
               Find my therapy match
@@ -865,7 +885,7 @@ export const TherapyGuide: React.FC = () => {
                   We match you with verified therapists who specialise in the approach that is right for you.
                 </p>
                 <button
-                  onClick={() => navigate('/create')}
+                  onClick={() => { trackEvent('therapy_guide_login_intent', { therapy_type: (currentNode as TherapyResult).badge }); navigate('/create'); }}
                   className="bg-[#A3B18A] hover:bg-[#8fa075] text-[#2E3A2F] font-bold px-8 py-3.5 rounded-xl transition-colors text-base"
                 >
                   Build my profile &amp; get matched
